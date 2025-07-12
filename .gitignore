@@ -32,3 +32,10 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# RSpec files to ignore
+/spec/reports/
+/spec/examples.txt
+/spec/tmp/
+.rspec_status
+coverage/
