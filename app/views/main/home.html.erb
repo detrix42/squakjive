@@ -1,7 +1,20 @@
 <% if user_signed_in? %>
   <%= current_user.email %> signed in.
   <%= link_to "Log out", destroy_user_session_path, data: { "turbo_method": :delete}, class: "btn btn-primary btn-lg" %>
-<% else %>
+
+  <%= form_with model: Squak.new do |form| %>
+    <%= form.text_field :body %>
+    <%= form.submit "Squak It" %>
+  <% end %>
+
+  <ul>
+    <% Squak.find_each do |squak| %>
+      <li><%= squak.body %></li>
+    <% end %>
+  </ul>
+
+  <% else %>
+
   <h1>SquakJive</h1>
   <%= link_to "Sign up", new_user_registration_path, class: "btn btn-primary btn-lg" %>
   <%= link_to "Log in", new_user_session_path, class: "btn btn-outline-primary btn-lg" %>

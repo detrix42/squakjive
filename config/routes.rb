@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get "squak/index"
+  get "squak/new"
   devise_for :users
   get "main/home"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -15,4 +17,6 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   root to: "main#home"
+
+  resources :squaks, only: [:create]
 end
