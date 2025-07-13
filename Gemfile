@@ -62,6 +62,10 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
   gem 'shoulda-matchers', '~> 6.0'
+  gem 'factory_bot_rails'
+  gem "rails-controller-testing"
+  gem 'database_cleaner-active_record'
+
 end
 
 # gems manually added

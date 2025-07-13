@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
-  get "squak/index"
-  get "squak/new"
+
+  # dashboard for when user is logged in
+  get :dashboard, to: "dashboard#index"
+
   devise_for :users
   get "main/home"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
