@@ -8533,18 +8533,10 @@
   Controller.outlets = [];
   Controller.values = {};
 
-  // app/javascript/controllers/hello_controller.js
-  var hello_controller_default = class extends Controller {
-    connect() {
-      this.element.textContent = "Hello nurse!";
-    }
-  };
-
   // app/javascript/controllers/application.js
   var application = Application.start();
   application.debug = true;
   window.Stimulus = application;
-  application.register("hello", hello_controller_default);
 
   // node_modules/@popperjs/core/lib/index.js
   var lib_exports = {};

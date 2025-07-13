@@ -1,7 +1,11 @@
 FactoryBot.define do
   factory :user do
-    email { "user#{rand(1000)}@example.com" }
-    password { "password123" }
-    password_confirmation { "password123" }
+    after(:build) do |user|
+      rnum = rand(1000)
+      user.email = "user#{rnum}@example.com"
+      user.username = "username#{rnum}"
+      user.password = "password123"
+      user.password_confirmation = "password123"
+    end
   end
 end

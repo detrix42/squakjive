@@ -7,6 +7,4 @@ const application = Application.start()
 application.debug = true
 window.Stimulus   = application
 
-application.register("hello", HelloController)
-
 export { application }
