@@ -11895,3 +11895,11 @@ a:hover {
   color: rgb(252.0961538462, 240.4807692308, 31.4038461538);
   text-shadow: 0 0 4px yellow;
 }
+
+.flash-msg {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  text-align: center;
+}

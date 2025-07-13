@@ -8533,10 +8533,23 @@
   Controller.outlets = [];
   Controller.values = {};
 
+  // app/javascript/controllers/flash_controller.js
+  var flash_controller_default = class extends Controller {
+    connect() {
+      setTimeout(() => {
+        this.dismiss();
+      }, 3e3);
+    }
+    dismiss() {
+      this.element.remove();
+    }
+  };
+
   // app/javascript/controllers/application.js
   var application = Application.start();
   application.debug = true;
   window.Stimulus = application;
+  application.register("flash", flash_controller_default);
 
   // node_modules/@popperjs/core/lib/index.js
   var lib_exports = {};
