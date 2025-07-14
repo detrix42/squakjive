@@ -1,0 +1,2 @@
+module SquakHelper
+end
