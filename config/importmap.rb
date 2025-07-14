@@ -1,3 +1,4 @@
+
 # Pin npm packages by running ./bin/importmap
 
 pin "application"
@@ -6,8 +7,12 @@ pin "@hotwired/stimulus", to: "stimulus.min.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
 
-pin "bootstrap", to: "https://ga.jspm.io/npm:bootstrap@5.3.2/dist/js/bootstrap.esm.js"
+pin "bootstrap", to: "https://ga.jspm.io/npm:bootstrap@5.3.7/dist/js/bootstrap.esm.js"
 pin "@popperjs/core", to: "https://ga.jspm.io/npm:@popperjs/core@2.11.8/lib/index.js"
+pin "axios", to: "https://cdn.jsdelivr.net/npm/axios@1.10.0/dist/axios.min.js"
 
-# config/importmap.rb
-pin "axios", to: "https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
+# Bootstrap Icons
+pin "bootstrap-icons", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+pin "bootstrap-icons/font/fonts/bootstrap-icons.woff", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff"
+pin "bootstrap-icons/font/fonts/bootstrap-icons.woff2", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2"
+

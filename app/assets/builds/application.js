@@ -13710,6 +13710,12 @@
   };
   enableDismissTrigger(Toast);
   defineJQueryPlugin(Toast);
+
+  // app/javascript/application.js
+  document.addEventListener("turbo:load", () => {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
+  });
 })();
 /*! Bundled license information:
 
@@ -13726,4 +13732,4 @@ bootstrap/dist/js/bootstrap.esm.js:
     * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
     *)
 */
-//# sourceMappingURL=assets/application.js.map
+//# sourceMappingURL=/assets/application.js.map

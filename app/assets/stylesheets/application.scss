@@ -8,8 +8,67 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css");
 @import "custom_colors"; // custom_colors imports bootstrap/scss/bootstrap
-//@import "bootstrap/scss/bootstrap";
+@import "bootstrap";
+
+@import "main/all";
+
+// Additional custom styles for dark theme
+.card {
+  background-color: $card-bg;
+  border-color: $card-border-color;
+}
+
+.form-control {
+  &:focus {
+    background-color: lighten($input-bg, 5%);
+    color: $input-color;
+  }
+}
+
+.btn-primary {
+  color: $btn-color;
+  &:hover {
+    color: $btn-color;
+  }
+}
+
+// Style for form labels
+.form-label {
+  color: $body-color;
+}
+
+// Style for error messages
+.field_with_errors {
+  .form-control {
+    border-color: $danger;
+  }
+}
+
+// Style for links
+a {
+  color: $link-color;
+  &:hover {
+    color: $link-hover-color;
+    text-shadow: 0 0 4px yellow;
+  }
+}
+
+.dropdown-menu {
+  .dropdown-item {
+    &.text-danger {
+      color: $danger;
+
+      &:hover {
+        color: #ff0000 !important;
+        font-weight: bold;
+        background-color: transparent;
+      }
+    }
+  }
+
+}
 
 .flash-msg {
   position: fixed;
@@ -17,4 +76,22 @@
   right: 0;
   z-index: 1000;
   text-align: center;
+}
+
+
+.user-info-card {
+  position: absolute;
+  bottom: .5rem;
+  right: .5rem;
+  left: .5rem;
+
+  .icon-vdots {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    //margin: auto;
+    color: $body-color;
+    font-size: 1.5rem;
+  }
 }

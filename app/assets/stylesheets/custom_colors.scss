@@ -4,7 +4,7 @@ $secondary: #6c757d;
 $success: #198754;
 $info: #0dcaf0;
 $warning: #ffc107;
-$danger: #dc3545;
+$danger: #9c2430;
 $light: #212529;
 $dark: #f8f9fa;
 
@@ -43,46 +43,4 @@ $theme-colors: (
 "dark": $dark
 );
 
-// Import Bootstrap
-@import "bootstrap/scss/bootstrap";
 
-// Additional custom styles for dark theme
-.card {
-  background-color: $card-bg;
-  border-color: $card-border-color;
-}
-
-.form-control {
-  &:focus {
-    background-color: lighten($input-bg, 5%);
-    color: $input-color;
-}
-}
-
-.btn-primary {
-  color: $btn-color;
-  &:hover {
-    color: $btn-color;
-}
-}
-
-// Style for form labels
-.form-label {
-  color: $body-color;
-}
-
-// Style for error messages
-.field_with_errors {
-  .form-control {
-    border-color: $danger;
-}
-}
-
-// Style for links
-a {
-  color: $link-color;
-  &:hover {
-    color: $link-hover-color;
-    text-shadow: 0 0 4px yellow;
-  }
-}

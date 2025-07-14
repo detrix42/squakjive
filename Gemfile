@@ -69,8 +69,9 @@ group :test do
 end
 
 # gems manually added
-gem "jsbundling-rails"
-gem "cssbundling-rails"
+# gem "cssbundling-rails"
+gem "dartsass-rails"
+gem "bootstrap", "~> 5.3.5"
 
 gem "devise"
 

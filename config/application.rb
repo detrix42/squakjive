@@ -23,5 +23,7 @@ module Jitter
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    config.asset_pipeline = :propshaft
   end
 end
