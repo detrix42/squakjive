@@ -11,8 +11,5 @@ pin "bootstrap", to: "https://ga.jspm.io/npm:bootstrap@5.3.7/dist/js/bootstrap.e
 pin "@popperjs/core", to: "https://ga.jspm.io/npm:@popperjs/core@2.11.8/lib/index.js"
 pin "axios", to: "https://cdn.jsdelivr.net/npm/axios@1.10.0/dist/axios.min.js"
 
-# Bootstrap Icons
-pin "bootstrap-icons", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-pin "bootstrap-icons/font/fonts/bootstrap-icons.woff", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff"
-pin "bootstrap-icons/font/fonts/bootstrap-icons.woff2", to: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/fonts/bootstrap-icons.woff2"
-
+pin "marked", to: "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js"
+pin "turndown", to: "https://ga.jspm.io/npm:turndown@7.2.0/lib/turndown.browser.es.js"

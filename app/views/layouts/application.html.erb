@@ -20,11 +20,10 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
-    <%#= javascript_include_tag "application", defer: true %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body style="visibility: hidden;">
   <% if flash.any? %>
     <div class="container flash-msg" style="max-width: 580px">
       <%= render "shared/flashes" %>
@@ -33,5 +32,10 @@
 
     <%= yield %>
     </div>
+  <script>
+    document.addEventListener("turbo:load", function() {
+      document.body.style.visibility = "visible";
+    })
+  </script>
   </body>
 </html>

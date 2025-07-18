@@ -1,20 +1,15 @@
-
 <div class="container-fluid center-text">
   <div class="row">
-    <div class="col-3 position-relative" style="background-color: #3e3838; height: 100vh;">
-      <%= render "brand_logo" %>
-      <%= render "user_info_card" %>
+    <div class="d-flex flex-column col-3 position-relative" style="background-color: #3e3838;">
+
+        <%= render "brand_logo" %>
+        <%= render partial: "circles/circle_sidebar" %>
+        <%= render "user_info_card" %>
     </div>
+
     <div class="col-6">
-      <%= form_with model: Squak.new do |form| %>
-        <%= form.text_field :body %>
-        <%= form.submit "Squak It" %>
-      <% end %>
-      <ul>
-        <% Squak.find_each do |squak| %>
-          <li><%= squak.body %></li>
-        <% end %>
-      </ul>
+      <%= render 'squak_form' %>
+      <%= render 'squak_index' %>
     </div>
     <div class="col-3" style="background-color: #343934; height: 100vh;">
 

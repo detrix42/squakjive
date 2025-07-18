@@ -13,6 +13,8 @@
 @import "bootstrap";
 
 @import "main/all";
+@import "squak_editor/all";
+@import "circles/all";
 
 // Additional custom styles for dark theme
 .card {
@@ -78,20 +80,3 @@ a {
   text-align: center;
 }
 
-
-.user-info-card {
-  position: absolute;
-  bottom: .5rem;
-  right: .5rem;
-  left: .5rem;
-
-  .icon-vdots {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    //margin: auto;
-    color: $body-color;
-    font-size: 1.5rem;
-  }
-}

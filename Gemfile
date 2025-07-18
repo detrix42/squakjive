@@ -68,10 +68,8 @@ group :test do
 
 end
 
-# gems manually added
-# gem "cssbundling-rails"
 gem "dartsass-rails"
 gem "bootstrap", "~> 5.3.5"
 
 gem "devise"
-
+gem "foreman"

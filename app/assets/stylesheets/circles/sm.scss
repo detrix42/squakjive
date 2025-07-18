@@ -1,0 +1,45 @@
+.circle-index-container {
+  position: relative;
+
+  .circles-header,
+  .circles-index {
+    background-color: #323535;
+    border: 1px solid #ccc;
+  }
+
+  .circles-header {
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    margin-top: 1rem;
+    margin-bottom: 0;
+    padding: 1rem;
+  }
+
+  .circles-index {
+    padding: 1rem;
+    border-radius: 0 0 5px 5px;
+  }
+
+  .circle-item {
+    min-height: 60px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+
+  .selected {
+    box-shadow: 0 0 10px #ffeeb4;
+  }
+
+}
+
+
+
+
+.btn-add-circle {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+
+}

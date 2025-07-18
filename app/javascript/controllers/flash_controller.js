@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   connect() {
+    console.log("Flash controller connected")
     // Automatically dismiss the flash message after 3 seconds
     setTimeout(() => {
       this.dismiss()

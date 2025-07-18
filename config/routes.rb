@@ -2,6 +2,7 @@ Rails.application.routes.draw do
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"
+  resources :circles
 
   devise_for :users
   get "main/home"

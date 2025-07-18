@@ -1,0 +1,70 @@
+<%= form_with model: Squak.new, id: "squak-form" do |form| %>
+  <div data-controller="squakeditor">
+    <div class="row align-items-start">
+      <div class="col-9 ms-4" contenteditable="true" id="squak-editor"
+           data-squakeditor-target="squakEditor">
+      </div>
+      <div class="col-3 pe-0 circle-select">
+        <select data-post-form-target="circleSelect" name="squak[circle_id]">
+          <option value="">Public (Everyone)</option>
+          <% current_user.circles.each do |circle| %>
+            <option value="<%= circle.id %>"><%= circle.name %> (<%= circle.members.count %> members)</option>
+          <% end %>
+        </select>
+      </div>
+
+    </div>
+
+    <textarea name="squak[body]" style="display: none;"
+              data-squakeditor-target="markdown">
+          </textarea>
+    <div class="row justify-content-start mt-2">  <!-- Bootstrap row for buttons -->
+      <div class="col-auto">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-action="click->squakeditor#format"
+                data-format="bold">
+          <i class="bi bi-type-bold"></i>  <!-- Bootstrap icon for bold -->
+        </button>
+      </div>
+      <div class="col-auto">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-action="click->squakeditor#format"
+                data-format="italic">
+          <i class="bi bi-type-italic"></i>  <!-- Bootstrap icon for italic -->
+        </button>
+      </div>
+      <div class="col-auto">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-action="click->squakeditor#format"
+                data-format="underline">
+          <i class="bi bi-type-underline"></i>  <!-- Bootstrap icon for underline -->
+        </button>
+      </div>
+      <div class="col-auto">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-action="click->squakeditor#format"
+                data-format="insertUnorderedList">
+          <i class="bi bi-list-ul"></i>  <!-- Bootstrap icon for unordered list -->
+        </button>
+      </div>
+      <div class="col-auto">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-action="click->squakeditor#format"
+                data-format="insertOrderedList">
+          <i class="bi bi-list-ol"></i>  <!-- Bootstrap icon for ordered list -->
+        </button>
+      </div>
+      <div class="col-auto ms-auto">
+        <%= form.submit "Squak It", class: "btn btn-primary" %>
+      </div>
+
+    </div>
+  </div>
+
+
+<% end %>

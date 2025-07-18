@@ -1,0 +1,10 @@
+<ul>
+  <% Squak.find_each do |squak| %>
+    <li data-controller="markdown-to-html"
+        class="squak-item">
+      <div data-markdown-to-html-target="content">
+        <%= squak.body %>
+      </div>
+    </li>
+  <% end %>
+</ul>

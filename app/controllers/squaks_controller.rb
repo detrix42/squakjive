@@ -2,14 +2,15 @@ class SquaksController < ApplicationController
   before_action :authenticate_user!
 
   def index
+    @squaks = Squak.visible_to(current_user)
   end
 
   def create
     squak_params = params.expect(squak: :body)
-    Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
+    # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
 
 
-    Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
+    # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
     @squak = current_user.squaks.create(squak_params)
 

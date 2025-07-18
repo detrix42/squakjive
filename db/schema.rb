@@ -10,15 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_13_020421) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_18_055114) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "circle_memberships", force: :cascade do |t|
+    t.bigint "circle_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["circle_id"], name: "index_circle_memberships_on_circle_id"
+    t.index ["user_id"], name: "index_circle_memberships_on_user_id"
+  end
+
+  create_table "circles", force: :cascade do |t|
+    t.string "name"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_circles_on_user_id"
+  end
 
   create_table "squaks", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.text "body"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "circle_id"
+    t.index ["circle_id"], name: "index_squaks_on_circle_id"
     t.index ["user_id"], name: "index_squaks_on_user_id"
   end
 
@@ -36,5 +55,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_13_020421) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "circle_memberships", "circles"
+  add_foreign_key "circle_memberships", "users"
+  add_foreign_key "circles", "users"
+  add_foreign_key "squaks", "circles"
   add_foreign_key "squaks", "users"
 end
