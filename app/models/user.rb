@@ -10,4 +10,12 @@ class User < ApplicationRecord
   has_many :joined_circles, through: :circle_memberships, source: :circle  # Circles they're in
   has_many :squaks, dependent: :destroy
   validates :username, presence: true, uniqueness: { case_sensitive: false }
+  has_one :user_profile, dependent: :destroy
+
+  after_create :create_user_profile
+
+  private
+  def create_user_profile
+    self.user_profile = UserProfile.new(selected_circle: nil)
+  end
 end

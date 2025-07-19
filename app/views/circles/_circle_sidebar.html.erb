@@ -1,16 +1,23 @@
-<div class="flex-grow-1 overflow-auto circle-index-container" data-controller="circle-selection">
+<div class="flex-grow-1 overflow-auto circle-index-container"
+     data-controller="circles"
+     data-circles-circle-role-value="selector"
+     data-circles-selected-circle-id-value="<%= @selected_circle_id %>"
+  >
   <h3 class="circles-header">Your Circles</h3>
-  <ul class="circles-index">
-    <li class="circle-item"
+  <ul class="circles-index"
+      data-target="circles.list"
+  >
+    <li class="circle-item" id="circle-id-0"
         data-circle-selection-target="item"
-        data-action="click->circle-selection#select"
-        data-circle-id="">
+        data-action="click->circle#select"
+        data-circle-id="0"
+    >
       <strong>All Circles</strong> (<%= Circle.count %>)
     </li>
     <% current_user.circles.each do |circle| %>
-      <li class="circle-item"
+      <li class="circle-item" id="circle-id-<%= circle.id %>"
           data-circle-selection-target="item"
-          data-action="click->circle-selection#select"
+          data-action="click->circle#select"
           data-circle-id="<%= circle.id %>">
         <%= link_to circle.name, circle_path(circle) %> (<%= circle.members.count %> members)
       </li>
