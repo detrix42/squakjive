@@ -36,10 +36,15 @@ export default class extends Controller {
   }
 
   handleCircleSelection = (event) => {
-    const circleId = event.detail.circleId
-    // Here you can handle the circle selection
-    // circleId will be null for "All Circles"
-    // or the actual circle ID for specific circles
+    // Extract circle_id from the event's detail
+    const circleId = event.detail.circleId;
+    console.log(`Received circle_id: ${circleId}`);
+
+    // Now use it! Example: Update the content target (or fetch squaks via AJAX)
+    if (this.hasContentTarget) {
+      this.contentTarget.innerHTML = `Loading squaks for circle ${circleId}...`;
+      // Real app: Fetch data, e.g., fetch(`/circles/${circleId}/squaks`).then(...)
+    }
   }
 
   // Action: Called on click in the selector's <li>
