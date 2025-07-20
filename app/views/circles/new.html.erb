@@ -1,2 +1,3 @@
-<h1>Circles#new</h1>
-<p>Find me in app/views/circles/new.html.erb</p>
+<%= turbo_frame_tag "new-circle-modal" do %>
+    <%= render partial: "circle_name_form", circle: @circle %>
+<% end %>

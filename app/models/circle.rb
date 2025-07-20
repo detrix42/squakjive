@@ -4,4 +4,8 @@ class Circle < ApplicationRecord
   has_many :members, through: :circle_memberships, source: :user  # Members are other users
   has_many :squaks  # Squaks posted to this circle
   validates :name, presence: true, uniqueness: { scope: :user_id }  # Unique per user
+
+  def members_count
+    members.count
+  end
 end

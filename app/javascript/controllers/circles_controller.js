@@ -13,16 +13,38 @@ export default class extends Controller {
     circleRole: {
       type: String,
       default: ''
+    },
+    circleName: {
+      type: String,
+      default: 'All Circles'
     }
   }
 
   connect() {
-    console.log('circles controller connected role:', this.circleRoleValue)
-    console.log('selected circle id:', this.selectedCircleIdValue)
     const tgt = this.element.querySelector(`#circle-id-${this.selectedCircleIdValue}`)
-    tgt.classList.add('selected')
+    if (tgt && !tgt.classList.contains('selected')) {
+      tgt.classList.add('selected')
+    }
+
+    if (this.circleRoleValue === 'selector') {
+      const circEvent = new CustomEvent("circle-selection:circleSelected", {
+        detail: { circleName: this.circleNameValue,
+                  circleId: this.selectedCircleIdValue},
+        bubbles: true
+      });
+      window.dispatchEvent(circEvent);  // Global dispatch
+    }
+
+    if (this.circleRoleValue === 'editor') {
+      this.element.innerHTML = this.circleNameValue
+      this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
+    }
 
     if (this.circleRoleValue === 'display') {
+      const tgtName = this.element.querySelector(`#editor-circle-name`)
+      if (tgtName) {
+        tgtName.innerHTML = this.circleNameValue || 'All Circles'
+      }
       this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
     }
 
@@ -36,14 +58,32 @@ export default class extends Controller {
   }
 
   handleCircleSelection = (event) => {
-    // Extract circle_id from the event's detail
-    const circleId = event.detail.circleId;
-    console.log(`Received circle_id: ${circleId}`);
 
-    // Now use it! Example: Update the content target (or fetch squaks via AJAX)
-    if (this.hasContentTarget) {
-      this.contentTarget.innerHTML = `Loading squaks for circle ${circleId}...`;
-      // Real app: Fetch data, e.g., fetch(`/circles/${circleId}/squaks`).then(...)
+    if (this.circleRoleValue === 'selector') {
+      // Remove 'selected' class from currently selected circle
+      const currentlySelected = this.element.querySelector('.selected')
+      if (currentlySelected) {
+        currentlySelected.classList.remove('selected')
+      }
+
+      // highlight the selected (active) circle
+      const tgt = this.element.querySelector(`#circle-id-${this.selectedCircleIdValue}`)
+      tgt.classList.add('selected')
+
+      // send event so another circle controller can react.
+      this.dispatchCircleEvent(this.circleNameValue)
+    }
+
+    if (this.circleRoleValue === 'display') {
+      const tgt = this.element.querySelector(`#editor-circle-name`)
+      if (tgt) {
+        tgt.innerHTML = event.detail.circleName || 'All Circles'
+      }
+
+    }
+
+    if (this.circleRoleValue === 'editor') {
+      this.element.innerHTML = event.detail.circleName
     }
   }
 
@@ -63,4 +103,13 @@ export default class extends Controller {
     });
     window.dispatchEvent(customEvent);  // Global dispatch
   }
+
+  dispatchCircleEvent(circleName) {
+    const circEvent = new CustomEvent("circle-selection:circleSelected", {
+      detail: { circleName: circleName },
+      bubbles: true
+    });
+    window.dispatchEvent(circEvent)
+  }
+
 }

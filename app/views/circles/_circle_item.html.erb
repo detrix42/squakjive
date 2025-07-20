@@ -1,0 +1,20 @@
+<li class="circle-item" id="circle-id-<%= circle.id %>"
+    data-circles-circle-selection-target="item"
+    data-action="click->circles#select"
+    data-circles-circle-id="<%= circle.id %>"
+    data-circles-circle-name="<%= circle.name %>">
+  <div class="row">
+    <div class="col-9">
+      <% if @selected_circle_id == circle.id %>
+        <strong><%= circle.name %></strong>
+      <% else %>
+        <%= circle.name %>
+      <% end %>
+      (<%= circle.members_count %>)
+    </div>
+    <div class="col-3">
+    </div>
+  </div>
+  <div class="col user-list-col-circle">
+  </div>
+</li>

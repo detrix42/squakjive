@@ -32,6 +32,9 @@
 
     <%= yield %>
     </div>
+
+  <%=  turbo_frame_tag "new-circle-modal" %>
+
   <script>
     document.addEventListener("turbo:load", function() {
       document.body.style.visibility = "visible";

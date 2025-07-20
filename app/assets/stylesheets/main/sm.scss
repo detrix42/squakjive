@@ -1,11 +1,15 @@
+@import "../custom_variables";
+
 .brand-logo {
   background-color: #353232;
   border-bottom: 1px solid #888888;
+
 }
 
 .user-info-card {
   position: relative;
   margin-bottom: 1rem;
+  height: $userinfo-card-height;
 
   .icon-vdots {
     display: block;

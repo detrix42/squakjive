@@ -1,24 +1,30 @@
+<div class="d-flex w-100 ms-3">
+  <div>Squak to: </div>
+  <div class="mx-4 flex-shrink-1"
+       id="editor-circle-name"
+       data-controller="circles"
+       data-circles-circle-role-value="editor"
+       data-circles-circle-name-value="<%= @selected_circle_name || 'All Circles' %>"
+  >
+    active circle
+  </div>
+</div>
 <%= form_with model: Squak.new, id: "squak-form" do |form| %>
-  <div data-controller="squakeditor">
-    <div class="row align-items-start">
-      <div class="col-9 ms-4" contenteditable="true" id="squak-editor"
-           data-squakeditor-target="squakEditor">
-      </div>
-      <div class="col-3 pe-0 circle-select">
-        <select data-post-form-target="circleSelect" name="squak[circle_id]">
-          <option value="">Public (Everyone)</option>
-          <% current_user.circles.each do |circle| %>
-            <option value="<%= circle.id %>"><%= circle.name %> (<%= circle.members.count %> members)</option>
-          <% end %>
-        </select>
-      </div>
-
+  <div class="row align-items-start" data-controller="squakeditor">
+    <div class="mx-4 flex-shrink-1" contenteditable="true" id="squak-editor"
+         data-squakeditor-target="squakEditor">
     </div>
 
+
+    <%# Hidden textarea for markdown content  %>
     <textarea name="squak[body]" style="display: none;"
               data-squakeditor-target="markdown">
-          </textarea>
-    <div class="row justify-content-start mt-2">  <!-- Bootstrap row for buttons -->
+    </textarea>
+
+
+
+
+    <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
       <div class="col-auto">
         <button type="button"
                 class="btn btn-outline-secondary"
@@ -59,7 +65,7 @@
           <i class="bi bi-list-ol"></i>  <!-- Bootstrap icon for ordered list -->
         </button>
       </div>
-      <div class="col-auto ms-auto">
+      <div class="col-auto ms-auto me-3">
         <%= form.submit "Squak It", class: "btn btn-primary" %>
       </div>
 

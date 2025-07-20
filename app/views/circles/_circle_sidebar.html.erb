@@ -1,27 +1,22 @@
 <div class="flex-grow-1 overflow-auto circle-index-container"
      data-controller="circles"
      data-circles-circle-role-value="selector"
-     data-circles-selected-circle-id-value="<%= @selected_circle_id %>"
+     data-circles-selected-circle-id-value="<%= @selected_circle.id || 0 %>"
+     data-circles-circle-name-value="<%= @selected_circle_name || "All Circles" %>"
   >
   <h3 class="circles-header">Your Circles</h3>
   <ul class="circles-index"
+      id="circles-list"
       data-target="circles.list"
   >
-    <li class="circle-item" id="circle-id-0"
-        data-circle-selection-target="item"
-        data-action="click->circle#select"
-        data-circle-id="0"
-    >
-      <strong>All Circles</strong> (<%= Circle.count %>)
-    </li>
-    <% current_user.circles.each do |circle| %>
-      <li class="circle-item" id="circle-id-<%= circle.id %>"
-          data-circle-selection-target="item"
-          data-action="click->circle#select"
-          data-circle-id="<%= circle.id %>">
-        <%= link_to circle.name, circle_path(circle) %> (<%= circle.members.count %> members)
-      </li>
-    <% end %>
+    <%= render partial: "circles/circle_item", collection: [AllCircle.new, *current_user.circles], as: :circle %>
   </ul>
-  <%= link_to "Create New Circle", new_circle_path, class: "btn btn-add-circle", data: { turbo_frame: "modal" } %>
+  <%= link_to "Create New Circle",
+              new_circle_path,
+              class: "btn btn-primary btn-add-circle",
+              data: {
+                turbo_frame: "new-circle-modal"
+              } %>
+
+
 </div>
