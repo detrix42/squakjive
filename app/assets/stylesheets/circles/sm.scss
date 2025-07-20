@@ -34,6 +34,19 @@
     box-shadow: 0 0 10px #ffeeb4;
   }
 
+  .circle-user-list {
+    height: 0;
+    -webkit-transition: height 0.5s ease;
+    -moz-transition: height 0.5s ease;
+    -o-transition: height 0.5s ease;
+    transition: height 0.5s ease;
+
+  }
+
+  .circle-user-list-open {
+    height: 40px;
+  }
+
 }
 
 

@@ -110,14 +110,19 @@ export default class extends Controller {
   }
 
   changeSelectedCircle(circleID, tgtElement) {
-      console.log('change selected circle ID:', circleID)
-      const currentlySelected = this.element.querySelector('.selected')
-      if (currentlySelected) {
-        currentlySelected.classList.remove('selected')
-      }
+    console.log('change selected circle ID:', circleID)
+    const currentlySelected = this.element.querySelector('.selected')
 
+    if (currentlySelected) {
+      const uList = currentlySelected.querySelector('.circle-user-list')
+      currentlySelected.classList.remove('selected')
+      uList.classList.remove('circle-user-list-open')
+    }
+
+    const userList = this.element.querySelector(`#circle-user-list-${circleID}`)
     const tgt = tgtElement.element.querySelector(`#circle-id-${circleID}`)
     tgt.classList.add('selected')
+    userList.classList.add('circle-user-list-open')
 
    }
 
