@@ -1,0 +1,32 @@
+<%= turbo_frame_tag "circle-add-user-modal" do %>
+  <div class="modal fade" id="circleAddUserModal"
+       data-controller="circle-add-user-modal"
+       tabindex="-1" >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add User to Circle</h5>
+          <button type="button" class="btn-close" data-action="click->circle-add-user-modal#close" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="list-group">
+            <% @available_users.each do |user| %>
+              <div class="list-group-item list-group-item-action"
+                   id="modal-user-item-<%= user.id %>"
+                   data-action="click->circle-add-user-modal#addUserToCircle"
+                   data-user-id="<%= user.id %>"
+                   data-circle-add-user-modal-target="userItem"
+              >
+                <%= user.username %> &lt; <%= user.email %> &gt;
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-action="click->circle-add-user-modal#close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,25 @@
+<div class="user-item d-flex align-items-center py-1 px-2 mb-1 rounded bg-light border user-list-entry" id="user-item-<%= user.id %>">
+  <i class="bi bi-person-circle me-2 text-secondary" style="font-size:1.2rem;"></i>
+  <span class="fw-semibold text-dark flex-grow-1"><%= user.username %></span>
+  <% unless circle.id == 0 %>
+    <% membership = circle.circle_memberships.find_by(user_id: user.id)%>
+    <% if membership.present? %>
+      <%# button_to('Remove', circle_membership_path(circle_id: circle.id, id: membership.id),
+                    method: :delete,
+                    form: { class: "d-inline" },
+                    class: "btn btn-sm btn-link text-danger ms-2",
+                    data: { turbo_confirm: "Remove this user from the circle?" }) do %>
+<!--                      <i class="bi bi-x-circle"></i>-->
+                    <%# end %>
+
+      <button class="btn btn-sm btn-link text-danger ms-2"
+              data-controller="circle-membership"
+              data-circle-membership-user-id-value="<%= user.id %>"
+              data-circle-membership-circle-id-value="<%= circle.id %>"
+              data-action="click->circle-membership#remove_member">
+        <i class="bi bi-x-circle"></i>
+      </button>
+      <% end %>
+    <% end %>
+
+</div>

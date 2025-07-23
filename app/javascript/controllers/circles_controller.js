@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
 
-  static targets = ["selector", "display"]
+  static targets = ["selector", "display", 'item']
 
   static values = {
     selectedCircleId: {
@@ -28,8 +28,10 @@ export default class extends Controller {
 
     if (this.circleRoleValue === 'selector') {
       const circEvent = new CustomEvent("circle-selection:circleSelected", {
-        detail: { circleName: this.circleNameValue,
-                  circleId: this.selectedCircleIdValue},
+        detail: {
+          circleName: this.circleNameValue,
+          circleId: this.selectedCircleIdValue
+        },
         bubbles: true
       });
       window.dispatchEvent(circEvent);  // Global dispatch
@@ -63,12 +65,11 @@ export default class extends Controller {
   }
 
   handleCircleSelection = (event) => {
-    console.log('handle circle selection', event.detail )
+    console.log('handle circle selection', event.detail)
     if (this.circleRoleValue === 'selector') {
       // Remove the dispatchCircleEvent call, just handle the selection
       this.changeSelectedCircle(this.selectedCircleIdValue, this)
     }
-
 
 
     if (this.circleRoleValue === 'display') {
@@ -103,27 +104,40 @@ export default class extends Controller {
 
   dispatchCircleEvent(circleName) {
     const circEvent = new CustomEvent("circle-selection:circleSelected", {
-      detail: { circleName: circleName },
+      detail: {circleName: circleName},
       bubbles: true
     });
     window.dispatchEvent(circEvent)
   }
 
   changeSelectedCircle(circleID, tgtElement) {
-    console.log('change selected circle ID:', circleID)
     const currentlySelected = this.element.querySelector('.selected')
 
     if (currentlySelected) {
       const uList = currentlySelected.querySelector('.circle-user-list')
       currentlySelected.classList.remove('selected')
-      uList.classList.remove('circle-user-list-open')
     }
 
-    const userList = this.element.querySelector(`#circle-user-list-${circleID}`)
     const tgt = tgtElement.element.querySelector(`#circle-id-${circleID}`)
     tgt.classList.add('selected')
-    userList.classList.add('circle-user-list-open')
 
-   }
+  }
+
+  add_user(event) {
+    event.stopPropagation()
+    const circleId = event.target.closest('.circle-item').dataset.circlesCircleId
+
+    // Load the modal content
+    Turbo.visit(`/circles/${circleId}/add_user_modal`, { frame: "circle-add-user-modal" })
+  }
+
+  closeAddUserModal() {
+    console.log('close add user modal')
+    const modal = document.getElementById("circle-add-user-modal")
+    modal.innerHTML = ""
+  }
+
+
+
 
 }

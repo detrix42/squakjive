@@ -28,28 +28,51 @@
     border-radius: 5px;
     margin-bottom: 1rem;
     padding: 1rem;
+
+    .circle-action-panel {
+      margin-right: 1rem;
+
+      i.icon {
+        width: 50px;
+        height: 30px;
+        font-size: 20px;
+        margin-top: -10px;
+      }
+    }
   }
 
   .selected {
     box-shadow: 0 0 10px #ffeeb4;
   }
 
+  .circle-add-user-icon {
+    display: none;
+  }
+  .circle-item.selected .circle-add-user-icon {
+    display: block;
+  }
+
+
   .circle-user-list {
     height: 0;
-    -webkit-transition: height 0.5s ease;
-    -moz-transition: height 0.5s ease;
-    -o-transition: height 0.5s ease;
-    transition: height 0.5s ease;
+    min-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    border-top: 1px solid #ccc;
+    -webkit-transition: min-height 0.5s ease;
+    -moz-transition: min-height 0.5s ease;
+    -o-transition: min-height 0.5s ease;
+    transition: min-height 0.5s ease;
 
   }
 
-  .circle-user-list-open {
-    height: 40px;
+  .circle-item.selected .circle-user-list {
+    opacity: 1;
+    height: auto;
+    min-height: 40px;
   }
 
 }
-
-
 
 
 .btn-add-circle {
@@ -58,3 +81,18 @@
   bottom: 2px;
 
 }
+
+.user-list-entry {
+  transition: box-shadow 0.2s, background 0.2s;
+  cursor: pointer;
+  margin-top: .5rem;
+
+  &:hover {
+    background: #e5f3ff;
+    box-shadow: 0 0 6px #72adf7;
+    .text-dark {
+      color: #039be5 !important;
+    }
+  }
+}
+

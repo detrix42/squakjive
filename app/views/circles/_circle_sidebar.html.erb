@@ -9,7 +9,8 @@
       id="circles-list"
       data-target="circles.list"
   >
-    <%= render partial: "circles/circle_item", collection: [AllCircle.new, *current_user.circles], as: :circle %>
+    <%= render partial: "circles/circle_item",
+               collection: [AllCircle.new, *current_user.circles], as: :circle %>
   </ul>
   <%= link_to "Create New Circle",
               new_circle_path,

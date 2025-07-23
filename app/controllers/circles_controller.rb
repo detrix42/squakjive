@@ -1,6 +1,12 @@
 class CirclesController < ApplicationController
   def index
     @circles = current_user.circles
+    @all_circles = [AllCircle.new] + @circles.to_a
+
+    respond_to do |format|
+      format.html
+      format.json { render json: @circles.to_json(include: :members) }
+    end
 
   end
 
@@ -34,6 +40,39 @@ class CirclesController < ApplicationController
   end
 
   def destroy
+  end
+
+  def add_user_modal
+    @circle = Circle.find(params[:circle_id])
+    @available_users = User.all.where.not(
+      id: @circle.members.pluck(:id)
+    ).where.not(id: current_user.id)
+
+    render partial: "circle_add_user_modal", layout: false
+  end
+
+  def add_user
+    @circle = Circle.find(params[:circle_id])
+    @user = User.find(params[:user_id])
+
+    @membership = @circle.circle_memberships.build(user: @user)
+
+    if @membership.save
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.remove("modal-user-item-#{@user.id}"),
+            turbo_stream.update("circle-members-count-#{@circle.id}",
+                                @circle.members_count.to_s),
+            turbo_stream.append("circle-user-list-#{@circle.id}",
+                              render_to_string(partial: "user_item",
+                                               locals: { user: @user, circle: @circle }))
+          ]
+        end
+      end
+    else
+      head :unprocessable_entity
+    end
   end
 
   private

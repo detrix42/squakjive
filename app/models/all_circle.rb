@@ -9,7 +9,7 @@ class AllCircle
   end
 
   def members
-    user.all
+    User.all
   end
 
   def members_count

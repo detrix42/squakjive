@@ -2,7 +2,15 @@ Rails.application.routes.draw do
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"
-  resources :circles
+  resources :circles, param: :circle_id do
+    member do
+      get :add_user_modal
+      post :add_user, param: :user_id
+    end
+
+  end
+
+  delete "/circle_memberships", to: "circle_memberships#destroy"
 
   devise_for :users
   get "main/home"
