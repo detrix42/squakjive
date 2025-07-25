@@ -31,7 +31,16 @@ static values = {
           },
           body: JSON.stringify(data)
         })
-        if (!res.ok) {
+        if (res.ok) {
+          const resText = await res.text()
+          console.log('resText:', resText)
+          Turbo.renderStreamMessage(resText)
+
+          const user_to_remove =
+              document.querySelector(`#sidebar-user-item-${this.userIdValue}`)
+          user_to_remove.remove()
+
+        } else {
           alert('Error removing user from circle')
         }
       } catch (error) {

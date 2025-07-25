@@ -13,8 +13,9 @@ class CircleMembershipsController < ApplicationController
       format.html { redirect_to dashboard_path }
       format.turbo_stream do
         render turbo_stream: [
-               turbo_stream.remove("user-item-#{@mem_user.id}"),
-               turbo_stream.update("circle-members-count-#{@circle.id}")
+               turbo_stream.remove("sidebar-user-item-#{@mem_user.id}"),
+               turbo_stream.update("circle-members-count-#{@circle.id}",
+                                   "(#{@circle.members_count})")
                ]
       end
     end

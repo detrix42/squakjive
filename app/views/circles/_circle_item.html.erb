@@ -13,24 +13,29 @@
             <%= circle.name %>
           <% end %>
         </div>
-        <div class="circle-members-count-<%= circle.id %>">
+        <div id="circle-members-count-<%= circle.id %>">
           (<%= circle.members_count %>)
         </div>
       </div>
 
     </div>
     <div class="col-3">
-        <div class="row circle-action-panel">
-          <div class="circle-add-user-icon"
-               id="add-user-icon-<%= circle.id %>"
-               data-action="click->circles#add_user">
-            <i class="icon bi bi-person-plus ms-auto" ></i>
-          </div>
+        <div class="row ms-auto circle-action-panel">
+          <% unless circle.id == 0 %>
+            <div class="circle-add-user-icon"
+                 id="add-user-icon-<%= circle.id %>"
+                 data-action="click->circles#add_user">
+              <i class="icon bi bi-person-plus ms-auto" ></i>
+            </div>
+          <% end %>
         </div>
 
     </div>
   </div>
-  <div class="col circle-user-list" id="circle-user-list-<%= circle.id %>">
+  <div class="col circle-user-list" id="circle-user-list-<%= circle.id %>"
+       data-controller="circles"
+       data-circles-circle-target="userlist"
+       data-circles-circle-id="<%= circle.id %>" >
     <%= render partial: 'circles/user_item',
                collection: circle.members, as: :user,
                locals: { circle: circle } %>

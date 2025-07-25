@@ -54,45 +54,48 @@
 
 
   .circle-user-list {
-    height: 0;
     min-height: 0;
+    max-height: 0;
     opacity: 0;
     overflow: hidden;
     border-top: 1px solid #ccc;
-    -webkit-transition: min-height 0.5s ease;
-    -moz-transition: min-height 0.5s ease;
-    -o-transition: min-height 0.5s ease;
-    transition: min-height 0.5s ease;
+    -webkit-transition: max-height 0.5s ease;
+    -moz-transition: max-height 0.5s ease;
+    -o-transition: max-height 0.5s ease;
+    transition: max-height 0.5s ease;
 
   }
 
   .circle-item.selected .circle-user-list {
     opacity: 1;
-    height: auto;
-    min-height: 40px;
+    max-height: 500px;
+    overflow-y: auto;
   }
 
-}
+  .btn-add-circle {
+    position: absolute;
+    right: 1rem;
+    bottom: 2px;
 
+  }
 
-.btn-add-circle {
-  position: absolute;
-  right: 1rem;
-  bottom: 2px;
+  .user-list-entry {
+    transition: box-shadow 0.2s, background 0.2s;
+    cursor: pointer;
+    margin-top: .5rem;
 
-}
-
-.user-list-entry {
-  transition: box-shadow 0.2s, background 0.2s;
-  cursor: pointer;
-  margin-top: .5rem;
-
-  &:hover {
-    background: #e5f3ff;
-    box-shadow: 0 0 6px #72adf7;
-    .text-dark {
-      color: #039be5 !important;
+    &:hover {
+      background: #e5f3ff;
+      box-shadow: 0 0 6px #72adf7;
+      .text-dark {
+        color: #039be5 !important;
+      }
     }
   }
+
+
 }
+
+
+
 

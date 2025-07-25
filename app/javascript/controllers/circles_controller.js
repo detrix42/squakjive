@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
 
-  static targets = ["selector", "display", 'item']
+  static targets = ["selector", "display", 'item', 'userlist']
 
   static values = {
     selectedCircleId: {
@@ -91,6 +91,8 @@ export default class extends Controller {
     const circleName = event.currentTarget.dataset.circlesCircleName;
     this.changeSelectedCircle(circleId, this)
 
+    this.toggleList(event.currentTarget)
+
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
         circleName: circleName,
@@ -137,7 +139,24 @@ export default class extends Controller {
     modal.innerHTML = ""
   }
 
-
+  toggleList(currentTarget) {
+    const el = this.userlistTarget;
+    if (el.classList.contains('expanded')) {
+      // Collapse
+      el.style.maxHeight = el.scrollHeight + 'px'; // set current height
+      requestAnimationFrame(() => {
+        el.style.maxHeight = '0px';
+      });
+      el.classList.remove('expanded');
+    } else {
+      // Expand
+      el.style.maxHeight = el.scrollHeight + 'px';
+      el.classList.add('expanded');
+      el.addEventListener('transitionend', () => {
+        el.style.maxHeight = 'none'; // allow for dynamic content grow
+      }, { once: true });
+    }
+  }
 
 
 }
