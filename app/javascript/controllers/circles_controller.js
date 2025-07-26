@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
 
-  static targets = ["selector", "display", 'item', 'userlist']
+  static targets = ["selector", "display", 'item', 'userList']
 
   static values = {
     selectedCircleId: {
@@ -145,7 +145,7 @@ export default class extends Controller {
   }
 
   toggleList() {
-    const el = this.userlistTarget;
+    const el = this.userListTarget;
     if (el.classList.contains('expanded')) {
       // Collapse
       el.style.maxHeight = el.scrollHeight + 'px'; // set current height
