@@ -77,6 +77,11 @@ export default class extends Controller {
       if (tgt) {
         tgt.innerHTML = event.detail.circleName || 'All Circles'
       }
+      // Request the list of squaks for the selected circle and update the turbo frame
+      const circleId = event.detail.circleId;
+      if (circleId != null) {
+        Turbo.visit(`/circles/${circleId}/squaks`, { frame: "squak-view" });
+      }
 
     }
 
@@ -91,7 +96,7 @@ export default class extends Controller {
     const circleName = event.currentTarget.dataset.circlesCircleName;
     this.changeSelectedCircle(circleId, this)
 
-    this.toggleList(event.currentTarget)
+    this.toggleList()
 
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
@@ -139,7 +144,7 @@ export default class extends Controller {
     modal.innerHTML = ""
   }
 
-  toggleList(currentTarget) {
+  toggleList() {
     const el = this.userlistTarget;
     if (el.classList.contains('expanded')) {
       // Collapse

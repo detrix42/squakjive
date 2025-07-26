@@ -13,3 +13,14 @@ class Squak < ApplicationRecord
       .order(created_at: :desc)
   end
 end
+
+
+# create_table "squaks", force: :cascade do |t|
+#   t.bigint "user_id", null: false
+#   t.text "body"
+#   t.datetime "created_at", null: false
+#   t.datetime "updated_at", null: false
+#   t.bigint "circle_id"
+#   t.index ["circle_id"], name: "index_squaks_on_circle_id"
+#   t.index ["user_id"], name: "index_squaks_on_user_id"
+# end

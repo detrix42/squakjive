@@ -7,7 +7,7 @@
   <h3 class="circles-header">Your Circles</h3>
   <ul class="circles-index"
       id="circles-list"
-      data-target="circles.list"
+      data-circles-target="circles-list"
   >
     <%= render partial: "circles/circle_item",
                collection: [AllCircle.new, *current_user.circles], as: :circle %>

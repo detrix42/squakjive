@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   resources :circles, param: :circle_id do
     member do
       get :add_user_modal
+      get :squaks
       post :add_user, param: :user_id
     end
 

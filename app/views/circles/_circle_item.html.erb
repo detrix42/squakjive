@@ -29,15 +29,17 @@
             </div>
           <% end %>
         </div>
-
     </div>
   </div>
   <div class="col circle-user-list" id="circle-user-list-<%= circle.id %>"
        data-controller="circles"
-       data-circles-circle-target="userlist"
+
        data-circles-circle-id="<%= circle.id %>" >
     <%= render partial: 'circles/user_item',
                collection: circle.members, as: :user,
                locals: { circle: circle } %>
   </div>
 </li>
+
+<!--       data-circles-circle-target="userlist"-->
+

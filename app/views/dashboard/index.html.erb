@@ -9,7 +9,9 @@
 
     <div class="col-6">
       <%= render 'squak_form' %>
-      <%= render 'squak_index' %>
+      <%= turbo_frame_tag "squak-view" do %>
+        <%= render partial: 'squak_index', locals: { squaks: @squaks } %>
+      <% end %>
     </div>
     <div class="col-3" style="background-color: #343934; height: 100vh;">
 

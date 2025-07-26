@@ -42,6 +42,16 @@ class CirclesController < ApplicationController
   def destroy
   end
 
+  def squaks
+    @circle = Circle.find(params[:circle_id])
+    @squaks = @circle.squaks.visible_to(current_user)
+
+    respond_to do |format|
+      format.html { render partial: 'squaks/squak_index', locals: { squaks: @squaks } }
+    end
+
+  end
+
   def add_user_modal
     @circle = Circle.find(params[:circle_id])
     @available_users = User.all.where.not(
