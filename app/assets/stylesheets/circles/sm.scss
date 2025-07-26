@@ -32,8 +32,15 @@
     .circle-action-panel {
       margin-right: 1rem;
 
+
+      .circle-add-user-icon {
+        justify-content: flex-end;
+        width: 30px;
+        padding-right: 0;
+      }
+
       i.icon {
-        width: 50px;
+        width: 30px;
         height: 30px;
         font-size: 20px;
         margin-top: -10px;
