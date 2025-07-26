@@ -20,9 +20,9 @@
 
     </div>
     <div class="col-3">
-        <div class="row ms-auto circle-action-panel">
+        <div class="row circle-action-panel">
           <% unless circle.id == 0 %>
-            <div class="circle-add-user-icon"
+            <div class="ms-auto circle-add-user-icon"
                  id="add-user-icon-<%= circle.id %>"
                  data-action="click->circles#add_user">
               <i class="icon bi bi-person-plus ms-auto" ></i>
