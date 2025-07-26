@@ -1,6 +1,6 @@
 <li id="circle-id-<%= circle.id %>"
     class="circle-item <%= 'selected' if @selected_circle_id == circle.id %>"
-    data-circles-circle-selection-target="item"
+    data-circles-target="item"  <%# Fixed from data-circles-circle-selection-target %>
     data-action="click->circles#select"
     data-circles-circle-id="<%= circle.id %>"
     data-circles-circle-name="<%= circle.name %>">
@@ -18,29 +18,23 @@
           (<%= circle.members_count %>)
         </div>
       </div>
-
     </div>
     <div class="col-3">
-        <div class="row circle-action-panel">
-          <% unless circle.id == 0 %>
-            <div class="ms-auto circle-add-user-icon"
-                 id="add-user-icon-<%= circle.id %>"
-                 data-action="click->circles#add_user">
-              <i class="icon bi bi-person-plus ms-auto" ></i>
-            </div>
-          <% end %>
-        </div>
+      <div class="row circle-action-panel">
+        <% unless circle.id == 0 %>
+          <div class="ms-auto circle-add-user-icon"
+               id="add-user-icon-<%= circle.id %>"
+               data-action="click->circles#add_user">
+            <i class="icon bi bi-person-plus ms-auto"></i>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
-  <div class="col circle-user-list" id="circle-user-list-<%= circle.id %>"
-       data-controller="circles"
-
-       data-circles-circle-id="<%= circle.id %>" >
+  <ul class="circle-user-list" id="circle-user-list-<%= circle.id %>"
+      data-circles-target="user-list">  <%# Moved to <ul>, added target %>
     <%= render partial: 'circles/user_item',
                collection: circle.members, as: :user,
                locals: { circle: circle } %>
-  </div>
+  </ul>
 </li>
-
-<!--       data-circles-circle-target="userlist"-->
-

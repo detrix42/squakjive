@@ -96,7 +96,7 @@ export default class extends Controller {
     const circleName = event.currentTarget.dataset.circlesCircleName;
     this.changeSelectedCircle(circleId, this)
 
-    this.toggleList()
+    this.toggleList(event)
 
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
@@ -144,21 +144,25 @@ export default class extends Controller {
     modal.innerHTML = ""
   }
 
-  toggleList() {
-    const el = this.userListTarget;
+  toggleList(event) {
+    const li = event.currentTarget;  // The clicked <li>
+    const el = li.querySelector('[data-circles-target="user-list"]');  // Specific <ul>
+    if (!el) {
+      console.error("No user-list target found in this <li>", li);
+      return;
+    }
+    console.log("Toggling userList:", el);  // Debug
     if (el.classList.contains('expanded')) {
-      // Collapse
-      el.style.maxHeight = el.scrollHeight + 'px'; // set current height
+      el.style.maxHeight = el.scrollHeight + 'px';
       requestAnimationFrame(() => {
         el.style.maxHeight = '0px';
       });
       el.classList.remove('expanded');
     } else {
-      // Expand
       el.style.maxHeight = el.scrollHeight + 'px';
       el.classList.add('expanded');
       el.addEventListener('transitionend', () => {
-        el.style.maxHeight = 'none'; // allow for dynamic content grow
+        el.style.maxHeight = 'none';
       }, { once: true });
     }
   }

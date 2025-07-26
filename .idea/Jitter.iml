@@ -71,6 +71,7 @@
     <orderEntry type="library" scope="PROVIDED" name="et-orbi (v1.2.11, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="factory_bot (v6.5.4, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="factory_bot_rails (v6.5.0, RVM: ruby-3.4.4) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="faker (v3.5.2, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="foreman (v0.88.1, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="fugit (v1.11.1, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="globalid (v1.2.1, RVM: ruby-3.4.4) [gem]" level="application" />

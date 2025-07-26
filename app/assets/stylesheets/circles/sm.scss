@@ -1,108 +1,125 @@
-.circle-index-container {
-  position: relative;
-  height: 100%;
-
-  .circles-header,
-  .circles-index {
-    background-color: #323535;
-    border: 1px solid #ccc;
-  }
-
-  .circles-header {
-    border-bottom: none;
-    border-radius: 5px 5px 0 0;
-    margin-top: 1rem;
-    margin-bottom: 0;
-    padding: 1rem;
-  }
-
-  .circles-index {
-    padding: 1rem;
-    border-radius: 0 0 5px 5px;
-    height: calc(100% - $userinfo-card-height - 2rem);
-  }
-
-  .circle-item {
-    min-height: 60px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 1rem;
-    padding: 1rem;
-
-    .circle-action-panel {
-      margin-right: 1rem;
-
-
-      .circle-add-user-icon {
-        justify-content: flex-end;
-        width: 30px;
-        padding-right: 0;
-      }
-
-      i.icon {
-        width: 30px;
-        height: 30px;
-        font-size: 20px;
-        margin-top: -10px;
-      }
-    }
-  }
-
-  .selected {
-    box-shadow: 0 0 10px #ffeeb4;
-  }
-
-  .circle-add-user-icon {
-    display: none;
-  }
-  .circle-item.selected .circle-add-user-icon {
-    display: block;
-  }
-
-
-  .circle-user-list {
-    min-height: 0;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    border-top: 1px solid #ccc;
-    -webkit-transition: max-height 0.5s ease;
-    -moz-transition: max-height 0.5s ease;
-    -o-transition: max-height 0.5s ease;
-    transition: max-height 0.5s ease;
-
-  }
-
-  .circle-item.selected .circle-user-list {
-    opacity: 1;
-    max-height: 500px;
-    overflow-y: auto;
-  }
-
-  .btn-add-circle {
-    position: absolute;
-    right: 1rem;
-    bottom: 2px;
-
-  }
-
-  .user-list-entry {
-    transition: box-shadow 0.2s, background 0.2s;
-    cursor: pointer;
-    margin-top: .5rem;
-
-    &:hover {
-      background: #e5f3ff;
-      box-shadow: 0 0 6px #72adf7;
-      .text-dark {
-        color: #039be5 !important;
-      }
-    }
-  }
-
-
+#circles-column-sidebar {
+  position: fixed;
+  max-height: 100vh;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 500px;
+  background: #fff;
+  border-right: 1px solid #ccc;
+  padding: 1rem;
 }
 
+
+  .circle-index-container {
+    position: relative;
+    height: 100%;
+
+    .circles-header,
+    .circles-index {
+      background-color: #323535;
+      border: 1px solid #ccc;
+    }
+
+    .circles-header {
+      border-bottom: none;
+      border-radius: 5px 5px 0 0;
+      margin-top: 1rem;
+      margin-bottom: 0;
+      padding: 1rem;
+    }
+
+    .circles-index {
+      padding: 1rem;
+      border-radius: 0 0 5px 5px;
+      height: calc(100% - $userinfo-card-height - 2rem);
+    }
+
+    .circle-item {
+      min-height: 60px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+      padding: 1rem;
+
+      .circle-action-panel {
+        margin-right: 1rem;
+
+
+        .circle-add-user-icon {
+          justify-content: flex-end;
+          width: 30px;
+          padding-right: 0;
+        }
+
+        i.icon {
+          width: 30px;
+          height: 30px;
+          font-size: 20px;
+          margin-top: -10px;
+        }
+      }
+    }
+
+    .selected {
+      box-shadow: 0 0 10px #ffeeb4;
+    }
+
+    .circle-add-user-icon {
+      display: none;
+    }
+
+    .circle-item.selected .circle-add-user-icon {
+      display: block;
+    }
+
+
+    .circle-user-list {
+      min-height: 0;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      border-top: 1px solid #ccc;
+      -webkit-transition: max-height 0.5s ease;
+      -moz-transition: max-height 0.5s ease;
+      -o-transition: max-height 0.5s ease;
+      transition: max-height 0.5s ease;
+
+    }
+
+    .circle-item.selected .circle-user-list {
+      opacity: 1;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .btn-add-circle {
+      position: absolute;
+      right: 1rem;
+      bottom: 2px;
+
+    }
+
+
+    .user-list-entry {
+      transition: box-shadow 0.2s, background 0.2s;
+      cursor: pointer;
+      margin-top: .5rem;
+
+      &:hover {
+        background: #e5f3ff;
+        box-shadow: 0 0 6px #72adf7;
+
+        .text-dark {
+          color: #039be5 !important;
+        }
+      }
+    }
+
+
+  }
 
 
 
