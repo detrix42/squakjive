@@ -1,9 +1,7 @@
 #circles-column-sidebar {
-  position: fixed;
+  position: sticky;
   max-height: 100vh;
-  left: 0;
   top: 0;
-  bottom: 0;
   //overflow-y: auto;
   //overflow-x: hidden;
   //width: 500px;
@@ -16,6 +14,8 @@
   .circle-index-container {
     position: relative;
     max-height: 100%;
+    flex: 1;
+    margin-bottom: .5rem;
 
     .circles-header,
     .circles-index {
@@ -39,6 +39,7 @@
 
     .circle-item {
       min-height: 60px;
+      height: 60px;
       border: 1px solid #ccc;
       border-radius: 5px;
       margin-bottom: 1rem;
@@ -65,6 +66,7 @@
 
     .selected {
       box-shadow: 0 0 10px #ffeeb4;
+      height: auto;
     }
 
     .circle-add-user-icon {

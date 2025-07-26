@@ -94,9 +94,9 @@ export default class extends Controller {
   select(event) {
     const circleId = event.currentTarget.dataset.circlesCircleId;
     const circleName = event.currentTarget.dataset.circlesCircleName;
-    this.changeSelectedCircle(circleId, this)
 
     this.toggleList(event)
+    this.changeSelectedCircle(circleId, this)
 
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
