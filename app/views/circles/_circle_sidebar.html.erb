@@ -1,11 +1,11 @@
-<div class="overflow-auto circle-index-container"
+<div class="d-flex flex-column circle-index-container"
      data-controller="circles"
      data-circles-circle-role-value="selector"
      data-circles-selected-circle-id-value="<%= @selected_circle.id || 0 %>"
      data-circles-circle-name-value="<%= @selected_circle_name || "All Circles" %>"
   >
   <h3 class="circles-header">Your Circles</h3>
-  <ul class="circles-index"
+  <ul class="overflow-x-hidden overflow-y-auto circles-index"
       id="circles-list"
       data-circles-target="user-list"
   >
