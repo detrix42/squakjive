@@ -95,8 +95,8 @@ export default class extends Controller {
     const circleId = event.currentTarget.dataset.circlesCircleId;
     const circleName = event.currentTarget.dataset.circlesCircleName;
 
-    this.toggleList(event)
     this.changeSelectedCircle(circleId, this)
+    this.toggleList(event)
 
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
@@ -118,15 +118,22 @@ export default class extends Controller {
   }
 
   changeSelectedCircle(circleID, tgtElement) {
-    const currentlySelected = this.element.querySelector('.selected')
+    const currentlySelected = this.element.querySelector('.selected');
 
     if (currentlySelected) {
-      const uList = currentlySelected.querySelector('.circle-user-list')
-      currentlySelected.classList.remove('selected')
+      const uList = currentlySelected.querySelector('.circle-user-list');
+      if (uList && uList.classList.contains('expanded')) {
+        uList.style.maxHeight = uList.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          uList.style.maxHeight = '0px';
+        });
+        uList.classList.remove('expanded');
+      }
+      currentlySelected.classList.remove('selected');
     }
 
-    const tgt = tgtElement.element.querySelector(`#circle-id-${circleID}`)
-    tgt.classList.add('selected')
+    const tgt = tgtElement.element.querySelector(`#circle-id-${circleID}`);
+    tgt.classList.add('selected');
 
   }
 
@@ -146,25 +153,21 @@ export default class extends Controller {
 
   toggleList(event) {
     const li = event.currentTarget;  // The clicked <li>
-    const el = li.querySelector('[data-circles-target="user-list"]');  // Specific <ul>
+    const el = document.querySelector(`#circle-user-list-${circleId}`);  // Specific <ul>
     if (!el) {
       console.error("No user-list target found in this <li>", li);
       return;
     }
+
     console.log("Toggling userList:", el);  // Debug
-    if (el.classList.contains('expanded')) {
-      el.style.maxHeight = el.scrollHeight + 'px';
-      requestAnimationFrame(() => {
-        el.style.maxHeight = '0px';
-      });
-      el.classList.remove('expanded');
-    } else {
+    if (!el.classList.contains('expanded')) {
       el.style.maxHeight = el.scrollHeight + 'px';
       el.classList.add('expanded');
       el.addEventListener('transitionend', () => {
         el.style.maxHeight = 'none';
       }, { once: true });
     }
+
   }
 
 
