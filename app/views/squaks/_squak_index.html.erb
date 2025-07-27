@@ -1,0 +1,10 @@
+<!-- app/views/squaks/_squak_index.html.erb -->
+<% if squaks.present? %>
+  <ul class="squaks-list">
+    <% squaks.each do |squak| %>
+      <%= render "squaks/squak", squak: squak %>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No squaks in this circle yet.</p>
+<% end %>

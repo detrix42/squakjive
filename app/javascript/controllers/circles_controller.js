@@ -65,28 +65,22 @@ export default class extends Controller {
   }
 
   handleCircleSelection = (event) => {
-    console.log('handle circle selection', event.detail)
-    if (this.circleRoleValue === 'selector') {
-      // Remove the dispatchCircleEvent call, just handle the selection
-      this.changeSelectedCircle(this.selectedCircleIdValue, this)
+    console.log("handle circle selection", event.detail);
+    if (this.circleRoleValue === "selector") {
+      this.changeSelectedCircle(this.selectedCircleIdValue, this);
     }
 
-
-    if (this.circleRoleValue === 'display') {
-      const tgt = this.element.querySelector(`#editor-circle-name`)
+    if (this.circleRoleValue === "display") {
+      const tgt = this.element.querySelector(`#editor-circle-name`);
       if (tgt) {
-        tgt.innerHTML = event.detail.circleName || 'All Circles'
+        tgt.innerHTML = event.detail.circleName || "All Circles";
       }
-      // Request the list of squaks for the selected circle and update the turbo frame
-      const circleId = event.detail.circleId;
-      if (circleId != null) {
-        Turbo.visit(`/circles/${circleId}/squaks`, { frame: "squak-view" });
-      }
-
+      const circleId = event.detail.circleId || 0;  // Ensure 0 for All Circles
+      Turbo.visit(`/circles/${circleId}/squaks`, { frame: "squak-view" });
     }
 
-    if (this.circleRoleValue === 'editor') {
-      this.element.innerHTML = event.detail.circleName
+    if (this.circleRoleValue === "editor") {
+      this.element.innerHTML = event.detail.circleName;
     }
   }
 
