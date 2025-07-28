@@ -1,10 +1,9 @@
 class CirclesController < ApplicationController
   def index
     @circles = [AllCircle.new, *current_user.circles]
-    @selected_circle_name = current_user.user_profile&.selected_circle || "All Circles"
-    @selected_circle = @circles.find { |c| c.name == @selected_circle_name } || AllCircle.new
-    @squaks = load_squaks_for(@selected_circle)
-    logger.debug "SQUAKS: #{@squaks.inspect}"
+    @selected_circle = current_user.user_profile.selected_circle || AllCircle.new
+    @selected_circle_name = current_user.user_profile.selected_circle.name
+    # logger.debug "Circles controller index (selected circle): #{@selected_circle}"
   end
 
   def new
@@ -77,16 +76,6 @@ class CirclesController < ApplicationController
   private
   def circle_params
     params.expect(circle: [:name])
-  end
-
-  def load_squaks_for(circle)
-    if circle.is_a?(AllCircle)
-      Squak.where(circle_id:
-                    (current_user.circles.pluck(:id) +
-                      current_user.circle_memberships.pluck(:circle_id)).uniq).order(created_at: :desc)
-    else
-      Squak.where(circle: circle).order(created_at: :desc)
-    end
   end
 
 

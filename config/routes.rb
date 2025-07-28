@@ -1,7 +1,9 @@
 Rails.application.routes.draw do
+  get "user_profile/selected_circle"
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"
+  patch 'user_profile/update_selected_circle', to: 'user_profile#update_selected_circle'
 
   resources :circles, param: :circle_id do
     member do

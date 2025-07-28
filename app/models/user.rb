@@ -14,8 +14,19 @@ class User < ApplicationRecord
 
   after_create :create_user_profile
 
+  def select_circle(cid)
+    user_profile.update(selected_circle: cid)
+  end
+
+  def selected_circle
+    cid = user_profile.selected_circle
+    Circle.find_by(id: cid) || AllCircle.new
+  end
+
   private
   def create_user_profile
     self.user_profile = UserProfile.new(selected_circle: nil)
   end
+
+
 end

@@ -3,11 +3,23 @@ class DashboardController < ApplicationController
   def index
     @username = current_user.username
     @email = current_user.email
-    @selected_circle = current_user.user_profile.selected_circle
-    if @selected_circle.nil?
-      @selected_circle = Circle.new(name: "All Circles", id: 0)
-    end
-    @selected_circle_name = @selected_circle.name if @selected_circle
+    @selected_circle = current_user.selected_circle
 
+    logger.debug "Dashboard controller index (selected circle): #{@selected_circle}"
+
+    @selected_circle_name = @selected_circle.name if @selected_circle
+    @squaks = Squak.for_circle(@selected_circle, current_user)
+
+    # logger.debug "Dashboard controller index (username): #{@username}"
+    # logger.debug "Dashboard controller index (email): #{@email}"
+    # logger.debug "Dashboard controller index (selected circle): #{@selected_circle}"
+    # logger.debug "Dashboard controller index (selected circle name): #{@selected_circle_name}"
+    #
+    # logger.debug "Dashboard controller SQUAKS: #{@squaks.inspect}"
   end
+
+
+
+  private
+
 end

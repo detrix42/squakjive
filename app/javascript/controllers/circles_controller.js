@@ -85,7 +85,7 @@ export default class extends Controller {
   }
 
   // Action: Called on click in the selector's <li>
-  select(event) {
+  async select(event) {
     const circleId = event.currentTarget.dataset.circlesCircleId;
     const circleName = event.currentTarget.dataset.circlesCircleName;
 
@@ -95,11 +95,28 @@ export default class extends Controller {
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
         circleName: circleName,
-        circleId: circleId  // Fixed variable name
+        circleId: circleId
       },
       bubbles: true
     });
     window.dispatchEvent(customEvent);
+    try {
+      const res = await fetch('/user_profile/update_selected_circle', {
+        method: 'PATCH',
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({circle_id: circleId})
+      })
+      if (res.ok) {
+        console.log('User profile; update selected circle to:', circleName)
+      } else {
+        console.log('Error updating user profile selected circle')
+      }
+    } catch (error) {
+      console.log('network error-> update selected circle error:', error)
+    }
   }
 
 

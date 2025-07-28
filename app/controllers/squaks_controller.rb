@@ -28,7 +28,7 @@ class SquaksController < ApplicationController
       circle ||= AllCircle.new  # Fallback
       current_user.user_profile.update(selected_circle: circle.name) if circle && !circle.is_a?(AllCircle)
     end
-    squaks = load_squaks_for(circle)
+    squaks = Squak.for_circle(circle, current_user)
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace("squak-view", partial: "squaks/squak_index", locals: { squaks: squaks })
