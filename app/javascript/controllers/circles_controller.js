@@ -71,11 +71,11 @@ export default class extends Controller {
     }
 
     if (this.circleRoleValue === "display") {
+      const circleId = event.detail.circleId || 0;
       const tgt = this.element.querySelector(`#editor-circle-name`);
       if (tgt) {
         tgt.innerHTML = event.detail.circleName || "All Circles";
-      }
-      const circleId = event.detail.circleId || 0;  // Ensure 0 for All Circles
+      }  // Ensure 0 for All Circles
       Turbo.visit(`/circles/${circleId}/squaks`, { frame: "squak-view" });
     }
 
@@ -146,6 +146,7 @@ export default class extends Controller {
   }
 
   toggleList(event) {
+    const circleId = event.currentTarget.dataset.circlesCircleId;
     const li = event.currentTarget;  // The clicked <li>
     const el = document.querySelector(`#circle-user-list-${circleId}`);  // Specific <ul>
     if (!el) {

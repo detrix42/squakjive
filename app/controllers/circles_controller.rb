@@ -4,6 +4,7 @@ class CirclesController < ApplicationController
     @selected_circle_name = current_user.user_profile&.selected_circle || "All Circles"
     @selected_circle = @circles.find { |c| c.name == @selected_circle_name } || AllCircle.new
     @squaks = load_squaks_for(@selected_circle)
+    logger.debug "SQUAKS: #{@squaks.inspect}"
   end
 
   def new
@@ -38,23 +39,7 @@ class CirclesController < ApplicationController
   def destroy
   end
 
-  def squaks
-    circle_id = params[:circle_id]
-    if circle_id == "0"  # All Circles
-      circle = AllCircle.new
-    else
-      circle = current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle
-      circle ||= AllCircle.new  # Fallback
-      current_user.user_profile.update(selected_circle: circle.name) if circle && !circle.is_a?(AllCircle)
-    end
-    squaks = load_squaks_for(circle)
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.replace("squak-view", partial: "squaks/squak_index", locals: { squaks: squaks })
-      end
-      format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
-    end
-  end
+
 
   def add_user_modal
     @circle = Circle.find(params[:circle_id])
@@ -96,7 +81,9 @@ class CirclesController < ApplicationController
 
   def load_squaks_for(circle)
     if circle.is_a?(AllCircle)
-      Squak.where(circle_id: (current_user.circles.pluck(:id) + current_user.circle_memberships.pluck(:circle_id)).uniq).order(created_at: :desc)
+      Squak.where(circle_id:
+                    (current_user.circles.pluck(:id) +
+                      current_user.circle_memberships.pluck(:circle_id)).uniq).order(created_at: :desc)
     else
       Squak.where(circle: circle).order(created_at: :desc)
     end

@@ -19,6 +19,31 @@ class SquaksController < ApplicationController
     redirect_to dashboard_path
   end
 
+  def squaks
+    circle_id = params.expect(:circle_id)
+    if circle_id == "0"  # All Circles
+      circle = AllCircle.new
+    else
+      circle = current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle
+      circle ||= AllCircle.new  # Fallback
+      current_user.user_profile.update(selected_circle: circle.name) if circle && !circle.is_a?(AllCircle)
+    end
+    squaks = load_squaks_for(circle)
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("squak-view", partial: "squaks/squak_index", locals: { squaks: squaks })
+      end
+      format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
+    end
+  end
+
+
+
+
   private
+
+  def param_circle_id
+    params.expect(:circle_id)
+  end
 
 end
