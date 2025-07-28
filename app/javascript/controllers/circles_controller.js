@@ -67,16 +67,28 @@ export default class extends Controller {
   handleCircleSelection = (event) => {
     console.log("handle circle selection", event.detail);
     if (this.circleRoleValue === "selector") {
+      console.log('circle_controller#handleCircleSelection: selector')
+
       this.changeSelectedCircle(this.selectedCircleIdValue, this);
+      const circleId = event.detail.circleId || 0;
+      Turbo.visit(`/squaks/${circleId}`, {
+        frame: "squak-view",
+        headers: { Accept: "text/vnd.turbo-stream.html" }  // Ensure Turbo Stream
+      });
     }
 
     if (this.circleRoleValue === "display") {
-      const circleId = event.detail.circleId || 0;
+      console.log('circle_controller#handleCircleSelection: display')
+
       const tgt = this.element.querySelector(`#editor-circle-name`);
       if (tgt) {
         tgt.innerHTML = event.detail.circleName || "All Circles";
-      }  // Ensure 0 for All Circles
-      Turbo.visit(`/circles/${circleId}/squaks`, { frame: "squak-view" });
+      }
+      const circleId = event.detail.circleId || 0;
+      Turbo.visit(`/squaks/${circleId}`, {
+        frame: "squak-view",
+        headers: { Accept: "text/vnd.turbo-stream.html" }  // Ensure Turbo Stream
+      });
     }
 
     if (this.circleRoleValue === "editor") {
@@ -86,11 +98,24 @@ export default class extends Controller {
 
   // Action: Called on click in the selector's <li>
   async select(event) {
-    const circleId = event.currentTarget.dataset.circlesCircleId;
+    const circleId = event.currentTarget.dataset.circlesCircleId || 0;
     const circleName = event.currentTarget.dataset.circlesCircleName;
 
     this.changeSelectedCircle(circleId, this)
     this.toggleList(event)
+
+    try {
+      const squaks_res = await fetch(`/squaks/${circleId}`, {
+        headers: {Accept: "text/vnd.turbo-stream.html"}  // Ensure Turbo Stream
+      });
+      if (squaks_res.ok) {
+        const squaks_res_text = await squaks_res.text();
+        Turbo.renderStreamMessage(squaks_res_text);
+      }
+    } catch (error) {
+      console.log('network error-> select circle error:', error)
+    }
+
 
     const customEvent = new CustomEvent("circle-selection:circleSelected", {
       detail: {
@@ -100,6 +125,7 @@ export default class extends Controller {
       bubbles: true
     });
     window.dispatchEvent(customEvent);
+
     try {
       const res = await fetch('/user_profile/update_selected_circle', {
         method: 'PATCH',
@@ -117,6 +143,7 @@ export default class extends Controller {
     } catch (error) {
       console.log('network error-> update selected circle error:', error)
     }
+
   }
 
 

@@ -3,7 +3,10 @@ Rails.application.routes.draw do
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"
+
   patch 'user_profile/update_selected_circle', to: 'user_profile#update_selected_circle'
+
+  get 'squaks/:circle_id', to: 'squaks#squaks'
 
   resources :circles, param: :circle_id do
     member do

@@ -31,7 +31,10 @@ class SquaksController < ApplicationController
     squaks = Squak.for_circle(circle, current_user)
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace("squak-view", partial: "squaks/squak_index", locals: { squaks: squaks })
+        render turbo_stream: turbo_stream.replace(
+          "squak-view",
+          partial: "squaks/turbo_squak_index",
+          locals: { squaks: squaks })
       end
       format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
     end
