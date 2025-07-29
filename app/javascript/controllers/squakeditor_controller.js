@@ -1,4 +1,3 @@
-console.log("Squakeditor file loaded - top of file");  // This should always appear if file executes
 import { Controller } from "@hotwired/stimulus"
 import { marked } from "marked"
 import TurndownService from "turndown"

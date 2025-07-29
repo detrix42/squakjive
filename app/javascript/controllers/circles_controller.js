@@ -48,6 +48,11 @@ export default class extends Controller {
         tgtName.innerHTML = this.circleNameValue || 'All Circles'
       }
       this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
+
+      const form_circle_id = document.querySelector('input[name="squak[circle_id]"]');
+      if (form_circle_id) {
+        form_circle_id.value = this.selectedCircleIdValue;
+      }
     }
 
 
@@ -103,6 +108,11 @@ export default class extends Controller {
 
     this.changeSelectedCircle(circleId, this)
     this.toggleList(event)
+
+    const form_circle_id = document.querySelector('input[name="squak[circle_id]"]');
+    if (form_circle_id) {
+      form_circle_id.value = circleId;
+    }
 
     try {
       const squaks_res = await fetch(`/squaks/${circleId}`, {

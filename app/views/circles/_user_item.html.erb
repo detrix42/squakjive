@@ -1,6 +1,7 @@
 <div class="user-item d-flex align-items-center py-1 px-2 mb-1 rounded bg-light border user-list-entry"
      id="sidebar-user-item-<%= user.id %>">
-  <i class="bi bi-person-circle me-2 text-secondary" style="font-size:1.2rem;"></i>
+<!--  <i class="bi bi-person-circle me-2 text-secondary" style="font-size:1.2rem;"></i>-->
+  <%= image_tag "https://robohash.org/#{user.username}?size=30x30", class: "img-fluid" %>
   <span class="fw-semibold text-dark flex-grow-1"><%= user.username %></span>
   <% unless circle.id == 0 %>
     <% membership = circle.circle_memberships.find_by(user_id: user.id)%>
