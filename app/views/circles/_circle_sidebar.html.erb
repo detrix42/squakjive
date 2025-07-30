@@ -1,8 +1,8 @@
 <div class="d-flex flex-column circle-index-container"
      data-controller="circles"
      data-circles-circle-role-value="selector"
-     data-circles-selected-circle-id-value="<%= @selected_circle.id || 0 %>"
-     data-circles-circle-name-value="<%= @selected_circle_name || "All Circles" %>"
+     data-circles-selected-circle-id-value="<%= @selected_circle || 0 %>"
+     data-circles-circle-name-value="<%= @selected_circle_name%>"
   >
   <h3 class="circles-header">Your Circles</h3>
   <ul class="overflow-x-hidden overflow-y-auto circles-index"
@@ -10,7 +10,7 @@
       data-circles-target="user-list"
   >
     <%= render partial: "circles/circle_item",
-               collection: [AllCircle.new, *current_user.circles], as: :circle %>
+               collection: current_user.circles, as: :circle %>
   </ul>
   <%= link_to "Create New Circle",
               new_circle_path,

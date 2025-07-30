@@ -21,13 +21,8 @@ class SquaksController < ApplicationController
 
   def squaks
     circle_id = params.expect(:circle_id)
-    if circle_id == "0"  # All Circles
-      circle = AllCircle.new
-    else
-      circle = current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle
-      circle ||= AllCircle.new  # Fallback
-      current_user.user_profile.update(selected_circle: circle.name) if circle && !circle.is_a?(AllCircle)
-    end
+    circle = current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle
+    # circle ||= current_user.circles.first
     squaks = Squak.for_circle(circle, current_user)
     respond_to do |format|
       format.turbo_stream do

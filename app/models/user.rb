@@ -20,7 +20,7 @@ class User < ApplicationRecord
 
   def selected_circle
     cid = user_profile.selected_circle
-    Circle.find_by(id: cid) || AllCircle.new
+    Circle.find_by(id: cid) || circles.first
   end
 
   private

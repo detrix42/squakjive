@@ -21,6 +21,10 @@ export default class extends Controller {
   }
 
   connect() {
+    if(this.selectedCircleIdValue === null) {
+      return;
+    }
+
     const tgt = this.element.querySelector(`#circle-id-${this.selectedCircleIdValue}`)
     if (tgt && !tgt.classList.contains('selected')) {
       tgt.classList.add('selected')

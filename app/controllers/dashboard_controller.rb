@@ -5,7 +5,9 @@ class DashboardController < ApplicationController
     @email = current_user.email
     @selected_circle = current_user.selected_circle
 
-    logger.debug "Dashboard controller index (selected circle): #{@selected_circle}"
+    if @selected_circle
+      logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
+    end
 
     @selected_circle_name = @selected_circle.name if @selected_circle
     @squaks = Squak.for_circle(@selected_circle, current_user)

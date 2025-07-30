@@ -1,5 +1,24 @@
 <!-- app/views/squaks/_squak.html.erb -->
-<li class="squak-item">
-  <%= squak.body %>
-  <small>by <%= squak.user.username %> at <%= squak.created_at.strftime("%H:%M %Y-%m-%d") %></small>
+
+<li class="squak-item  m-3 px-1 py-1">
+  <div class="row">
+    <div class="col-sm-3 col-md-2 col-lg-1 squak-avatar-col">
+      <div class="squak-avatar">
+        <%= image_tag "https://robohash.org/#{squak.user.username}?size=60x60", class: "img-fluid" %>
+      </div>
+    </div>
+    <div class="col-sm-9 col-md-10 col-lg-11">
+      <div class="row ms-1 squak-username">
+        <%= squak.user.username %>
+      </div>
+      <div class="row ms-4 squak-body">
+        <%= squak.body %>
+      </div>
+      <div class="row">
+        <div class="squak-date text-end">
+          <%= squak.created_at.strftime("%H:%M %Y-%m-%d") %>
+        </div>
+      </div>
+    </div>
+  </div>
 </li>

@@ -6,16 +6,46 @@
   margin: 0;
 }
 
-.squak-item {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: #fff;
+ul {
+  list-style: none;
+
+  .squak-item {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #263442;
+
+    &:nth-child(even) {
+      background-color: rgba(41, 38, 20, 0.27);
+    }
+
+    .squak-avatar-col {
+      min-height: 100%;
+      border-right: 1px solid #ccc;
+      padding-right: 0;
+    }
+
+    .squak-avatar {
+    }
+
+    .squak-username {
+      font-weight: bold;
+      color: cornflowerblue;
+    }
+
+    .squak-body {
+      font-size: 1.5rem;
+    }
+
+    .squak-date {
+      color: #666;
+    }
+
+  }
+
+  .squak-item small {
+    display: block;
+    color: #666;
+    font-size: 0.9rem;
+  }
 }
 
-.squak-item small {
-  display: block;
-  color: #666;
-  font-size: 0.9rem;
-}

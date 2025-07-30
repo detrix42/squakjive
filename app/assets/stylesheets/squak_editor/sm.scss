@@ -19,18 +19,5 @@
   }
 }
 
-ul {
-  list-style: none;
 
-  .squak-item {
-    background-color: rgba(140, 84, 0, 0.11);
-    color: white;
-    padding: 5px 0;
-    margin: 5px 0;
 
-    &:nth-child(even) {
-      background-color: rgba(16, 15, 9, 0.27);
-
-    }
-  }
-}
