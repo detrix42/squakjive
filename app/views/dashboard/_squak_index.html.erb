@@ -5,5 +5,11 @@
     <% end %>
   </ul>
 <% else %>
-  <p>No squaks yet. <% if @selected_circle.nil? %><br/>Select or create a circle to start!<% else %>Post one in this circle!<% end %></p>
+  <p>No squaks yet.
+    <% if @selected_circle.nil? %>
+      <br/>Select or create a circle to start!
+    <% else %>
+      Post one in this circle!
+    <% end %>
+  </p>
 <% end %>

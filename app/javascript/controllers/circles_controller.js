@@ -73,7 +73,7 @@ export default class extends Controller {
     }
   }
 
-  handleCircleSelection = (event) => {
+  handleCircleSelection = async (event) => {
     console.log("handle circle selection", event.detail);
     if (this.circleRoleValue === "selector") {
       console.log('circle_controller#handleCircleSelection: selector')
@@ -93,11 +93,22 @@ export default class extends Controller {
       if (tgt) {
         tgt.innerHTML = event.detail.circleName || "All Circles";
       }
-      const circleId = event.detail.circleId || 0;
-      Turbo.visit(`/squaks/${circleId}`, {
-        frame: "squak-view",
-        headers: { Accept: "text/vnd.turbo-stream.html" }  // Ensure Turbo Stream
-      });
+
+      try {
+        const squak_res = await fetch(`/squaks/${circleId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/vnd.turbo-stream.html',
+          }
+        })
+        if (squak_res.ok) {
+          const squak_res_text = await squak_res.text()
+          Turbo.renderStreamMessage(squak_res_text)
+        }
+      } catch (error) {
+        console.log('network error-> select circle error:', error)
+      }
     }
 
     if (this.circleRoleValue === "editor") {

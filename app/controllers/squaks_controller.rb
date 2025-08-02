@@ -23,7 +23,7 @@ class SquaksController < ApplicationController
     circle_id = params.expect(:circle_id)
     circle = current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle
     # circle ||= current_user.circles.first
-    squaks = Squak.for_circle(circle, current_user)
+    squaks = Squak.for_circle(circle)
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
