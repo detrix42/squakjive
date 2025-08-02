@@ -34,7 +34,7 @@
   <ul class="circle-user-list" id="circle-user-list-<%= circle.id %>"
       data-circles-target="user-list">  <%# Moved to <ul>, added target %>
     <%= render partial: 'circles/user_item',
-               collection: circle.members, as: :user,
+               collection: circle.visible_members(current_user), as: :user,
                locals: { circle: circle } %>
   </ul>
 </li>

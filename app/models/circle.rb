@@ -8,4 +8,8 @@ class Circle < ApplicationRecord
   def members_count
     members.count
   end
+
+  def visible_members(current_user)
+    members.where.not(id: current_user.id)
+  end
 end

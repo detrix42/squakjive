@@ -10,7 +10,7 @@
   <% else %>
     <ul class="overflow-x-hidden overflow-y-auto circles-index"
         id="circles-list" data-circles-target="user-list">
-      <%= render partial: "circles/circle_item", collection: @circles, as: :circle %>
+      <%= render partial: "circles/circle_item", collection: @grouped_circles, as: :circle %>
     </ul>
   <% end %>
   <%= link_to "Create New Circle",
