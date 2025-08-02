@@ -3,17 +3,10 @@ class Squak < ApplicationRecord
   belongs_to :circle, optional: true
   validates :body, presence: true, length: { maximum: 512 }
 
-  scope :public_squak, -> { where(circle_id: nil) }
-
   scope :for_circle, -> (circle, user) {
-    if circle.is_a?(AllCircle)
-      where(circle_id: 0).order(created_at: :desc)
-      # where(circle_id: (user.circles.pluck(:id) +
-      #   user.circle_memberships.pluck(:circle_id))
-      #                    .uniq).order(created_at: :desc)
-    else
-      where(circle: circle).order(created_at: :desc)
-    end
+    where(circle_id: (user.circles.pluck(:id) +
+      user.circle_memberships.pluck(:circle_id)).uniq)
+      .order(created_at: :desc)
   }
 
   def self.visible_to(user)

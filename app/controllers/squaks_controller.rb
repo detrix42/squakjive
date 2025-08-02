@@ -35,7 +35,17 @@ class SquaksController < ApplicationController
     end
   end
 
-
+  def for_circle
+    circle_id = params[:circle_id]&.to_i
+    circle = circle_id == 0 ? AllCircle.new : (current_user.circles.find_by(id: circle_id) || current_user.circle_memberships.find_by(circle_id: circle_id)&.circle || AllCircle.new)
+    squaks = Squak.for_circle(circle, current_user)
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("squak-view", partial: "squaks/squak_index", locals: { squaks: squaks })
+      end
+      format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
+    end
+  end
 
 
   private
