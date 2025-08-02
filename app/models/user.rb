@@ -12,7 +12,7 @@ class User < ApplicationRecord
   validates :username, presence: true, uniqueness: { case_sensitive: false }
   has_one :user_profile, dependent: :destroy
 
-  after_create :create_user_profile
+  after_create :create_default_profile
 
   def select_circle(cid)
     user_profile.update(selected_circle: cid)
@@ -24,8 +24,8 @@ class User < ApplicationRecord
   end
 
   private
-  def create_user_profile
-    self.user_profile = UserProfile.new(selected_circle: nil)
+  def create_default_profile
+    self.user_profile = UserProfile.new(selected_circle: 0)
   end
 
 

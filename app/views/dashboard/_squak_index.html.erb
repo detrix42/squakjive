@@ -1,10 +1,9 @@
-<ul>
-  <% Squak.find_each do |squak| %>
-    <li data-controller="markdown-to-html"
-        class="squak-item">
-      <div data-markdown-to-html-target="content">
-        <%= squak.body %>
-      </div>
-    </li>
-  <% end %>
-</ul>
+<% if squaks.present? %>
+  <ul class="squaks-list">
+    <% squaks.each do |squak| %>
+      <%= render "squaks/squak", squak: squak %>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No squaks yet. <% if @selected_circle.nil? %><br/>Select or create a circle to start!<% else %>Post one in this circle!<% end %></p>
+<% end %>

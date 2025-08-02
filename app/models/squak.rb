@@ -3,11 +3,13 @@ class Squak < ApplicationRecord
   belongs_to :circle, optional: true
   validates :body, presence: true, length: { maximum: 512 }
 
-  scope :for_circle, -> (circle, user) {
-    where(circle_id: (user.circles.pluck(:id) +
-      user.circle_memberships.pluck(:circle_id)).uniq)
-      .order(created_at: :desc)
-  }
+  scope :for_circle, ->(circle) do
+    if circle.nil? || (circle.respond_to?(:id) && circle.id == 0)
+      none  # Returns empty relation (no squaks)
+    else
+      where(circle: circle).order(created_at: :desc)
+    end
+  end
 
   def self.visible_to(user)
     # Public squaks + those in user's joined circles + user's own squaks

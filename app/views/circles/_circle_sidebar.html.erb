@@ -5,13 +5,14 @@
      data-circles-circle-name-value="<%= @selected_circle_name%>"
   >
   <h3 class="circles-header">Your Circles</h3>
-  <ul class="overflow-x-hidden overflow-y-auto circles-index"
-      id="circles-list"
-      data-circles-target="user-list"
-  >
-    <%= render partial: "circles/circle_item",
-               collection: current_user.circles, as: :circle %>
-  </ul>
+  <% if current_user.circles.empty? && current_user.joined_circles.empty? %>
+    <p>You have no circles yet. Create one or join one to start!</p>
+  <% else %>
+    <ul class="overflow-x-hidden overflow-y-auto circles-index"
+        id="circles-list" data-circles-target="user-list">
+      <%= render partial: "circles/circle_item", collection: @circles, as: :circle %>
+    </ul>
+  <% end %>
   <%= link_to "Create New Circle",
               new_circle_path,
               class: "btn btn-primary btn-add-circle",
