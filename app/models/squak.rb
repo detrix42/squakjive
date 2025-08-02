@@ -11,14 +11,6 @@ class Squak < ApplicationRecord
     end
   end
 
-  def self.visible_to(user)
-    # Public squaks + those in user's joined circles + user's own squaks
-    where(circle_id: nil)
-      .or(where(circle_id: user.joined_circles.pluck(:id)))
-      .or(where(user_id: user.id))
-      .order(created_at: :desc)
-  end
-
 
 end
 

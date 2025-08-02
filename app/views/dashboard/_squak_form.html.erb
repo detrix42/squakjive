@@ -1,16 +1,17 @@
 <div class="d-flex w-100 ms-3">
   <div>Squak to: </div>
-  <div class="mx-4 flex-shrink-1"
+  <div class="mx-2 flex-shrink-1"
        id="editor-circle-name"
        data-controller="circles"
-       data-circles-circle-role-value="editor"
-       data-circles-circle-name-value="<%= @selected_circle_name || 'All Circles' %>"
-  >
+       data-circles-circle-role-value="squak_to_display"
+       data-circles-circle-name-value="<%= @selected_circle_name %>" >
     active circle
   </div>
 </div>
 <%= form_with model: Squak.new, id: "squak-form" do |form| %>
-  <div class="row align-items-start" data-controller="squakeditor">
+  <div class="row align-items-start"
+       data-squakeditor-circle-id-value="<%= circle_id %>"
+       data-controller="squakeditor">
     <div class="mx-4 flex-shrink-1" contenteditable="true" id="squak-editor"
          data-squakeditor-target="squakEditor">
     </div>
@@ -20,10 +21,9 @@
     <textarea name="squak[body]" style="display: none;"
               data-squakeditor-target="markdown">
     </textarea>
-    <input type="hidden" name="squak[circle_id]" value="<%= @selected_circle %>">
 
-
-
+    <input type="hidden" name="squak[circle_id]" value="<%= circle_id %>"
+           data-squakeditor-target="circleId">
 
     <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
       <div class="col-auto">

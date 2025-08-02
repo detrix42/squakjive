@@ -3,14 +3,22 @@ import { marked } from "marked"
 import TurndownService from "turndown"
 
 export default class extends Controller {
-  static targets = ["squakEditor", "markdown"]
+  static targets = ["squakEditor", "markdown", "circleId"]
+
+  static values = {
+    circleId: Number
+  }
 
   connect() {
-    // console.log("Squakeditor controller connected")
+    console.log("Squakeditor controller connected")
 
-    if (this.hasMarkdownTarget && this.markdownTarget.value) {
-      this.squakEditorTarget.innerHTML = marked.parse(this.markdownTarget.value)
-    }
+    // if (this.hasMarkdownTarget && this.markdownTarget.value) {
+    //   this.squakEditorTarget.innerHTML = marked.parse(this.markdownTarget.value)
+    // }
+    
+    console.log('circle Id value:', this.circleIdValue)
+    const e = document.querySelector('[name="squak[circle_id]"]')
+    e.value = this.circleIdValue
 
     this.syncToMarkdown = this.debounce(this._syncToMarkdown.bind(this), 500)  // Debounce to 500ms for better perf
     this.squakEditorTarget.addEventListener('input', (e) => {

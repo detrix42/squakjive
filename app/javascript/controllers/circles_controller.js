@@ -16,7 +16,7 @@ export default class extends Controller {
     },
     circleName: {
       type: String,
-      default: 'All Circles'
+      default: 'No Circle Selected'
     }
   }
 
@@ -41,23 +41,26 @@ export default class extends Controller {
       window.dispatchEvent(circEvent);  // Global dispatch
     }
 
-    if (this.circleRoleValue === 'editor') {
+    if (this.circleRoleValue === 'squak_to_display') {
+
       this.element.innerHTML = this.circleNameValue
       window.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
     }
 
-    if (this.circleRoleValue === 'display') {
-      const tgtName = this.element.querySelector(`#editor-circle-name`)
-      if (tgtName) {
-        tgtName.innerHTML = this.circleNameValue || 'All Circles'
-      }
-      this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
-
-      const form_circle_id = document.querySelector('input[name="squak[circle_id]"]');
-      if (form_circle_id) {
-        form_circle_id.value = this.selectedCircleIdValue;
-      }
-    }
+    // if (this.circleRoleValue === 'editor') {
+    //   const tgtName = this.element.querySelector(`#editor-circle-name`)
+    //   if (tgtName) {
+    //     tgtName.innerHTML = this.circleNameValue
+    //   }
+    //   this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
+    //
+    //   const form_circle_id = document.querySelector('input[name="squak[circle_id]"]');
+    //   console.log('form circle id on connection:', form_circle_id)
+    //
+    //   if (form_circle_id) {
+    //     form_circle_id.value = this.selectedCircleIdValue;
+    //   }
+    // }
 
 
   }
@@ -68,7 +71,7 @@ export default class extends Controller {
     }
 
 
-    if (this.circleRoleValue === 'display') {
+    if (this.circleRoleValue === 'squak_to_display') {
       this.element.removeEventListener('circle-selection:circleSelected', this.handleCircleSelection)
     }
   }
@@ -91,7 +94,8 @@ export default class extends Controller {
 
       const tgt = this.element.querySelector(`#editor-circle-name`);
       if (tgt) {
-        tgt.innerHTML = event.detail.circleName || "All Circles";
+
+        tgt.innerHTML = event.detail.circleName;
       }
 
       try {

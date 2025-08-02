@@ -10,7 +10,7 @@
     </div>
 
     <div class="col-6">
-      <%= render 'squak_form' %>
+      <%= render partial: 'squak_form', locals: { circle_id: @selected_circle_id} %>
       <%= turbo_frame_tag "squak-view" do %>
         <%= render partial: 'squaks/squak_index', locals: { squaks: @squaks } %>
       <% end %>

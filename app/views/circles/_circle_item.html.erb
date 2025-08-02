@@ -1,5 +1,5 @@
 <li id="circle-id-<%= circle.id %>"
-    class="circle-item <%= 'selected' if @selected_circle_id == circle.id %>"
+    class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %>"
     data-circles-target="item"  <%# Fixed from data-circles-circle-selection-target %>
     data-action="click->circles#select"
     data-circles-circle-id="<%= circle.id %>"

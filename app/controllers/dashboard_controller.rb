@@ -4,11 +4,7 @@ class DashboardController < ApplicationController
     @username = current_user.username
     @email = current_user.email
 
-    if @selected_circle
-      logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
-    end
 
-    @selected_circle_name = @selected_circle.name if @selected_circle
 
     # @circles = current_user.circles + current_user.joined_circles.uniq
     # selected_circle_id = current_user.user_profile&.selected_circle
@@ -24,9 +20,15 @@ class DashboardController < ApplicationController
       owned || group.first  # Fallback to first if no owned
     end.values  # Returns array of unique representatives by name
 
-    selected_circle_id = current_user.user_profile&.selected_circle || 0
-    @selected_circle = @grouped_circles.find { |c| c.id == selected_circle_id }  # Nil if invalid
+    @selected_circle_id = current_user.user_profile&.selected_circle.to_i
+    @selected_circle = @grouped_circles.find { |c| c.id.to_i == @selected_circle_id }  # Nil if invalid
     @squaks = Squak.for_circle(@selected_circle)
+
+    if @selected_circle
+      logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
+    end
+
+    @selected_circle_name = @selected_circle.name if @selected_circle
 
   end
 
