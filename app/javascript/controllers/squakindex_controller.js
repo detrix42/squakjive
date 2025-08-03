@@ -12,11 +12,27 @@ export default class extends Controller {
   connect() {
     console.log("Squak index controller connected")
 
+    // Set up polling interval
+    this.pollingInterval = setInterval(() => {
+      this.pollForNewSquaks()
+    }, 5000) // Poll every 5 seconds; adjust as needed
 
   }
 
   disconnect() {
+    // Clear the interval when the controller disconnects
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval)
+    }
 
   }
+
+  pollForNewSquaks() {
+    // TODO: Fetch and process new squaks here
+    console.log("Polling for new squaks...")
+
+    
+  }
+
 
 }
