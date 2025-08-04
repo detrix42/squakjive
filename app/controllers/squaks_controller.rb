@@ -25,9 +25,9 @@ class SquaksController < ApplicationController
   end
 
   def squaks
-    circle_id = params.expect(:circle_id)&.to_i
-    circle = (current_user.circles.find_by(id: circle_id) ||
-             current_user.circle_memberships.find_by(circle_id: circle_id)&.circle)
+    @circle_id = params.expect(:circle_id)&.to_i
+    circle = (current_user.circles.find_by(id: @circle_id) ||
+             current_user.circle_memberships.find_by(circle_id: @circle_id)&.circle)
 
     squaks = Squak.for_circle(circle)
     respond_to do |format|
@@ -35,7 +35,7 @@ class SquaksController < ApplicationController
         render turbo_stream: turbo_stream.replace(
           "squak-view",
           partial: "squaks/turbo_squak_index",
-          locals: { squaks: squaks })
+          locals: { squaks: squaks, circleId: @circle_id })
       end
       format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
     end

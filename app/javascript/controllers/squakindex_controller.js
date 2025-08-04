@@ -8,8 +8,7 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log("Squak index controller connected")
-    console.log('circle Id value:', this.circleIdValue)
+    console.log("Squak index controller connected.\n Polling for circle: ", this.circleIdValue)
 
     // Set up polling interval
     this.pollingInterval = setInterval(() => {
@@ -27,8 +26,6 @@ export default class extends Controller {
   }
 
   async pollForNewSquaks() {
-    // TODO: Fetch and process new squaks here
-    console.log("Polling for new squaks...")
 
     const url='/squaks/' + this.circleIdValue
     try {

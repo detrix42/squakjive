@@ -10,6 +10,10 @@ class Circle < ApplicationRecord
   end
 
   def visible_members(current_user)
-    members.where.not(id: current_user.id)
+    all_members.where.not(id: current_user.id)
+  end
+
+  def all_members
+    User.where(id: (members.ids + [user_id]).uniq)
   end
 end
