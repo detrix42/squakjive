@@ -1,16 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
-import { marked } from "marked"
-import TurndownService from "turndown"
 
 export default class extends Controller {
   static targets = ["squakindex"]
 
   static values = {
-
+    circleId: Number
   }
 
   connect() {
     console.log("Squak index controller connected")
+    console.log('circle Id value:', this.circleIdValue)
 
     // Set up polling interval
     this.pollingInterval = setInterval(() => {
@@ -27,11 +26,26 @@ export default class extends Controller {
 
   }
 
-  pollForNewSquaks() {
+  async pollForNewSquaks() {
     // TODO: Fetch and process new squaks here
     console.log("Polling for new squaks...")
 
-    
+    const url='/squaks/' + this.circleIdValue
+    try {
+      const squak_res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/vnd.turbo-stream.html',
+        }
+      })
+      if (squak_res.ok) {
+        const squak_res_text = await squak_res.text()
+        Turbo.renderStreamMessage(squak_res_text)
+      }
+    } catch (error) {
+      console.log('network error-> select circle error:', error)
+    }
   }
 
 

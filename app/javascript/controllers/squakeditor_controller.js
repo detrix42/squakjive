@@ -16,7 +16,7 @@ export default class extends Controller {
     //   this.squakEditorTarget.innerHTML = marked.parse(this.markdownTarget.value)
     // }
     
-    console.log('circle Id value:', this.circleIdValue)
+    // console.log('circle Id value:', this.circleIdValue)
     const e = document.querySelector('[name="squak[circle_id]"]')
     e.value = this.circleIdValue
 

@@ -12,7 +12,8 @@
     <div class="col-6">
       <%= render partial: 'squak_form', locals: { circle_id: @selected_circle_id} %>
       <%= turbo_frame_tag "squak-view" do %>
-        <%= render partial: 'squaks/squak_index', locals: { squaks: @squaks } %>
+        <%= render partial: 'squaks/squak_index', locals: { squaks: @squaks,
+                                                            circleId: @selected_circle.id } %>
       <% end %>
     </div>
     <div class="col-3" style="background-color: #343934; height: 100vh;">

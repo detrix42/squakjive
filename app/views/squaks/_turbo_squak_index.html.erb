@@ -1,3 +1,5 @@
 <%= turbo_frame_tag "squak-view" do %>
-  <%= render partial: "squaks/squak_index", locals: { squaks: squaks } %>
+  <%= render partial: "squaks/squak_index",
+             locals: { squaks: squaks,
+                       circleId: @selected_circle_id } %>
 <% end %>
