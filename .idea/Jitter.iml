@@ -129,6 +129,7 @@
     <orderEntry type="library" scope="PROVIDED" name="rainbow (v3.1.1, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rake (v13.3.0, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rdoc (v6.14.2, RVM: ruby-3.4.4) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="redis (v4.8.1, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="regexp_parser (v2.10.0, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="reline (v0.6.1, RVM: ruby-3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="responders (v3.1.1, RVM: ruby-3.4.4) [gem]" level="application" />

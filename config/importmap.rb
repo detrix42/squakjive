@@ -13,3 +13,5 @@ pin "axios", to: "https://cdn.jsdelivr.net/npm/axios@1.10.0/dist/axios.min.js"
 
 pin "marked", to: "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js"
 pin "turndown", to: "https://ga.jspm.io/npm:turndown@7.2.0/lib/turndown.browser.es.js"
+pin "@rails/actioncable", to: "actioncable.esm.js"
+pin_all_from "app/javascript/channels", under: "channels"

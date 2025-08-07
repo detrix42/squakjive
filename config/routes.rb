@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'test_broadcast', to: 'squaks#test'
+
   get "user_profile/selected_circle"
 
   # dashboard for when user is logged in
