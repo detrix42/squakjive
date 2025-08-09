@@ -17,19 +17,33 @@ class SquaksController < ApplicationController
 
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
+    # if @squak.persisted?
+    #   # You can send whatever data you want here (render HTML partial, json, etc.)
+    #   ActionCable.server.broadcast("squaks", {
+    #     id: @squak.id,
+    #     body: @squak.body,
+    #     username: @squak.user.username,
+    #     circle_id: @squak.circle_id,
+    #     created_at: @squak.created_at.strftime("* %H:%M %Y-%m-%d *")
+    #   })
+    #   head :ok
+    # else
+    #   head :unprocessable_entity
+    # end
+
     if @squak.persisted?
-      # You can send whatever data you want here (render HTML partial, json, etc.)
-      ActionCable.server.broadcast("squaks", {
-        id: @squak.id,
-        body: @squak.body,
-        username: @squak.user.username,
-        circle_id: @squak.circle_id,
-        created_at: @squak.created_at.strftime("%Y-%m-%d %H:%M:%S")
-      })
+      squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak })
+      # Broadcast a Turbo Stream append that uses your ERB partial
+      Turbo::StreamsChannel.broadcast_prepend_to(
+        "squaks",
+        target: "squaks-list",
+        html: squak
+      )
       head :ok
     else
       head :unprocessable_entity
     end
+
 
 
     # redirect_to dashboard_path
@@ -50,12 +64,6 @@ class SquaksController < ApplicationController
       end
       format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
     end
-  end
-
-  def test
-    ActionCable.server.broadcast("squaks", { message: "Hello from ActionCable, via HTTP!" })
-    render plain: "Broadcast sent!"
-
   end
 
   private
