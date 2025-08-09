@@ -2,12 +2,8 @@ class SquaksController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # cid = current circle ID
-    # cid = currrent_user.user_profile.selected_circle
-    # @circle = Circle.find_by(id: cid)
     @circle = getCircle
-    # @squaks = Squak.visible_to(current_user)
-    @squaks = Squak.for_circle(circle)
+    @squaks = Squak.for_circle(@circle)
   end
 
   def create

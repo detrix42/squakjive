@@ -8,6 +8,9 @@ Things you may want to cover:
 * Ruby version
 
 * System dependencies
+ 
+    be sure to install redis on produciton server
+
 
 * Configuration
 

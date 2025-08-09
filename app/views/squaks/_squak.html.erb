@@ -8,14 +8,15 @@
       </div>
     </div>
     <div class="col-sm-9 col-md-10 col-lg-11">
-      <div class="row ms-1 squak-username">
+      <div class="ms-1 squak-username">
         <%= squak.user.username %>
       </div>
-      <div class="row ms-4 squak-body">
-        <%= squak.body %>
+      <div class="ms-4 squak-body">
+        <%= render_squak_body(squak) %>
       </div>
-      <div class="row">
+      <div class="">
         <div class="squak-date text-end">
+          <%= squak.id %>
           <%= squak.created_at.strftime("%H:%M %Y-%m-%d") %>
         </div>
       </div>

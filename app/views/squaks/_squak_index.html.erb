@@ -5,9 +5,8 @@
       data-squakindex-circle-id-value="<%= circleId %>"
       data-controller="squakindex">
 
-    <% squaks.each do |squak| %>
-      <%= render "squaks/squak", squak: squak %>
-    <% end %>
+      <%= render partial: "squaks/squak", collection: squaks, as: :squak %>
+
   </ul>
 <% else %>
   <p>No squaks in this circle yet.</p>

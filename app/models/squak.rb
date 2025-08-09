@@ -1,7 +1,7 @@
 class Squak < ApplicationRecord
   belongs_to :user
   belongs_to :circle, optional: true
-  validates :body, presence: true, length: { maximum: 512 }
+  validates :body, presence: true, length: { maximum: 10_000 }
 
   scope :for_circle, ->(circle) do
     if circle.nil? || (circle.respond_to?(:id) && circle.id == 0)

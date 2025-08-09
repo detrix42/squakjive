@@ -3,7 +3,7 @@ import { marked } from "marked"
 import TurndownService from "turndown"
 
 export default class extends Controller {
-  static targets = ["squakEditor", "markdown", "circleId"]
+  static targets = ["squakEditor", "markdown", "circleId", "html"]
 
   static values = {
     circleId: Number
@@ -12,56 +12,83 @@ export default class extends Controller {
   connect() {
     console.log("Squakeditor controller connected")
 
-    // if (this.hasMarkdownTarget && this.markdownTarget.value) {
-    //   this.squakEditorTarget.innerHTML = marked.parse(this.markdownTarget.value)
-    // }
-    
-    // console.log('circle Id value:', this.circleIdValue)
-    const e = document.querySelector('[name="squak[circle_id]"]')
-    e.value = this.circleIdValue
+    // Prefer paragraphs over divs when pressing Enter
+    try {
+      document.execCommand("defaultParagraphSeparator", false, "p")
+    } catch (_) {}
 
-    this.syncToMarkdown = this.debounce(this._syncToMarkdown.bind(this), 500)  // Debounce to 500ms for better perf
-    this.squakEditorTarget.addEventListener('input', (e) => {
-      // console.log('typing check')
-      this.syncToMarkdown(e)
-    })
+    // Initial sync if editor has preloaded content
+    this.sync()
+
+    // Keep track of selection so toolbar buttons work
+    this.savedRange = null
+    this.squakEditorTarget.addEventListener("keyup", this.saveSelection)
+    this.squakEditorTarget.addEventListener("mouseup", this.saveSelection)
+    this.squakEditorTarget.addEventListener("mouseleave", this.saveSelection)
+    this.squakEditorTarget.addEventListener("blur", this.saveSelection)
+
+    // Keep hidden input in sync
+    this.squakEditorTarget.addEventListener("input", this.sync)
+    this.squakEditorTarget.addEventListener("paste", () => requestAnimationFrame(this.sync))
+
+    // Ensure final value is synced on submit
+    const formEl = this.element.closest("form")
+    if (formEl) formEl.addEventListener("submit", this._boundSync)
+
   }
 
   disconnect() {
-    this.squakEditorTarget.removeEventListener('input', this.syncToMarkdown)
+    if (this.hasSquakEditorTarget) {
+      this.squakEditorTarget.removeEventListener("keyup", this._boundSaveSelection)
+      this.squakEditorTarget.removeEventListener("mouseup", this._boundSaveSelection)
+      this.squakEditorTarget.removeEventListener("mouseleave", this._boundSaveSelection)
+      this.squakEditorTarget.removeEventListener("blur", this._boundSaveSelection)
+      this.squakEditorTarget.removeEventListener("input", this._boundSync)
+
+    }
+
+    const formEl = this.element.closest("form")
+    if (formEl) formEl.removeEventListener("submit", this._boundSync)
+
   }
 
   format(event) {
-    event.preventDefault()
-    const format = event.currentTarget.dataset.format
-    document.execCommand(format)
-    this.syncToMarkdown()  // Sync after format
+    const cmd = event.currentTarget?.dataset?.format
+    if (!cmd) return
+
+    this.restoreSelection()
+    this.squakEditorTarget.focus()
+    document.execCommand(cmd, false, null)
+    this.sync()
+
   }
 
-  _syncToMarkdown() {
-    if (!this.hasMarkdownTarget) {
-      // console.log('Markdown target not found');
-      return;
-    }
-
-    // console.log('syncing to Markdown');
-    const html = this.squakEditorTarget.innerHTML;
-    // console.log('HTML content:', html);
-
-    const td = new TurndownService();
-    td.keep(['u']);
-    const md = td.turndown(html);
-    // console.log('Converted markdown:', md);
-
-    this.markdownTarget.value = md;
-    // console.log('Textarea value after update:', this.markdownTarget.value);
-  }
-
-  debounce(func, delay) {
-    let timeout
-    return (...args) => {
-      clearTimeout(timeout)
-      timeout = setTimeout(() => func(...args), delay)
+  // Save current selection range
+  saveSelection = () => {
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      this.savedRange = sel.getRangeAt(0)
     }
   }
+
+
+  // Restore saved selection range
+  restoreSelection = () => {
+    if (!this.savedRange) return
+    const sel = window.getSelection()
+    if (!sel) return
+    sel.removeAllRanges()
+    sel.addRange(this.savedRange)
+  }
+
+
+  // Mirror editor HTML into hidden input for submission
+  sync = () => {
+    if (this.hasHtmlTarget && this.hasSquakEditorTarget) {
+      this.htmlTarget.value = this.squakEditorTarget.innerHTML
+    }
+  }
+
+
+
 }

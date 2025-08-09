@@ -19,11 +19,13 @@
 
     <%# Hidden textarea for markdown content  %>
     <textarea name="squak[body]" style="display: none;"
-              data-squakeditor-target="markdown">
+              id="squak-body"
+              data-squakeditor-target="html">
     </textarea>
 
     <input type="hidden" name="squak[circle_id]" value="<%= circle_id %>"
            data-squakeditor-target="circleId">
+
 
     <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
       <div class="col-auto">
