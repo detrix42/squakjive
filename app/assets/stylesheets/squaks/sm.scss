@@ -55,7 +55,11 @@ ul {
     }
   }
 
-
+  .squak-previews-scroll {
+    max-height: 260px;   /* adjust to taste */
+    overflow-y: auto;
+    padding-right: .25rem; /* avoid scrollbar overlaying content */
+  }
 
 
   .squak-item small {

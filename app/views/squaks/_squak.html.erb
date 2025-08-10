@@ -14,15 +14,22 @@
       <div class="ms-4 squak-body">
         <%= render_squak_body(squak) %>
       </div>
+
       <%# Preview goes here (bottom of squak) %>
-      <% if (url = first_url_from_html(squak.body)) && (preview = link_preview_for(url)) %>
-        <div class="ms-4 mt-2">
-          <%= render partial: "squaks/link_preview", locals: { preview: preview, url: url } %>
+      <% urls = all_urls_from_html(squak.body) %>
+      <% if urls.present? %>
+        <div class="ms-4 mt-2 squak-previews-scroll">
+          <% urls.each do |u| %>
+            <% if (preview = link_preview_for(u)) %>
+              <%= render partial: "squaks/link_preview", locals: { preview: preview, url: u } %>
+            <% end %>
+          <% end %>
         </div>
       <% end %>
 
+
       <div class="">
-        <div class="squak-date text-end">
+        <div class="squak-date text-end" style="color: #587a91;">
           <%= squak.created_at.strftime("%m-%d-%Y %l:%M %P") %>
         </div>
       </div>

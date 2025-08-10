@@ -31,6 +31,21 @@ module SquakHelper
 
   end
 
+  # Extract multiple URLs from HTML (anchors first, then raw text)
+  def all_urls_from_html(html, max: nil)
+    frag = Nokogiri::HTML::DocumentFragment.parse(html.to_s)
+
+    # 1) anchor hrefs
+    hrefs = frag.css('a[href]').map { |a| a['href'].to_s.strip }.select { |h| h =~ /\Ahttps?:\/\/\S+\z/i }
+
+    # 2) raw text URLs fallback
+    text_urls = frag.text.scan(/\bhttps?:\/\/[^\s<>"')]+/i)
+
+    urls = (hrefs + text_urls).uniq
+    max ? urls.first(max) : urls
+  end
+
+
   # Get (and cache) link preview data for a URL
   # Returns a hash like { url:, title:, site_name:, image:, desc: } or nil
   def link_preview_for(url)
