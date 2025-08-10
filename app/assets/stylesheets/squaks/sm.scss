@@ -42,6 +42,22 @@ ul {
 
   }
 
+  .link-preview.card {
+    background-color: #1f252b;
+    border-color: #3a3f44;
+
+    .card-title {
+      color: #b9d4ff;
+      word-break: break-word;
+    }
+    .small, .text-muted {
+      color: #9aa3ad;
+    }
+  }
+
+
+
+
   .squak-item small {
     display: block;
     color: #666;
