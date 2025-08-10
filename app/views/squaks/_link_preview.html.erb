@@ -1,0 +1,26 @@
+<!-- erb -->
+<div class="link-preview card my-2 w-100">
+  <div class="row g-0 align-items-center">
+    <% if preview[:image].present? %>
+      <div class="col-auto">
+        <img src="<%= preview[:image] %>" alt="" class="img-thumbnail"
+             style="max-width: 120px; max-height: 120px; object-fit: cover;">
+      </div>
+    <% end %>
+    <div class="col">
+      <div class="card-body py-2">
+        <a href="<%= preview[:url].presence || url %>"
+           target="_blank" rel="noopener noreferrer"
+           class="card-title h6 d-block mb-1">
+          <%= (preview[:title].presence || url) %>
+        </a>
+        <% if preview[:site_name].present? %>
+          <div class="text-muted small"><%= preview[:site_name] %></div>
+        <% end %>
+        <% if preview[:desc].present? %>
+          <div class="small mt-1"><%= preview[:desc] %></div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
