@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
-  get 'test_broadcast', to: 'squaks#test'
+  get "link_preview/show"
+
+  get "link_preview", to: "link_preview#show"
 
   get "user_profile/selected_circle"
 
