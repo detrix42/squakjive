@@ -17,20 +17,6 @@ class SquaksController < ApplicationController
 
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
-    # if @squak.persisted?
-    #   # You can send whatever data you want here (render HTML partial, json, etc.)
-    #   ActionCable.server.broadcast("squaks", {
-    #     id: @squak.id,
-    #     body: @squak.body,
-    #     username: @squak.user.username,
-    #     circle_id: @squak.circle_id,
-    #     created_at: @squak.created_at.strftime("* %H:%M %Y-%m-%d *")
-    #   })
-    #   head :ok
-    # else
-    #   head :unprocessable_entity
-    # end
-
     if @squak.persisted?
       squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak })
       # Broadcast a Turbo Stream append that uses your ERB partial
