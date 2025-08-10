@@ -14,9 +14,16 @@
       <div class="ms-4 squak-body">
         <%= render_squak_body(squak) %>
       </div>
+      <%# Preview goes here (bottom of squak) %>
+      <% if (url = first_url_from_html(squak.body)) && (preview = link_preview_for(url)) %>
+        <div class="ms-4 mt-2">
+          <%= render partial: "squaks/link_preview", locals: { preview: preview, url: url } %>
+        </div>
+      <% end %>
+
       <div class="">
         <div class="squak-date text-end">
-          <%= squak.created_at.strftime("%H:%M %Y-%m-%d") %>
+          <%= squak.created_at.strftime("%m-%d-%Y %l:%M %P") %>
         </div>
       </div>
     </div>
