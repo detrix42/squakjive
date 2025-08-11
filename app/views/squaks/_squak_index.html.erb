@@ -9,10 +9,7 @@
        data-squakindex-circle-id-value="<%= circleId %>"
        data-squakindex-limit-value="<%= per_page %>">
 
-    <ul class="squaks-list" id="squaks-list"
-        data-squakindex-limit-value="<%= per_page %>"
-        data-squakindex-circle-id-value="<%= circleId %>"
-        data-controller="squakindex">
+    <ul class="squaks-list" id="squaks-list">
 
       <%= render partial: "squaks/squak", collection: squaks, as: :squak %>
 

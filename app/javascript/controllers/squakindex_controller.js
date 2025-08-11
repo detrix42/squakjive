@@ -47,7 +47,6 @@ export default class extends Controller {
     // Initial button state
     this.toggleBackToTop()
 
-
   }
 
   disconnect() {
@@ -55,6 +54,13 @@ export default class extends Controller {
       this.observer.unobserve(this.sentinelTarget)
     }
     window.removeEventListener("scroll", this._onScroll)
+    // Clean up potential deferred starters
+    if (this._startObserving) {
+      window.removeEventListener("wheel", this._startObserving)
+      window.removeEventListener("touchstart", this._startObserving)
+      window.removeEventListener("pointerdown", this._startObserving)
+    }
+
 
   }
 
@@ -71,11 +77,45 @@ export default class extends Controller {
     return items && items.length ? items[items.length - 1] : null
   }
 
+  // When the user switches circles, disable observer and reinit
+  circleIdValueChanged(newVal, oldVal) {
+    if (newVal === oldVal) return
+
+    // 1) Stop observing immediately
+    if (this.observer && this.hasSentinelTarget && this.observing) {
+      this.observer.unobserve(this.sentinelTarget)
+    }
+    this.observing = false
+    this.loading = false
+    this.done = false
+
+    // 2) Reset references (list might have been replaced)
+    this.listEl = this.element.querySelector("#squaks-list")
+
+    // 3) Ensure sentinel is visible again for the new circle
+    if (this.hasSentinelTarget) {
+      this.sentinelTarget.classList.remove("d-none")
+    }
+
+    // 4) Re-arm "start observing on first interaction"
+    if (this._startObserving) {
+      window.removeEventListener("wheel", this._startObserving)
+      window.removeEventListener("touchstart", this._startObserving)
+      window.removeEventListener("pointerdown", this._startObserving)
+    }
+    this._startObserving = this.startObserving.bind(this)
+    window.addEventListener("wheel", this._startObserving, { passive: true, once: true })
+    window.addEventListener("touchstart", this._startObserving, { passive: true, once: true })
+    window.addEventListener("pointerdown", this._startObserving, { passive: true, once: true })
+
+    // 5) Update back-to-top visibility
+    this.toggleBackToTop()
+  }
+
+
   async loadMore() {
     if (this.loading || this.done) return
     if (!this.listEl) return
-
-    console.log('loading more squaks')
 
     const last = this.lastItemEl()
     if (!last) {
