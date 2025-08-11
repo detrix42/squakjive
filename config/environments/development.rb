@@ -71,4 +71,6 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   config.assets.debug = false
+
+  config.web_console.permissions = "192.168.1.11"
 end
