@@ -1,6 +1,8 @@
 <!-- app/views/squaks/_squak.html.erb -->
 
-<li class="squak-item  m-3 px-1 py-1">
+<li class="squak-item  m-3 px-1 py-1"
+    id="squak-<%= squak.id %>"
+    data-squak-id="<%= squak.id %>">
   <div class="row">
     <div class="col-sm-3 col-md-2 col-lg-1 squak-avatar-col">
       <div class="squak-avatar">
@@ -28,7 +30,7 @@
       <% end %>
 
 
-      <div class="">
+      <div class="squak-footer">
         <div class="squak-date text-end" style="color: #587a91;">
           <%= squak.created_at.strftime("%m-%d-%Y %l:%M %P") %>
         </div>

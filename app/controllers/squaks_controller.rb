@@ -3,14 +3,12 @@ class SquaksController < ApplicationController
 
   def index
     @circle = getCircle
-    @squaks = Squak.for_circle(@circle)
+    @squaks = Squak.for_circle(@circle).reorder(id: :desc).limit(20)
   end
 
   def create
     squak_params = params.expect(squak: [:body, :circle_id])
     # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
-
-
     # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
     @squak = current_user.squaks.create(squak_params)
@@ -40,17 +38,44 @@ class SquaksController < ApplicationController
     circle = (current_user.circles.find_by(id: @circle_id) ||
              current_user.circle_memberships.find_by(circle_id: @circle_id)&.circle)
 
-    squaks = Squak.for_circle(circle)
+    per_page  = (params[:limit].presence || 20).to_i.clamp(5, 100)
+    before_id = params[:before_id].presence&.to_i
+
+    scope = Squak.for_circle(circle).reorder(id: :desc)
+    scope = scope.where("id < ?", before_id) if before_id
+    @page = scope.limit(per_page)
+
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          "squak-view",
-          partial: "squaks/turbo_squak_index",
-          locals: { squaks: squaks, circleId: @circle_id })
+        if before_id
+          # If no more rows, return 204 so the client stops
+          if @page.empty?
+            head :no_content
+          else
+            render turbo_stream: turbo_stream.before(
+              "squaks-sentinel",
+              partial: "squaks/squak",
+              collection: @page,
+              as: :squak
+            )
+          end
+
+        else
+          # First load/reload
+          render turbo_stream: turbo_stream.replace(
+            "squak-view",
+            partial: "squaks/turbo_squak_index",
+            locals: { squaks: @page, circleId: @circle_id }
+          )
+        end
       end
-      format.html { render partial: "squaks/squak_index", locals: { squaks: squaks } }
+
+      format.html do
+        render partial: "squaks/squak_index", locals: { squaks: @page, circleId: @circle_id }
+      end
     end
   end
+
 
   private
 

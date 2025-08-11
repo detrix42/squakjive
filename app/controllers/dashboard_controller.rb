@@ -22,7 +22,7 @@ class DashboardController < ApplicationController
 
     @selected_circle_id = current_user.user_profile&.selected_circle.to_i
     @selected_circle = @grouped_circles.find { |c| c.id.to_i == @selected_circle_id }  # Nil if invalid
-    @squaks = Squak.for_circle(@selected_circle)
+    @squaks = Squak.for_circle(@selected_circle).reorder(id: :desc).limit(20)
 
     if @selected_circle
       logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
