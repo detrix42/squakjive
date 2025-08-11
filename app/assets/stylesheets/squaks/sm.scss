@@ -69,3 +69,16 @@ ul {
   }
 }
 
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1030; /* above content */
+  opacity: 0.9;
+}
+
+.back-to-top:hover {
+  opacity: 1;
+}
+
+

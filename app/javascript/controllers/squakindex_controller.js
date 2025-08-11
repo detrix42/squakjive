@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["sentinel"]
+  static targets = ["sentinel", "backToTop"]
 
   static values = {
     circleId: Number,
@@ -12,8 +12,7 @@ export default class extends Controller {
     console.log("Squak index controller connected. Squaks for circle:", this.circleIdValue)
 
     // This controller is attached to the <ul>, so use this.element as the list
-    this.listEl = this.element
-
+    this.listEl = this.element.querySelector("#squaks-list")
     this.loading = false
     this.done = false
     this.observing = false
@@ -41,6 +40,12 @@ export default class extends Controller {
     window.addEventListener("touchstart", this._startObserving, { passive: true, once: true })
     window.addEventListener("pointerdown", this._startObserving, { passive: true, once: true })
 
+    // Back-to-top visibility handler (throttled)
+    this._onScroll = this.throttle(() => this.toggleBackToTop(), 100)
+    window.addEventListener("scroll", this._onScroll, { passive: true })
+
+    // Initial button state
+    this.toggleBackToTop()
 
 
   }
@@ -49,6 +54,8 @@ export default class extends Controller {
     if (this.observer && this.hasSentinelTarget) {
       this.observer.unobserve(this.sentinelTarget)
     }
+    window.removeEventListener("scroll", this._onScroll)
+
   }
 
   startObserving() {
@@ -146,6 +153,41 @@ export default class extends Controller {
 
   hideSentinel() {
     if (this.hasSentinelTarget) this.sentinelTarget.classList.add("d-none")
+  }
+
+  // Back-to-top behavior
+  toggleBackToTop() {
+    if (!this.hasBackToTopTarget) return
+    const threshold = 300 // px scrolled before showing button
+    if (window.scrollY > threshold) {
+      this.backToTopTarget.classList.remove("d-none")
+    } else {
+      this.backToTopTarget.classList.add("d-none")
+    }
+  }
+
+  scrollTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  // Small utility throttle
+  throttle(fn, wait) {
+    let last = 0
+    let timer = null
+    return (...args) => {
+      const now = Date.now()
+      const remaining = wait - (now - last)
+      if (remaining <= 0) {
+        last = now
+        fn.apply(this, args)
+      } else if (!timer) {
+        timer = setTimeout(() => {
+          last = Date.now()
+          timer = null
+          fn.apply(this, args)
+        }, remaining)
+      }
+    }
   }
 
 
