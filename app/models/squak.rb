@@ -1,6 +1,8 @@
 class Squak < ApplicationRecord
   belongs_to :user
   belongs_to :circle, optional: true
+  has_many_attached :images
+
   validates :body, presence: true, length: { maximum: 10_000 }
 
   scope :for_circle, ->(circle) do

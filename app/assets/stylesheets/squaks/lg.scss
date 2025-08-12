@@ -1,0 +1,21 @@
+// Medium devices (tablets, 768px and up)
+@media (min-width: 1200px) {
+  /* Grid layout for link previews at large screens */
+  .squak-previews-scroll {
+    display: grid;
+    grid-template-columns: 1fr; /* default to one column */
+    gap: 0.75rem; /* adjust spacing as desired */
+  }
+
+  /* Switch to two columns only if there are 2+ previews */
+  .squak-previews-scroll:has(.link-preview:nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Ensure children fit columns neatly */
+  .squak-previews-scroll > * {
+    width: 100%;
+  }
+
+
+}

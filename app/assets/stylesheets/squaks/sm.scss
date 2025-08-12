@@ -59,8 +59,16 @@ ul {
     max-height: 260px;   /* adjust to taste */
     overflow-y: auto;
     padding-right: .25rem; /* avoid scrollbar overlaying content */
-  }
 
+    .img-thumbnail {
+      margin: 5px;
+    }
+
+    /* Keep link-preview thumbnail aligned to the top (override Bootstrap center) */
+    .row.align-items-center {
+      align-items: flex-start !important;
+    }
+  }
 
   .squak-item small {
     display: block;

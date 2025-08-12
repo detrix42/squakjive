@@ -8,74 +8,93 @@
     active circle
   </div>
 </div>
-<%= form_with model: Squak.new, id: "squak-form" do |form| %>
+<%= form_with model: Squak.new, id: "squak-form", data: {controller: "paste-image" } do |form| %>
+  <%# Wrapper runs both controllers so paste-image can access its targets %>
   <div class="row align-items-start"
        data-squakeditor-circle-id-value="<%= circle_id %>"
-       data-controller="squakeditor">
-    <div class="mx-4 flex-shrink-1" contenteditable="true" id="squak-editor"
-         data-squakeditor-target="squakEditor">
-    </div>
+       data-controller="squakeditor paste-image">
 
+    <!--    <textarea name="squak[body]" style="display: none;"-->
+    <!--              id="squak-body"-->
+    <!--              data-squakeditor-target="html">-->
+    <!--    </textarea>-->
+    <%= form.text_area :body, id: "squak-body",
+                       style: "display: none;",
+                       data: { 'squakeditor-target': "html" } %>
 
-    <%# Hidden textarea for markdown content  %>
-    <textarea name="squak[body]" style="display: none;"
-              id="squak-body"
-              data-squakeditor-target="html">
-    </textarea>
-
-    <input type="hidden" name="squak[circle_id]" value="<%= circle_id %>"
-           data-squakeditor-target="circleId">
-
-    <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="bold">
-          <i class="bi bi-type-bold"></i>  <!-- Bootstrap icon for bold -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="italic">
-          <i class="bi bi-type-italic"></i>  <!-- Bootstrap icon for italic -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="underline">
-          <i class="bi bi-type-underline"></i>  <!-- Bootstrap icon for underline -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="insertUnorderedList">
-          <i class="bi bi-list-ul"></i>  <!-- Bootstrap icon for unordered list -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="insertOrderedList">
-          <i class="bi bi-list-ol"></i>  <!-- Bootstrap icon for ordered list -->
-        </button>
+      <div class="mx-4 flex-shrink-1 form-control" id="squak-editor"
+           contenteditable="true"
+           data-action="paste->paste-image#paste"
+           data-squakeditor-target="squakEditor">
       </div>
 
-      <div class="col-auto ms-auto me-3">
-        <%= form.submit "Squak It", class: "btn btn-primary" %>
-      </div>
-    </div>
+      <%# Hidden direct-upload-capable input: gives us the directUploadUrl  %>
+      <%= form.file_field :images,
+                       multiple: true,
+                       direct_upload: true,
+                       class: "d-none",
+                       data: { paste_image_target: "uploader" } %>
 
-    <!-- URL previews will appear here (client-only for now) -->
-    <div class="mt-2" data-squakeditor-target="previews"></div>
+      <%# Hidden signed_ids will be appended here  %>
+      <div data-paste-image-target="signedIds"></div>
+
+      <%# Simple Previews %>
+      <div class="d-flex flex-wrap mt-2" data-paste-image-target="previews"></div>
+
+
+      <input type="hidden" name="squak[circle_id]" value="<%= circle_id %>"
+             data-squakeditor-target="circleId">
+
+      <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
+        <div class="col-auto">
+          <button type="button"
+                  class="btn btn-outline-secondary"
+                  data-action="click->squakeditor#format"
+                  data-format="bold">
+            <i class="bi bi-type-bold"></i>  <!-- Bootstrap icon for bold -->
+          </button>
+        </div>
+        <div class="col-auto">
+          <button type="button"
+                  class="btn btn-outline-secondary"
+                  data-action="click->squakeditor#format"
+                  data-format="italic">
+            <i class="bi bi-type-italic"></i>  <!-- Bootstrap icon for italic -->
+          </button>
+        </div>
+        <div class="col-auto">
+          <button type="button"
+                  class="btn btn-outline-secondary"
+                  data-action="click->squakeditor#format"
+                  data-format="underline">
+            <i class="bi bi-type-underline"></i>  <!-- Bootstrap icon for underline -->
+          </button>
+        </div>
+        <div class="col-auto">
+          <button type="button"
+                  class="btn btn-outline-secondary"
+                  data-action="click->squakeditor#format"
+                  data-format="insertUnorderedList">
+            <i class="bi bi-list-ul"></i>  <!-- Bootstrap icon for unordered list -->
+          </button>
+        </div>
+        <div class="col-auto">
+          <button type="button"
+                  class="btn btn-outline-secondary"
+                  data-action="click->squakeditor#format"
+                  data-format="insertOrderedList">
+            <i class="bi bi-list-ol"></i>  <!-- Bootstrap icon for ordered list -->
+          </button>
+        </div>
+
+        <div class="col-auto ms-auto me-3">
+          <%= form.submit "Squak It", class: "btn btn-primary" %>
+        </div>
+      </div>
+
+      <!-- URL previews will appear here (client-only for now) -->
+      <div class="mt-2" data-squakeditor-target="previews"></div>
+
   </div>
-
 
 <% end %>

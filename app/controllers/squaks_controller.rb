@@ -7,7 +7,7 @@ class SquaksController < ApplicationController
   end
 
   def create
-    squak_params = params.expect(squak: [:body, :circle_id])
+    squak_params = params.expect(squak: [:body, :circle_id, {images: []}])
     # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
     # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
