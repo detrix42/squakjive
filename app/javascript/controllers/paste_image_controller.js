@@ -5,8 +5,25 @@ import { DirectUpload } from "@rails/activestorage"
 export default class extends Controller {
   static targets = ["uploader", "signedIds", "previews", "editor"]
 
+  connect() {
+    // Ensure we can clean up before submit
+    this.form = this.element.closest("form")
+    if (this.form) {
+      this._onSubmit = this.beforeSubmit.bind(this)
+      this.form.addEventListener("submit", this._onSubmit)
+    }
+  }
+
+  disconnect() {
+    if (this.form && this._onSubmit) {
+      this.form.removeEventListener("submit", this._onSubmit)
+    }
+  }
+
+
   onPaste(event) {
     if (!event.clipboardData) return
+
     const items = Array.from(event.clipboardData.items || [])
     const imageItems = items.filter(i => i.kind === "file" && i.type.startsWith("image/"))
     if (imageItems.length === 0) return
