@@ -34,7 +34,15 @@
         <div class="ms-4 mt-2 d-flex flex-wrap gap-2">
           <% squak.images.each do |img| %>
             <% if img.image? %>
-              <%= image_tag img.variant(resize_to_limit: [1000, 1000]).processed, class: "img-fluid rounded", style: "max-width: 280px;" %>
+              <%= link_to url_for(img),
+                          data: { controller: "image-lightbox", action: "click->image-lightbox#open" },
+                          class: "d-inline-block" do %>
+                <%= image_tag img.variant(resize_to_limit: [1000, 1000]).processed,
+                              class: "img-fluid rounded",
+                              style: "max-width: 280px;" %>
+              <% end %>
+
+              <%#= image_tag img.variant(resize_to_limit: [1000, 1000]).processed, class: "img-fluid rounded", style: "max-width: 280px;" %>
             <% end %>
           <% end %>
         </div>
