@@ -132,15 +132,27 @@ export default class extends Controller {
     // console.log('scan for urls:', urls)
 
     urls.forEach((url) => {
+      // Always ensure it’s linkified immediately
+      this.linkifyUrlInEditor(url, url)
+
+      // Then fetch preview once
+      if (!this.seenUrls) this.seenUrls = new Set()
       if (this.seenUrls.has(url)) return
+      this.seenUrls.add(url)
       this.fetchPreview(url)
     })
+
   }
 
   extractUrls(text) {
+    if (!text) return []
+
     // Basic http/https URL regex
     const re = /\bhttps?:\/\/[^\s<>"')]+/gi
-    return Array.from(text.matchAll(re)).map((m) => m[0])
+    const matches = Array.from(text.matchAll(re)).map((m) => this.normalizeUrlText(m[0]))
+
+    return [...new Set(matches.filter(Boolean))]
+
   }
 
   // Fetch preview and update editor: linkify URL using title
@@ -168,47 +180,75 @@ export default class extends Controller {
     }
   }
 
-  // Replace first occurrence of the raw URL text in the editor with an <a>
-  linkifyUrlInEditor(url, title) {
-    // If already linked, skip (avoid CSS.escape; compare hrefs directly)
-    const existing = Array.from(this.squakEditorTarget.querySelectorAll("a"))
-        .find(a => (a.getAttribute("href") || "") === url)
-    if (existing) return
+  // Replace your linkifyUrlInEditor with this corrected version
+linkifyUrlInEditor(url, title) {
+  const normalized = this.normalizeUrlText(url)
+  if (!normalized) return
 
-    const walker = document.createTreeWalker(this.squakEditorTarget, NodeFilter.SHOW_TEXT, null)
-    const anchor = document.createElement("a")
-    anchor.href = url
-    anchor.textContent = title
-    anchor.target = "_blank"
-    anchor.rel = "noopener noreferrer"
-
-    const urlRe = new RegExp(this.escapeForRegex(url))
-    let node
-    while ((node = walker.nextNode())) {
-      const idx = node.nodeValue.search(urlRe)
-      if (idx !== -1) {
-        const range = document.createRange()
-        range.setStart(node, idx)
-        range.setEnd(node, idx + url.length)
-        range.deleteContents()
-        range.insertNode(anchor)
-
-        // Move caret after the anchor
-        const sel = window.getSelection()
-        if (sel) {
-          sel.removeAllRanges()
-          const after = document.createRange()
-          after.setStartAfter(anchor)
-          after.setEndAfter(anchor)
-          sel.addRange(after)
-        }
-        return
-      }
+  // 1) Correct existing-anchor check: compare to normalized
+  const existing = Array.from(this.squakEditorTarget.querySelectorAll("a"))
+    .find(a => (a.getAttribute("href") || "") === normalized)
+  if (existing) {
+    // If we have a title and the current text is the raw URL, replace it
+    const safeTitle = (title || "").toString().trim()
+    if (safeTitle && existing.textContent.trim() === normalized) {
+      existing.textContent = safeTitle
     }
-    // Fallback if the URL text was split by formatting
-    this.squakEditorTarget.appendChild(anchor)
-    this.squakEditorTarget.appendChild(document.createTextNode(" "))
+    return
   }
+
+
+  const walker = document.createTreeWalker(this.squakEditorTarget, NodeFilter.SHOW_TEXT, null)
+  const urlRe = new RegExp(this.escapeForRegex(normalized))
+
+  let node
+  while ((node = walker.nextNode())) {
+    const txt = node.nodeValue
+    if (!txt) continue
+
+    let idx = txt.search(urlRe)
+    if (idx === -1) {
+      const withPunct = new RegExp(this.escapeForRegex(normalized) + "[)\\]\\}.,!?\"'“”’]*")
+      idx = txt.search(withPunct)
+    }
+    if (idx !== -1) {
+      const after = txt.slice(idx)
+      const m = after.match(new RegExp("^" + this.escapeForRegex(normalized)))
+      const matchLen = m ? m[0].length : normalized.length
+
+      const anchor = document.createElement("a")
+      anchor.href = normalized
+      anchor.textContent = title || normalized
+      anchor.target = "_blank"
+      anchor.rel = "noopener noreferrer"
+
+      const range = document.createRange()
+      range.setStart(node, idx)
+      range.setEnd(node, idx + matchLen)
+      range.deleteContents()
+      range.insertNode(anchor)
+
+      const sel = window.getSelection()
+      if (sel) {
+        sel.removeAllRanges()
+        const caret = document.createRange()
+        caret.setStartAfter(anchor)
+        caret.setEndAfter(anchor)
+        sel.addRange(caret)
+      }
+      return
+    }
+  }
+
+  // 2) Fallback appended only after we've searched all nodes
+  const fallback = document.createElement("a")
+  fallback.href = normalized
+  fallback.textContent = title || normalized
+  fallback.target = "_blank"
+  fallback.rel = "noopener noreferrer"
+  this.squakEditorTarget.appendChild(fallback)
+  this.squakEditorTarget.appendChild(document.createTextNode(" "))
+}
 
 
 
@@ -266,10 +306,36 @@ export default class extends Controller {
     this.seenUrls = new Set()
   }
 
+  // 1) Robust escape for building a RegExp from a literal URL
   escapeForRegex(s) {
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   }
 
+// 2) Normalize URLs: trim whitespace and trailing punctuation that
+// commonly attaches in typing (.,),],},!,"', etc.)
+  normalizeUrlText(raw) {
+    if (!raw) return ""
+    let url = raw.trim()
+
+    // strip common trailing punctuation that may be typed accidentally
+    url = url.replace(/[)\]\}.,!?'"“”’]+$/, "")
+
+
+    // Strip trailing punctuation while keeping a balanced closing parenthesis case
+    // Example: https://x.com/foo) -> keep ) only if there is a matching (
+    const trailing = /[)\]\}.,!?'"“”’]+$/
+
+    if (trailing.test(url)) {
+      // Preserve a trailing ")" if there are more "(" than ")"
+      const closes = (url.match(/\)/g) || []).length
+      const opens  = (url.match(/\(/g) || []).length
+      url = url.replace(trailing, (punct) => {
+        if (punct === ")" && opens > closes - 1) return ")" // keep one ")"
+        return "" // otherwise drop trailing punctuation
+      })
+    }
+    return url
+  }
 
 
 }

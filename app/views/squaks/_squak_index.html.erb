@@ -10,15 +10,15 @@
        data-squakindex-limit-value="<%= per_page %>">
 
     <ul class="squaks-list" id="squaks-list">
+      <% if squaks.present?  %>
+        <%= render partial: "squaks/squak", collection: squaks, as: :squak %>
 
-      <%= render partial: "squaks/squak", collection: squaks, as: :squak %>
-
-      <li id="squaks-sentinel"
-          data-squakindex-target="sentinel"
-          class="py-2 text-center text-muted list-unstyled">
-        Loading more…
-      </li>
-
+        <li id="squaks-sentinel"
+            data-squakindex-target="sentinel"
+            class="py-2 text-center text-muted list-unstyled">
+          Loading more…
+        </li>
+      <% end %>
     </ul>
 
     <button type="button"

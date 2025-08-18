@@ -1,5 +1,6 @@
 class SquaksController < ApplicationController
   before_action :authenticate_user!
+  before_action :set_squak, only: :destroy
 
   def index
     @circle = getCircle
@@ -11,11 +12,16 @@ class SquaksController < ApplicationController
     # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
     # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
-    @squak = current_user.squaks.create(squak_params)
+    @squak = current_user.squaks.new(squak_params)
 
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
-    if @squak.persisted?
+    # If user attached images but provided no text, set a minimal placeholder
+    if @squak.body.to_s.strip.blank? && Array(params.dig(:squak, :images)).present?
+      @squak.body = "Image is attached"
+    end
+
+    if @squak.save
       squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak })
       # Broadcast a Turbo Stream append that uses your ERB partial
       Turbo::StreamsChannel.broadcast_prepend_to(
@@ -23,9 +29,31 @@ class SquaksController < ApplicationController
         target: "squaks-list",
         html: squak
       )
-      head :ok
+
+      # Turbo Stream response for the submitter (immediate UI update)
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: [turbo_stream.prepend(
+            "squaks-list",
+            partial: "squaks/squak",
+            locals: { squak: @squak }
+          ),
+          turbo_stream.update("squak-editor", ""),
+          turbo_stream.update("squak-body", "")
+          ]
+        end
+
+        format.html { head :ok }
+        format.json { head :ok }
+      end
+
     else
-      head :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream { head :unprocessable_entity }
+        format.html { head :unprocessable_entity }
+        format.json { head :unprocessable_entity }
+      end
+
     end
 
 
@@ -76,6 +104,35 @@ class SquaksController < ApplicationController
     end
   end
 
+  def destroy
+    unless can_destroy?(@squak)
+      return respond_to do |format|
+        format.turbo_stream { head :forbidden }
+        format.html { head :forbidden }
+        format.json { head :forbidden }
+      end
+    end
+
+    @squak.destroy
+    target_id = "squak-#{@squak.id}"
+    # Broadcast removal so other clients update too
+    Turbo::StreamsChannel.broadcast_remove_to("squaks", target: target_id)
+
+    respond_to do |format|
+      # Remove from the submitter’s DOM immediately
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(target_id) }
+
+      # If the request negotiated HTML, still return a turbo-stream so the UI updates
+      format.html do
+        response.headers["Content-Type"] = "text/vnd.turbo-stream.html"
+        render turbo_stream: turbo_stream.remove(target_id)
+      end
+
+      format.json { head :ok }
+    end
+
+  end
+
 
   private
 
@@ -88,5 +145,17 @@ class SquaksController < ApplicationController
     (current_user.circles.find_by(id: circle_id) ||
       current_user.circle_memberships.find_by(circle_id: circle_id)&.circle)
   end
+
+  def set_squak
+    @squak = Squak.find(params[:id])
+  end
+
+  def can_destroy?(squak)
+    return false if squak.blank?
+    return true if squak.user_id == current_user.id
+    owner_id = squak.circle&.user_id
+    owner_id.present? && owner_id == current_user.id
+  end
+
 
 end

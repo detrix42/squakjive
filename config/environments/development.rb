@@ -73,4 +73,5 @@ Rails.application.configure do
   config.assets.debug = false
 
   config.web_console.permissions = "192.168.1.11"
+  config.hosts += ["192.168.1.11", "novasector.net:3000"]
 end

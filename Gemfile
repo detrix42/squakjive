@@ -39,7 +39,7 @@ gem "thruster", require: false
 
 gem "activestorage", "~> 8.0"
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-# gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 1.2"
 
 gem "redis", "~> 4.5"
 # gem "redis-namespace", "~> 1.8"

@@ -3,6 +3,8 @@ class Squak < ApplicationRecord
   belongs_to :circle, optional: true
   has_many_attached :images
 
+  before_validation :strip_inline_images_from_body
+
   validates :body, presence: true, length: { maximum: 10_000 }
 
   scope :for_circle, ->(circle) do
@@ -11,6 +13,15 @@ class Squak < ApplicationRecord
     else
       where(circle: circle).order(created_at: :desc)
     end
+  end
+
+  def strip_inline_images_from_body
+    return if body.blank?
+    # Remove <img src="data:..."> tags entirely
+    self.body = body.gsub(/<img\b[^>]*\bsrc\s*=\s*["']\s*data:[^"']*["'][^>]*>/i, "")
+    # Remove any lingering data: URIs in attributes
+    self.body = body.gsub(/(["'])\s*data:[^"']*\1/i, '""')
+
   end
 
 

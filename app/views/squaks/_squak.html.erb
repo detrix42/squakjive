@@ -1,4 +1,4 @@
-<!-- app/views/squaks/_squak.html.erb -->
+<%# app/views/squaks/_squak.html.erb %>
 
 <li class="squak-item  m-3 px-1 py-1"
     id="squak-<%= squak.id %>"
@@ -10,12 +10,36 @@
       </div>
     </div>
     <div class="col-sm-9 col-md-10 col-lg-11">
-      <div class="ms-1 squak-username">
-        <%= squak.user.username %>
+      <div class="d-flex align-items-start justify-content-between">
+        <div class="ms-1 squak-username">
+          <%= squak.user.username %>
+        </div>
+
+        <% if can_destroy_squak?(current_user, squak) %>
+          <%= link_to squak_path(squak),
+                      data: { turbo_method: :delete, turbo_confirm: "Delete this squak?" },
+                      class: "text-danger text-decoration-none",
+                      title: "Delete squak" do %>
+            <i class="bi bi-trash"></i>
+          <% end %>
+        <% end %>
       </div>
+
       <div class="ms-4 squak-body">
         <%= render_squak_body(squak) %>
       </div>
+
+      <%# Render attached images (pasted/uploaded) %>
+      <% if squak.respond_to?(:images) && squak.images.attached? %>
+        <div class="ms-4 mt-2 d-flex flex-wrap gap-2">
+          <% squak.images.each do |img| %>
+            <% if img.image? %>
+              <%= image_tag img.variant(resize_to_limit: [1000, 1000]).processed, class: "img-fluid rounded", style: "max-width: 280px;" %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
 
       <%# Preview goes here (bottom of squak) %>
       <% urls = all_urls_from_html(squak.body) %>
@@ -32,7 +56,11 @@
 
       <div class="squak-footer">
         <div class="squak-date text-end" style="color: #587a91;">
-          <%= squak.created_at.strftime("%m-%d-%Y %l:%M %P") %>
+          <time data-controller="local-time"
+                data-local-time-format-value="MM-dd-yyyy h:mm a"
+                datetime="<%= squak.created_at.iso8601 %>">
+            <%= squak.created_at.strftime("%m-%d-%Y %l:%M %P") %>
+          </time>
         </div>
       </div>
     </div>
