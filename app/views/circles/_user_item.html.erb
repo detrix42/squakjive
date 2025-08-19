@@ -3,9 +3,11 @@
 <!--  <i class="bi bi-person-circle me-2 text-secondary" style="font-size:1.2rem;"></i>-->
   <%= image_tag "https://robohash.org/#{user.username}?size=30x30", class: "img-fluid" %>
   <span class="fw-semibold text-dark flex-grow-1"><%= user.username %></span>
+  <% if circle_owner?(circle, user) %>
+    <span class="owner-icon"><i class="bi bi-star"></i></span>
+  <% end %>
   <% unless circle.id == 0 %>
-    <% membership = circle.circle_memberships.find_by(user_id: user.id)%>
-    <% if membership.present? %>
+    <% if owner_and_member?(user, circle) %>
 
       <button class="btn btn-sm btn-link text-danger ms-2"
               data-controller="circle-membership"
@@ -14,7 +16,7 @@
               data-action="click->circle-membership#remove_member">
         <i class="bi bi-x-circle"></i>
       </button>
-      <% end %>
     <% end %>
+  <% end %>
 
 </div>

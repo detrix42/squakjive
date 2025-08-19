@@ -1,12 +1,12 @@
 <li id="circle-id-<%= circle.id %>"
-    class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %>"
+    class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %> <%= 'owner' if circle_owner(circle) == current_user.username %>"
     data-circles-target="item"  <%# Fixed from data-circles-circle-selection-target %>
     data-action="click->circles#select"
     data-circles-circle-id="<%= circle.id %>"
     data-circles-circle-name="<%= circle.name %>">
   <div class="row">
     <div class="col-9">
-      <div class="d-flex">
+      <div class="d-flex justify-content-start">
         <div class="d-inline-block circle-name-<%= circle.id %>">
           <% if @selected_circle_id == circle.id %>
             <strong><%= circle.name %></strong>
@@ -14,8 +14,9 @@
             <%= circle.name %>
           <% end %>
         </div>
-        <div id="circle-members-count-<%= circle.id %>">
-          (<%= circle.members_count %>)
+        <div id="circle-members-count-<%= circle.id %>"
+             class="member-count-badge">
+          <%= member_count %>
         </div>
       </div>
     </div>
