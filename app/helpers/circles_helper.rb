@@ -17,6 +17,6 @@ module CirclesHelper
   end
 
   def member_count(circle)
-    circle.members.count
+    circle.all_members.count
   end
 end

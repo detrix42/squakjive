@@ -6,7 +6,7 @@ class Circle < ApplicationRecord
   validates :name, presence: true, uniqueness: { scope: :user_id }  # Unique per user
 
   def members_count
-    members.count
+    all_members.count
   end
 
   def visible_members(current_user)
@@ -16,4 +16,6 @@ class Circle < ApplicationRecord
   def all_members
     User.where(id: (members.ids + [user_id]).uniq)
   end
+
+
 end
