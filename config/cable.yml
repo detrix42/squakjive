@@ -4,6 +4,9 @@
 # to make the web console appear.
 development:
   adapter: async
+  allowed_request_origins:
+    - http://novasector.net:3000
+    - http://localhost:3000
 
 test:
   adapter: test

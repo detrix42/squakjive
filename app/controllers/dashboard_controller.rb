@@ -4,14 +4,6 @@ class DashboardController < ApplicationController
     @username = current_user.username
     @email = current_user.email
 
-
-
-    # @circles = current_user.circles + current_user.joined_circles.uniq
-    # selected_circle_id = current_user.user_profile&.selected_circle
-    # @selected_circle = @circles.find { |c| c.id == selected_circle_id }
-    # @squaks = Squak.for_circle(@selected_circle)
-
-
     all_circles = (current_user.circles + current_user.joined_circles).uniq
     @grouped_circles = all_circles.group_by { |c| c.name.downcase }.transform_values do |group|
         # Prioritize owned circle if duplicates

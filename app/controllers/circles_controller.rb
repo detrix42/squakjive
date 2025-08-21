@@ -36,6 +36,18 @@ class CirclesController < ApplicationController
   end
 
   def destroy
+    circle = current_user.circles.find(params[:circle_id])
+
+    circle.destroy!
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.remove("circle-id-#{circle.id}")
+      end
+      format.html { redirect_to dashboard_path, notice: "Circle removed" }
+    end
+
+
   end
 
 
@@ -61,7 +73,7 @@ class CirclesController < ApplicationController
           render turbo_stream: [
             turbo_stream.remove("modal-user-item-#{@user.id}"),
             turbo_stream.update("circle-members-count-#{@circle.id}",
-                                "(#{@circle.members_count})"),
+                                "#{@circle.members_count}"),
             turbo_stream.append("circle-user-list-#{@circle.id}",
                               render_to_string(partial: "user_item",
                                                locals: { user: @user, circle: @circle }))

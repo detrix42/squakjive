@@ -17,7 +17,8 @@ export default class extends Controller {
     circleName: {
       type: String,
       default: 'No Circle Selected'
-    }
+    },
+    circleId: Number,
   }
 
   connect() {
@@ -46,21 +47,6 @@ export default class extends Controller {
       this.element.innerHTML = this.circleNameValue
       window.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
     }
-
-    // if (this.circleRoleValue === 'editor') {
-    //   const tgtName = this.element.querySelector(`#editor-circle-name`)
-    //   if (tgtName) {
-    //     tgtName.innerHTML = this.circleNameValue
-    //   }
-    //   this.element.addEventListener('circle-selection:circleSelected', this.handleCircleSelection)
-    //
-    //   const form_circle_id = document.querySelector('input[name="squak[circle_id]"]');
-    //   console.log('form circle id on connection:', form_circle_id)
-    //
-    //   if (form_circle_id) {
-    //     form_circle_id.value = this.selectedCircleIdValue;
-    //   }
-    // }
 
 
   }
@@ -235,6 +221,52 @@ export default class extends Controller {
         el.style.maxHeight = 'none';
       }, { once: true });
     }
+
+  }
+
+  async remove_circle(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    console.log('remove circle with id:', event.currentTarget.dataset.circlesCircleId)
+    const id = event.currentTarget.dataset.circlesCircleId
+    const name = this.circleNameValue || "(unnamed circle)"
+
+    if (!id) return
+
+    if (!confirm(`Remove circle "${name}"?\n This cannot be undone.`)) return
+
+    const csrfTkn = document.querySelector('meta[name="csrf-token"]').content
+
+    const resp = await fetch(`/circles/${id}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-Token": csrfTkn,
+        "Accept": "text/vnd.turbo-stream.html"
+      },
+      credentials: "same-origin"
+    })
+
+    if (!resp.ok) {
+      // Optionally show an error message
+      return
+    }
+
+    // IMPORTANT: manually apply the Turbo Stream message
+    const html = await resp.text()
+    if (html && html.includes("<turbo-stream")) {
+      Turbo.renderStreamMessage(html)
+    } else {
+      // Fallback if not a stream: remove the element manually
+      const li = document.getElementById(`circle-id-${id}`)
+      li && li.remove()
+    }
+
+
+    // If the server responds with a Turbo Stream, Turbo will apply it.
+    // Otherwise, you could manually remove the element:
+    // this.element.remove()
+
 
   }
 

@@ -5,8 +5,12 @@
     data-circles-circle-id="<%= circle.id %>"
     data-circles-circle-name="<%= circle.name %>">
   <div class="row">
-    <div class="col-9">
+    <div class="col-8">
       <div class="d-flex justify-content-start">
+        <div id="circle-members-count-<%= circle.id %>"
+             class="member-count-badge">
+          <%= member_count(circle) %>
+        </div>
         <div class="d-inline-block circle-name-<%= circle.id %>">
           <% if @selected_circle_id == circle.id %>
             <strong><%= circle.name %></strong>
@@ -14,21 +18,25 @@
             <%= circle.name %>
           <% end %>
         </div>
-        <div id="circle-members-count-<%= circle.id %>"
-             class="member-count-badge">
-          <%= member_count(circle) %>
-        </div>
+
       </div>
     </div>
-    <div class="col-3">
-      <div class="row circle-action-panel">
+    <div class="col-4">
+      <div class="d-flex justify-content-end circle-action-panel">
         <% unless circle.id == 0 %>
-          <div class="ms-auto circle-add-user-icon"
+          <div class=" circle-add-user-icon"
                id="add-user-icon-<%= circle.id %>"
                data-action="click->circles#add_user">
             <i class="icon bi bi-person-plus ms-auto"></i>
           </div>
         <% end %>
+        <div class="circle-rem-user-icon"
+             id="remove-circle-icon-<%= circle.id %>"
+             data-circles-circle-id="<%= circle.id %>"
+             data-circles-circle-name-value="<%= circle.name %>"
+             data-action="click->circles#remove_circle">
+          <i class="icon bi bi-trash ms-auto"></i>
+        </div>
       </div>
     </div>
   </div>
