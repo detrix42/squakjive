@@ -1,3 +1,5 @@
+$fg-color: #ffeeb4;
+
 #circles-column-sidebar {
   position: sticky;
   max-height: 100vh;
@@ -98,8 +100,12 @@
       }
     }
 
+
+
+
+
     .selected {
-      box-shadow: 0 0 10px #ffeeb4;
+      box-shadow: 0 0 10px $fg-color;
       height: auto;
     }
 
@@ -188,6 +194,53 @@
     }
 
   }
+
+// add user dialog styles
+  #search-add-user-modal-close-button {
+    opacity: 1;
+    background-image:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' \
+            viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath \
+            d='M.293 1.707 6.586 8 .293 14.293l1.414 1.414L8 9.414l6.293 6.293 \
+            1.414-1.414L9.414 8l6.293-6.293L14.293.293 8 6.586 1.707.293z'/%3E%3C/svg%3E");
+  }
+
+/* Give everyone a top border by default */
+.list-group .list-group-item { border-top-width: 1px; }
+
+/* Collapse only between two adjacent visible items */
+.list-group .list-group-item:not(.d-none) + .list-group-item:not(.d-none) {
+  border-top-width: 0 !important;
+}
+
+/* Restore top border for the first visible item */
+.list-group .list-group-item.first-visible {
+  border-top-width: 1px !important;
+  border-top-left-radius: var(--bs-list-group-border-radius, .375rem) !important;
+  border-top-right-radius: var(--bs-list-group-border-radius, .375rem) !important;
+}
+
+/* Restore bottom border + bottom radii for the last visible item */
+.list-group .list-group-item.last-visible {
+  border-bottom-width: 1px !important;
+  border-bottom-left-radius: var(--bs-list-group-border-radius, .375rem) !important;
+  border-bottom-right-radius: var(--bs-list-group-border-radius, .375rem) !important;
+}
+
+/* Ensure interior visible items have no rounding */
+.list-group .list-group-item:not(.first-visible):not(.last-visible) {
+  border-radius: 0;
+}
+
+/* When there is exactly one visible item, give it full rounding */
+.list-group .list-group-item.first-visible.last-visible {
+  border-radius: var(--bs-list-group-border-radius, .375rem) !important;
+}
+
+.list-group-item-action:not(.active):hover, .list-group-item-action:not(.active):focus {
+  background-color: #323e49;
+  color: #5cd1c0;
+}
 
 .tooltip-colors {
   --bs-tooltip-bg: #21255e;     /* background */

@@ -2,6 +2,8 @@ import {Controller} from "@hotwired/stimulus"
 import {Modal} from "bootstrap"
 
 export default class extends Controller {
+  static targets = ["userItem", "emptyState"]
+
   connect() {
     this.modal = new Modal(this.element)
     this.modal.show()
@@ -17,6 +19,33 @@ export default class extends Controller {
       this.modal.hide()
     }
     this.element.innerHTML = ""
+  }
+
+  applyFilter(event) {
+    const query = (event.detail?.query || "").toLowerCase()
+    const visible = []
+
+    this.userItemTargets.forEach((el) => {
+      const text = (el.textContent || "").toLowerCase()
+      const match = !query || text.includes(query)
+      el.classList.toggle("d-none", !match)
+      if (match) visible.push(el)
+    })
+
+    // Clear old markers
+    this.userItemTargets.forEach(el => {
+      el.classList.remove("first-visible", "last-visible")
+    })
+
+    // Mark first/last visible for rounded corners + borders
+    if (visible.length > 0) {
+      visible[0].classList.add("first-visible")
+      visible[visible.length - 1].classList.add("last-visible")
+    }
+
+    if (this.hasEmptyStateTarget) {
+      this.emptyStateTarget.classList.toggle("d-none", visible.length !== 0)
+    }
   }
 
 

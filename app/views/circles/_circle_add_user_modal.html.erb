@@ -1,17 +1,33 @@
 <%= turbo_frame_tag "circle-add-user-modal" do %>
   <div class="modal fade" id="circleAddUserModal"
        data-controller="circle-add-user-modal"
+       data-action="user-search:filter->circle-add-user-modal#applyFilter"
        tabindex="-1" >
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="d-flex justify-content-between modal-header">
           <h5 class="modal-title">Add User to Circle</h5>
-          <button type="button" class="btn-close" data-action="click->circle-add-user-modal#close" aria-label="Close"></button>
+          <button type="button" class="btn-close"
+                  id="search-add-user-modal-close-button"
+                  data-action="click->circle-add-user-modal#close"
+                  aria-label="Close"></button>
+
         </div>
+
         <div class="modal-body">
-          <div class="list-group">
-            <% @available_users.each do |user| %>
-              <div class="list-group-item list-group-item-action"
+          <div class="d-flex flex-column px-2 mb-2"
+               id="user-search-row"
+               data-controller="add-user-search" >
+            <span>Filter Users:</span>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Enter user's name"
+                   data-action="input->add-user-search#onInput" />
+
+          </div>
+          <div class="mt-2 list-group">
+            <% @available_users.each_with_index do |user, idx| %>
+              <div class="<%= list_group_item_classes(idx, @available_users) %>"
                    id="modal-user-item-<%= user.id %>"
                    data-action="click->circle-add-user-modal#addUserToCircle"
                    data-user-id="<%= user.id %>"
