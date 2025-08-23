@@ -11,8 +11,6 @@ module CirclesHelper
   end
 
   def circle_owner?(circle, user)
-    cuid = circle.user_id
-    uid = user.id
     circle.user_id == user.id
   end
 

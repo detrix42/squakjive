@@ -270,5 +270,13 @@ export default class extends Controller {
 
   }
 
+  remove_self_from_circle(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+
+    const circleId = event.currentTarget.dataset.circlesCircleId
+  }
+
 
 }

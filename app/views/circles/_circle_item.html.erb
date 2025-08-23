@@ -30,13 +30,19 @@
             <i class="icon bi bi-person-plus ms-auto"></i>
           </div>
         <% end %>
-        <div class="circle-rem-user-icon"
-             id="remove-circle-icon-<%= circle.id %>"
-             data-circles-circle-id="<%= circle.id %>"
-             data-circles-circle-name-value="<%= circle.name %>"
-             data-action="click->circles#remove_circle">
-          <i class="icon bi bi-trash ms-auto"></i>
-        </div>
+
+
+
+        <% if circle_owner(circle) == current_user.username %>
+          <div class="circle-remove-icon"
+               id="remove-circle-icon-<%= circle.id %>"
+               data-circles-circle-id="<%= circle.id %>"
+               data-circles-circle-name-value="<%= circle.name %>"
+               data-action="click->circles#remove_circle">
+            <i class="icon bi bi-trash ms-auto"></i>
+          </div>
+        <% end %>
+
       </div>
     </div>
   </div>
@@ -45,5 +51,24 @@
     <%= render partial: 'circles/user_item',
                collection: circle.visible_members(current_user), as: :user,
                locals: { circle: circle } %>
+    <% unless circle_owner?(circle, current_user) %>
+      <li class="d-flex justify-content-end footer-row mt-2"    >
+
+        <div class="circle-rem-self-icon"
+             id="remove-self-icon-<%= circle.id %>"
+             data-circles-circle-id="<%= circle.id %>"
+             data-circles-circle-name-value="<%= circle.name %>"
+             data-controller="tooltips"
+             data-tooltips-content-value="Click to leave this circle"
+             data-tooltips-placement-value="left"
+             data-action="click->circles#remove_self_from_circle mouseenter->tooltips#show mouseleave->tooltips#hide">
+          <i class="icon bi bi-person-dash ms-auto"></i>
+        </div>
+      </li>
+    <% end %>
+
   </ul>
+
+
+
 </li>
