@@ -58,10 +58,10 @@
              id="remove-self-icon-<%= circle.id %>"
              data-circles-circle-id="<%= circle.id %>"
              data-circles-circle-name-value="<%= circle.name %>"
-             data-controller="tooltips"
-             data-tooltips-content-value="Click to leave this circle"
+             data-controller="tooltips circle-membership"
+             data-tooltips-content-value="Click to remove yourself from this circle"
              data-tooltips-placement-value="left"
-             data-action="click->circles#remove_self_from_circle mouseenter->tooltips#show mouseleave->tooltips#hide">
+             data-action="click->circle-membership#remove_self_from_circle mouseenter->tooltips#show mouseleave->tooltips#hide">
           <i class="icon bi bi-person-dash ms-auto"></i>
         </div>
       </li>

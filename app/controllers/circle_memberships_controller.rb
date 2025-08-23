@@ -28,6 +28,33 @@ class CircleMembershipsController < ApplicationController
 
   end
 
+  def destroy_self
+    circle_id = params[:circle_id] || params.dig(:circle_membership, :circle_id)
+    return head :unprocessable_entity unless circle_id.present?
+
+    circle = Circle.find_by(id: circle_id)
+    return head :not_found unless circle
+
+    membership = circle.circle_memberships.find_by(user_id: current_user.id)
+    return head :not_found unless membership
+
+    membership.destroy!
+
+    # If the user had this circle selected, clear/update their selected circle
+    if current_user.user_profile.selected_circle.to_i == circle.id
+      fallback_id = current_user.selected_circle&.id || 0
+      current_user.user_profile.update(selected_circle: fallback_id)
+    end
+
+    respond_to do |format|
+      format.html { redirect_to dashboard_path, notice: "You left the circle." }
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.remove("circle-id-#{circle.id}")
+      end
+    end
+  end
+
+
   private
 
   def circle_membership_params

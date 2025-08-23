@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   end
 
   delete "/circle_memberships", to: "circle_memberships#destroy"
+  delete "/circle_memberships/self", to: "circle_memberships#destroy_self"
 
   devise_for :users
   get "main/home"

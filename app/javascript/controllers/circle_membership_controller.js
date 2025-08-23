@@ -11,6 +11,10 @@ static values = {
     }
   }
 
+  connect() {
+    console.log("circle membership controller connected")
+  }
+
   async remove_member() {
     const url = '/circle_memberships'
     const data = {circle_membership: {
@@ -49,5 +53,44 @@ static values = {
 
     }
   }
+
+  remove_self_from_circle = async (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    console.log('remove self from circle action started')
+
+    const circleId = event.currentTarget.dataset.circlesCircleId
+    if (!circleId) return
+
+    if (!confirm("Leave this circle?")) return
+
+    try {
+      const csrf = document.querySelector('meta[name="csrf-token"]').content
+      const resp = await fetch("/circle_memberships/self", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+          "Accept": "text/vnd.turbo-stream.html"
+        },
+        body: JSON.stringify({ circle_id: circleId }),
+        credentials: "same-origin"
+      })
+
+      if (!resp.ok) {
+        console.warn("Failed to leave circle", await resp.text())
+        return
+      }
+
+      const html = await resp.text()
+      if (html && html.includes("<turbo-stream")) {
+        Turbo.renderStreamMessage(html)
+      }
+    } catch (e) {
+      console.error("Network error leaving circle", e)
+    }
+  }
+
 
 }
