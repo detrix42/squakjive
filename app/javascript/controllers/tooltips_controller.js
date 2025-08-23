@@ -32,11 +32,22 @@ export default class extends Controller {
   }
 
   show() {
-    if (this.tooltip) this.tooltip.show()
+    const t = this.tooltip || Tooltip.getInstance(this.element)
+    t && t.show()
+    // if (this.tooltip) this.tooltip.show()
   }
 
   hide() {
-    if (this.tooltip) this.tooltip.hide()
+    const t = this.tooltip || Tooltip.getInstance(this.element)
+    if (!!t) return
+
+    try {
+      this.tooltip.hide()
+      this.tooltip.dispose()
+    } catch (e) {
+      console.error("Error disposing tooltip:", e)
+    }
+
   }
 
   // Optional: toggle via click instead of hover

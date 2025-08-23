@@ -12,7 +12,6 @@ static values = {
   }
 
   connect() {
-    console.log("circle membership controller connected")
   }
 
   async remove_member() {
@@ -57,8 +56,6 @@ static values = {
   remove_self_from_circle = async (event) => {
     event.preventDefault()
     event.stopPropagation()
-
-    console.log('remove self from circle action started')
 
     const circleId = event.currentTarget.dataset.circlesCircleId
     if (!circleId) return
