@@ -1,3 +1,5 @@
+<%= turbo_stream_from [circle, :members] %>
+
 <li id="circle-id-<%= circle.id %>"
     class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %> <%= 'owner' if circle_owner(circle) == current_user.username %>"
     data-circles-target="item"  <%# Fixed from data-circles-circle-selection-target %>
@@ -46,11 +48,11 @@
       </div>
     </div>
   </div>
-  <ul class="circle-user-list" id="circle-user-list-<%= circle.id %>"
+  <ul class="circle-user-list" id="circle-<%= circle.id %>-user-list"
       data-circles-target="user-list">  <%# Moved to <ul>, added target %>
     <%= render partial: 'circles/user_item',
                collection: circle.visible_members(current_user), as: :user,
-               locals: { circle: circle } %>
+               locals: { circle: circle, viewer: current_user } %>
     <% unless circle_owner?(circle, current_user) %>
       <li class="d-flex justify-content-end footer-row mt-2"    >
 

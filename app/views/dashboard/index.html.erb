@@ -20,16 +20,13 @@
       <%= render partial: "user_info_card" %>
 
       <%= turbo_frame_tag "invite-to-circle-frame" do %>
-        <%= turbo_stream_from "user-invites-#{current_user.id}" %>
+        <%= turbo_stream_from [current_user, :user_invites] %>
 
-        <% if @invites.present? %>
-          <%= turbo_stream_from "user-invites-#{current_user.id}" %>
-          <div class="user-invites-list">
+        <div id="user-invites-list">
+          <% if @invites.present? %>
             <%= render partial: "dashboard/user_invites", collection: @invites, as: :invite %>
-          </div>
-        <% else %>
-          invite to circle coming soon
-        <% end %>
+          <% end %>
+        </div>
       <% end %>
     </div>
   </div>

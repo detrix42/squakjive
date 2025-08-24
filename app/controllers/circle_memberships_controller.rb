@@ -1,5 +1,8 @@
 
 class CircleMembershipsController < ApplicationController
+
+
+
   def destroy
     _params = circle_membership_params
 

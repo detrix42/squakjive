@@ -1,7 +1,8 @@
 module CirclesHelper
-  def owner_and_member?(user, circle)
-    membership = circle.circle_memberships.find_by(user_id: user.id)
-    membership.present? && current_user.id == circle.user_id && user.id != circle.user_id
+  def owner_and_member?(viewer, user, circle)
+    return false unless circle.user_id == viewer.id
+    return false if user.id == circle.user_id
+    circle.circle_memberships.exists?(user_id: user.id)
 
   end
 

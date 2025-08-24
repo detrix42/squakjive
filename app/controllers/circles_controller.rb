@@ -76,8 +76,8 @@ class CirclesController < ApplicationController
             turbo_stream.remove("modal-user-item-#{@user.id}"),
             turbo_stream.update("circle-members-count-#{@circle.id}",
                                 "#{@circle.members_count}"),
-            turbo_stream.append("circle-user-list-#{@circle.id}",
-                              render_to_string(partial: "user_item",
+            turbo_stream.append("circle-#{@circle.id}-user-list",
+                              render_to_string(partial: "circles/user_item",
                                                locals: { user: @user, circle: @circle }))
           ]
         end

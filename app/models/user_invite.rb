@@ -5,7 +5,7 @@ class UserInvite < ApplicationRecord
   # Ensure these partial paths and target IDs match your views
   after_create_commit do
     broadcast_append_to(
-      "user-invites-#{user_id}",
+      [user, :user_invites],
       target: "user-invites-list",
       partial: "dashboard/user_invites",
       locals: { invite: self }
@@ -14,7 +14,7 @@ class UserInvite < ApplicationRecord
 
   after_destroy_commit do
     broadcast_remove_to(
-      "user-invites-#{user_id}",
+      [user, :user_invites],
       target: self
     )
   end
