@@ -9,8 +9,11 @@ class User < ApplicationRecord
   has_many :circle_memberships, dependent: :destroy
   has_many :joined_circles, through: :circle_memberships, source: :circle  # Circles they're in
   has_many :squaks, dependent: :destroy
-  validates :username, presence: true, uniqueness: { case_sensitive: false }
+  has_many :user_invites, dependent: :destroy
+
   has_one :user_profile, dependent: :destroy
+
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
 
   after_create :create_default_profile
 

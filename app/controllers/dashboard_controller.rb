@@ -3,6 +3,9 @@ class DashboardController < ApplicationController
   def index
     @username = current_user.username
     @email = current_user.email
+    @invites = UserInvite
+                 .where(user_id: current_user.id)
+                 .includes(circle: :user)
 
     all_circles = (current_user.circles + current_user.joined_circles).uniq
     @grouped_circles = all_circles.group_by { |c| c.name.downcase }.transform_values do |group|
@@ -20,10 +23,9 @@ class DashboardController < ApplicationController
 
 
     if @selected_circle
-      logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
+      @selected_circle_name = @selected_circle.name
+      # logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
     end
-
-    @selected_circle_name = @selected_circle.name if @selected_circle
 
   end
 

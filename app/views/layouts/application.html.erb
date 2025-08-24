@@ -24,14 +24,14 @@
   </head>
 
   <body style="visibility: hidden;">
-  <% if flash.any? %>
-    <div class="container flash-msg" style="max-width: 580px">
-      <%= render "shared/flashes" %>
+
+  <div class="container flash-msg" style="max-width: 580px">
+    <div id="flash">
+      <%= render "shared/flashes" if flash.any? %>
     </div>
-  <% end %>
+  </div>
 
     <%= yield %>
-    </div>
 
   <%=  turbo_frame_tag "new-circle-modal" %>
   <%=  turbo_frame_tag "circle-add-user-modal" %>

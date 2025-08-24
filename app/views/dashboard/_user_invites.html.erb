@@ -1,0 +1,21 @@
+<div class="card mb-3" id="<%= dom_id(invite) %>">
+  <div class="card-body">
+    <h6 class="card-title">You have been invited to join the circle </h6>
+    <p class="card-text">
+      <strong><%= invite.circle.name %></strong>
+    </p>
+    <div class="card-footer">
+      from <strong><%= invite.circle.user.username %></strong>
+    </div>
+    <div class="d-flex gap-2">
+      <%= button_to "Accept",
+                    accept_user_invite_path(invite),
+                    method: :post,
+                    class: "btn btn-sm btn-primary" %>
+      <%= button_to "Decline",
+                    decline_user_invite_path(invite),
+                    method: :delete,
+                    class: "btn btn-sm btn-outline-secondary" %>
+    </div>
+  </div>
+</div>

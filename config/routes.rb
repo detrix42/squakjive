@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+
   get "link_preview/show"
 
   get "link_preview", to: "link_preview#show"
@@ -17,7 +18,13 @@ Rails.application.routes.draw do
       get :add_user_modal
       get :squaks
       post :add_user, param: :user_id
+      post :invite_user
     end
+  end
+
+  resources :user_invites, only: [:destroy] do
+    post :accept, on: :member
+    delete :decline, on: :member
   end
 
   delete "/circle_memberships", to: "circle_memberships#destroy"

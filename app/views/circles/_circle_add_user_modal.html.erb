@@ -29,7 +29,7 @@
             <% @available_users.each_with_index do |user, idx| %>
               <div class="<%= list_group_item_classes(idx, @available_users) %>"
                    id="modal-user-item-<%= user.id %>"
-                   data-action="click->circle-add-user-modal#addUserToCircle"
+                   data-action="click->circle-add-user-modal#inviteUserToCircle"
                    data-user-id="<%= user.id %>"
                    data-circle-add-user-modal-target="userItem"
               >

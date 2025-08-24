@@ -54,7 +54,6 @@ export default class extends Controller {
     const userId = event.currentTarget.dataset.userId
     const circleId = document.querySelector('.circle-item.selected').dataset.circlesCircleId
 
-    console.log("Adding user", userId, "to circle", circleId)
     try {
       const res = await fetch(`/circles/${circleId}/add_user`, {
         method: 'POST',
@@ -84,4 +83,38 @@ export default class extends Controller {
       alert('Network error adding user to circle')
     }
   }
+
+  async inviteUserToCircle(event) {
+    event.preventDefault()
+    const userId = event.currentTarget.dataset.userId
+    const circleId = document.querySelector('.circle-item.selected').dataset.circlesCircleId
+
+    try {
+      const res = await fetch(`/circles/${circleId}/invite_user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/vnd.turbo-stream.html',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({user_id: userId})
+      })
+
+      if (!res.ok) {
+        alert('Error sending invite')
+        return
+      }
+
+      const html = await res.text()
+      if (html) Turbo.renderStreamMessage(html)
+
+    } catch (error) {
+      console.log('network error-> add user error:', error)
+      alert('Network error adding user to circle')
+    }
+  }
+
+
+
+
 }

@@ -18,6 +18,19 @@
     </div>
     <div class="col-3" style="background-color: #343934; height: 100vh;">
       <%= render partial: "user_info_card" %>
+
+      <%= turbo_frame_tag "invite-to-circle-frame" do %>
+        <%= turbo_stream_from "user-invites-#{current_user.id}" %>
+
+        <% if @invites.present? %>
+          <%= turbo_stream_from "user-invites-#{current_user.id}" %>
+          <div class="user-invites-list">
+            <%= render partial: "dashboard/user_invites", collection: @invites, as: :invite %>
+          </div>
+        <% else %>
+          invite to circle coming soon
+        <% end %>
+      <% end %>
     </div>
   </div>
 </div>

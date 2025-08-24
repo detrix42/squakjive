@@ -8,7 +8,7 @@
   <% if current_user.circles.empty? && current_user.joined_circles.empty? %>
     <p>You have no circles yet. Create one or join one to start!</p>
   <% else %>
-    <ul class="overflow-x-hidden overflow-y-auto circles-index"
+    <ul class="circles-index"
         id="circles-list" data-circles-target="user-list">
       <%= render partial: "circles/circle_item", collection: @grouped_circles, as: :circle %>
     </ul>

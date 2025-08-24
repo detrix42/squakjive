@@ -3,6 +3,8 @@ class Circle < ApplicationRecord
   has_many :circle_memberships, dependent: :destroy
   has_many :members, through: :circle_memberships, source: :user  # Members are other users
   has_many :squaks, dependent: :destroy  # Squaks posted to this circle
+  has_many :user_invites, dependent: :destroy
+
   validates :name, presence: true, uniqueness: { scope: :user_id }  # Unique per user
 
   def members_count
@@ -15,6 +17,10 @@ class Circle < ApplicationRecord
 
   def all_members
     User.where(id: (members.ids + [user_id]).uniq)
+  end
+
+  def circle_invites
+    user_invites.where(circle_id: id)
   end
 
 

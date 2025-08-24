@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_12_172758) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_23_205505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -69,6 +69,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_12_172758) do
     t.index ["user_id"], name: "index_squaks_on_user_id"
   end
 
+  create_table "user_invites", force: :cascade do |t|
+    t.bigint "circle_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["circle_id", "user_id"], name: "index_user_invites_on_circle_id_and_user_id", unique: true
+    t.index ["circle_id"], name: "index_user_invites_on_circle_id"
+    t.index ["user_id"], name: "index_user_invites_on_user_id"
+  end
+
   create_table "user_profiles", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "selected_circle"
@@ -98,5 +108,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_12_172758) do
   add_foreign_key "circles", "users"
   add_foreign_key "squaks", "circles"
   add_foreign_key "squaks", "users"
+  add_foreign_key "user_invites", "circles"
+  add_foreign_key "user_invites", "users"
   add_foreign_key "user_profiles", "users"
 end
