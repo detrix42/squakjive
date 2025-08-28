@@ -6,8 +6,76 @@ export default class extends Controller {
     circleId: Number
   }
 
+  initialize() {
+    console.log('squak editor initializing')
+    // Register underline once
+    if (window.Trix && !Trix.config.textAttributes.underline) {
+      console.log('registering underline')
+      Trix.config.textAttributes.underline = {
+        tagName: "u",
+        inheritable: true,
+        parser: el => el.tagName === "U" || el.style?.textDecoration?.includes("underline")
+      }
+    }
+
+    this.insertUnderlineIntoToolbar = (toolbarElement) => {
+      if (!toolbarElement) return
+      const group = toolbarElement.querySelector(".trix-button-group--text-tools")
+      if (!group || group.querySelector(".trix-button--icon-underline")) return
+
+      const btn = document.createElement("button")
+      btn.type = "button"
+      btn.className = "trix-button trix-button--icon trix-button--icon-underline"
+      btn.setAttribute("data-trix-attribute", "underline")
+      btn.setAttribute("data-trix-key", "u")
+      btn.setAttribute("aria-label", "Underline")
+      btn.setAttribute("title", "Underline")
+      btn.setAttribute("tabindex", "-1")
+
+      // Place after Italic if present
+      const italicBtn = group.querySelector('[data-trix-attribute="italic"]')
+      if (italicBtn) {
+        const afterItalic = italicBtn.nextSibling
+        if (afterItalic) {
+          group.insertBefore(btn, afterItalic)
+        } else {
+          group.appendChild(btn)
+        }
+      } else {
+        group.appendChild(btn)
+      }
+    }
+
+    // Bound event handlers so we can remove them later
+    this.onToolbarSetup = (event) => {
+      // Some builds dispatch detail.toolbarElement; others pass toolbarElement on the event object
+      const toolbar = event.detail?.toolbarElement || event.toolbarElement
+      if (!toolbar) return
+      console.log('toolbar setup event caught')
+      this.insertUnderlineIntoToolbar(toolbar)
+    }
+
+    this.onTrixInitialize = (event) => {
+      // trix-initialize fires on the editor element
+      const editorEl = event.target
+      const toolbar = editorEl && editorEl.toolbarElement
+      if (!toolbar) return
+      console.log('trix initialize event caught')
+      this.insertUnderlineIntoToolbar(toolbar)
+    }
+  }
+
   connect() {
     console.log("Squakeditor controller connected")
+
+    // Attach listeners (do this in connect so they are reattached on Turbo visits)
+    document.addEventListener("trix-toolbar-setup", this.onToolbarSetup)
+    document.addEventListener("trix-initialize", this.onTrixInitialize)
+
+    // Immediate pass for already-present toolbars (covers SSR or late binding)
+    document.querySelectorAll("trix-toolbar").forEach((tb) => {
+      this.insertUnderlineIntoToolbar(tb)
+    })
 
     this.element.addEventListener("trix-attachment-add", (event) => {
       const { attachment } = event;
@@ -68,9 +136,17 @@ export default class extends Controller {
 
 
   disconnect() {
+    // Remove toolbar listener to prevent duplicates on reconnection
+    if (this.onToolbarSetup) {
+      document.removeEventListener("trix-toolbar-setup", this.onToolbarSetup)
+    }
+
+
     if (this.hasSquakEditorTarget) {
 
     }
+
+
 
     const formEl = this.element.closest("form")
     if (formEl) {
