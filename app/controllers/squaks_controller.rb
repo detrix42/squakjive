@@ -1,10 +1,22 @@
 class SquaksController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_squak, only: :destroy
+  before_action :set_squak, only: [:show, :destroy]
 
   def index
     @circle = getCircle
     @squaks = Squak.for_circle(@circle).reorder(id: :desc).limit(20)
+  end
+
+  def show
+    # Add circle-based authorization, e.g., if current_user.in_circle_for?(@squak)
+    #   render :show
+    # else
+    #   redirect_to root_path, alert: "Not authorized"
+    # end
+    # method squaks below returns all or a turbo stream
+    # turbo stream renders a single squak that prepends to the list
+    # reflecting whats in the database
+    # this show method will probably be deleted later.
   end
 
   def create

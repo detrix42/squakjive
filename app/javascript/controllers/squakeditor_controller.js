@@ -9,56 +9,66 @@ export default class extends Controller {
   connect() {
     console.log("Squakeditor controller connected")
 
-    // Prefer paragraphs over divs when pressing Enter
-    try {
-      document.execCommand("defaultParagraphSeparator", false, "p")
-    } catch (_) {}
+    this.element.addEventListener("trix-attachment-add", (event) => {
+      const { attachment } = event;
+      if (attachment.file) {
+        this.uploadAttachment(attachment);
+      }
+    });
 
-    this.seenUrls = new Set()
-    // Initial sync if editor has preloaded content
-    this.sync()
-
-    // Keep track of selection so toolbar buttons work
-    this.savedRange = null
-    this.squakEditorTarget.addEventListener("keyup", this.saveSelection)
-    this.squakEditorTarget.addEventListener("mouseup", this.saveSelection)
-    this.squakEditorTarget.addEventListener("mouseleave", this.saveSelection)
-    this.squakEditorTarget.addEventListener("blur", this.saveSelection)
-
-    // Keep hidden input in sync
-    this.squakEditorTarget.addEventListener("input", this.sync)
-    this.squakEditorTarget.addEventListener("paste", () => {
-      requestAnimationFrame(() => {
-        this.sync()
-        this.scanForUrlsDebounced()
-      })
-    })
-
-    // Also scan as user types, but debounced
-    this._debouncedScan = this.debounce(() => this.scanForUrls(), 400)
-    this.squakEditorTarget.addEventListener("input", this._debouncedScan)
-
-
-    // Clear previews on Turbo submit start
-    this._boundOnSubmitStart = this.onSubmitStart.bind(this)
-    this._boundOnSubmitEnd = this.onSubmitEnd.bind(this)
-
-    const formEl = this.element.closest("form")
-    if (formEl) {
-      formEl.addEventListener("turbo:submit-start", this._boundOnSubmitStart)
-      formEl.addEventListener("turbo:submit-end", this._boundOnSubmitEnd)
-    }
+    // Optional: File validation
+    this.element.addEventListener("trix-file-accept", (event) => {
+      const { file } = event;
+      if (file.size > 100 * 1024 * 1024) {
+        event.preventDefault();
+        alert("File too large!");
+      }
+    });
 
 
   }
 
+  uploadAttachment(attachment) {
+    const file = attachment.file;
+    const formData = new FormData();
+    formData.append("Content-Type", file.type);
+    formData.append("attachment[file]", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/attachments", true);
+    xhr.setRequestHeader("X-CSRF-Token", document.querySelector('meta[name="csrf-token"]').content);
+
+    xhr.upload.onprogress = (event) => {
+      const progress = (event.loaded / event.total) * 100;
+      attachment.setUploadProgress(progress);
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        let attributes = { href: data.url }; // Base for all
+
+        if (data.content_type.startsWith("image/")) {
+          attributes.url = data.url; // Trix handles <img> preview
+        } else if (data.content_type.startsWith("video/")) {
+          attributes.content = `<figure class="attachment attachment--preview attachment--${data.filename.split('.').pop()}"><video src="${data.url}" controls width="100%" height="auto"></video><figcaption>${data.filename}</figcaption></figure>`;
+        } else {
+          attributes.content = `<figure class="attachment attachment--file"><a href="${data.url}">${data.filename} (${data.content_type})</a></figure>`;
+        }
+
+        attachment.setAttributes(attributes);
+      } else {
+        attachment.remove();
+        alert("Upload failed!");
+      }
+    };
+
+    xhr.send(formData);
+  }
+
+
   disconnect() {
     if (this.hasSquakEditorTarget) {
-      this.squakEditorTarget.removeEventListener("keyup", this._boundSaveSelection)
-      this.squakEditorTarget.removeEventListener("mouseup", this._boundSaveSelection)
-      this.squakEditorTarget.removeEventListener("mouseleave", this._boundSaveSelection)
-      this.squakEditorTarget.removeEventListener("blur", this._boundSaveSelection)
-      this.squakEditorTarget.removeEventListener("input", this._boundSync)
 
     }
 

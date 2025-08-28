@@ -1,0 +1,6 @@
+@import url("https://unpkg.com/trix@2.0.8/dist/trix.css");
+
+
+trix-toolbar .trix-button::before {
+  filter: invert(1) hue-rotate(45deg) saturate(1.9) brightness(1.3);
+}

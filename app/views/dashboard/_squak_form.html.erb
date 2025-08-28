@@ -9,10 +9,19 @@
   </div>
 </div>
 <%= form_with model: Squak.new, id: "squak-form",
-              data: {action: "submit->paste-image#beforeSubmit"} do |f| %>
+              data: {
+                action: "submit->paste-image#beforeSubmit",
+                controller: "squakeditor paste-image",
+              } do |f| %>
 
   <%# Wrapper runs both controllers so paste-image can access its targets %>
   <%# and squakeditor can access its targets %>
+  <trix-editor
+    data-controller="squakeditor"
+    toolbar="squak-toolbar"
+  >
+  </trix-editor>
+  <trix-toolbar id="squak-toolbar" data-controller="squakeditor"></trix-toolbar>
   <div class="row align-items-start"
        data-squakeditor-circle-id-value="<%= circle_id %>"
        data-controller="squakeditor paste-image">
