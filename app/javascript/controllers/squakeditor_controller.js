@@ -1,13 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
-  static targets = ["squakEditor", "circleId", "html", "previews"]
+  static targets = []
 
   static values = {
     circleId: Number
   }
 
   initialize() {
-    console.log('squak editor initializing')
     // Register underline once
     if (window.Trix && !Trix.config.textAttributes.underline) {
       console.log('registering underline')
@@ -46,22 +45,63 @@ export default class extends Controller {
       }
     }
 
-    // Bound event handlers so we can remove them later
+    // Toolbar setup hooks
     this.onToolbarSetup = (event) => {
-      // Some builds dispatch detail.toolbarElement; others pass toolbarElement on the event object
       const toolbar = event.detail?.toolbarElement || event.toolbarElement
-      if (!toolbar) return
-      console.log('toolbar setup event caught')
-      this.insertUnderlineIntoToolbar(toolbar)
+      if (toolbar) this.insertUnderlineIntoToolbar(toolbar)
+    }
+    this.onTrixInitialize = (event) => {
+      const toolbar = event.target?.toolbarElement
+      if (toolbar) this.insertUnderlineIntoToolbar(toolbar)
     }
 
-    this.onTrixInitialize = (event) => {
-      // trix-initialize fires on the editor element
-      const editorEl = event.target
-      const toolbar = editorEl && editorEl.toolbarElement
-      if (!toolbar) return
-      console.log('trix initialize event caught')
-      this.insertUnderlineIntoToolbar(toolbar)
+    // Debounced linkify on content changes
+    this.onTrixChange = this.debounce(() => {
+      const editor = this.element.editor
+      if (!editor) return
+
+      const [caret] = editor.getSelectedRange()
+      const docText = editor.getDocument().toString()
+
+      const hit = this.findLatestUrlEndingAtOrBefore(docText, caret)
+      if (!hit) return
+
+      // Skip if we've already processed this exact span
+      this._seenLinks ||= new Set()
+      const key = `${hit.start}-${hit.end}-${hit.url}`
+      if (this._seenLinks.has(key)) return
+
+      // If the selection is already part of a link with same href, skip
+      if (this.rangeIsLinked(editor, hit.start, hit.end, hit.url)) {
+        this._seenLinks.add(key)
+        return
+      }
+
+      // Linkify with visible text = URL first
+      this.replaceRangeWithLink(editor, hit.start, hit.end, hit.url, hit.url)
+      this._seenLinks.add(key)
+
+      // Optional: upgrade visible text to a fetched title shortly after
+      this.fetchTitle(hit.url).then((title) => {
+        const safeTitle = (title || "").trim()
+        if (!safeTitle || safeTitle === hit.url) return
+        // Best-effort: re-apply at the original span
+        // If the doc shifted heavily, this may miss; acceptable for quick follow-up
+        this.replaceRangeWithLink(editor, hit.start, hit.start + safeTitle.length, hit.url, safeTitle)
+      }).catch(() => {})
+    }, 250)
+
+    this.onAttachmentAdd = (event) => {
+      const { attachment } = event
+      if (attachment.file) this.uploadAttachment(attachment)
+    }
+
+    this.onFileAccept = (event) => {
+      const { file } = event
+      if (file.size > 100 * 1024 * 1024) {
+        event.preventDefault()
+        alert("File too large!")
+      }
     }
   }
 
@@ -77,24 +117,102 @@ export default class extends Controller {
       this.insertUnderlineIntoToolbar(tb)
     })
 
-    this.element.addEventListener("trix-attachment-add", (event) => {
-      const { attachment } = event;
-      if (attachment.file) {
-        this.uploadAttachment(attachment);
-      }
-    });
+    this.element.addEventListener("trix-change", this.onTrixChange)
+    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd)
 
     // Optional: File validation
-    this.element.addEventListener("trix-file-accept", (event) => {
-      const { file } = event;
-      if (file.size > 100 * 1024 * 1024) {
-        event.preventDefault();
-        alert("File too large!");
-      }
-    });
-
-
+    this.element.addEventListener("trix-file-accept", this.onFileAccept)
   }
+
+  disconnect() {
+    document.removeEventListener("trix-toolbar-setup", this.onToolbarSetup)
+    document.removeEventListener("trix-initialize", this.onTrixInitialize)
+    this.element.removeEventListener("trix-change", this.onTrixChange)
+    this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+    this.element.removeEventListener("trix-file-accept", this.onFileAccept)
+  }
+
+  // ---- URL detection/linkification using Trix editor API ----
+
+  // Find most recent URL token that ends at or before caret
+  findLatestUrlEndingAtOrBefore(text, caret) {
+    if (!text) return null
+    const lookBack = 2048
+    const start = Math.max(0, caret - lookBack)
+    const slice = text.slice(start, caret)
+
+    const re = /\bhttps?:\/\/[^\s<>"')]+/gi
+    let match, last = null
+    while ((match = re.exec(slice)) !== null) {
+      const raw = match[0]
+      const url = this.normalizeUrlText(raw)
+      if (!url) continue
+      const absStart = start + match.index
+      const absEnd = absStart + raw.length
+      last = { url, start: absStart, end: absEnd }
+    }
+    return last
+  }
+
+  // Replace [start, end) with a link whose text is title and href is url
+  replaceRangeWithLink(editor, start, end, url, title) {
+    if (!editor || start == null || end == null || end <= start) return
+    const docLength = editor.getDocument().toString().length
+    const s = Math.max(0, Math.min(start, docLength))
+    const e = Math.max(s, Math.min(end, docLength))
+
+    editor.recordUndoEntry("Link URL")
+    editor.setSelectedRange([s, e])
+    editor.activateAttribute("href", url)
+    editor.insertString(title || url)
+    editor.deactivateAttribute("href")
+  }
+
+  // Replace the text content of the first link matching href, preserving its href
+  replaceLinkTextByHref(editor, href, newText) {
+    if (!href || !newText) return
+    // Trix mirrors HTML into the associated input element; read and find the link
+    const container = document.createElement("div")
+    container.innerHTML = this.element.value || ""
+
+    const link = container.querySelector(`a[href="${this.cssEscapeAttr(href)}"]`)
+    if (!link) return
+
+    // Compute the character offsets of that link within the plain text of the doc
+    const preText = container.innerText
+    const fullText = preText.toString()
+    const linkText = link.textContent || ""
+    const linkIndex = fullText.indexOf(linkText)
+    if (linkIndex === -1) return
+
+    const start = linkIndex
+    const end = start + linkText.length
+
+    // Re-apply within the editor
+    this.replaceRangeWithLink(editor, start, end, href, newText)
+  }
+
+  rangeIsLinked(editor, start, end, url) {
+    try {
+      const container = document.createElement("div")
+      container.innerHTML = this.element.value || ""
+      return !!container.querySelector(`a[href="${this.cssEscapeAttr(url)}"]`)
+    } catch {
+      return false
+    }
+  }
+
+// ---- Optional title fetcher ----
+  async fetchTitle(url) {
+    const resp = await fetch(`/link_preview?url=${encodeURIComponent(url)}`, {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    })
+    if (!resp.ok) return null
+    const data = await resp.json()
+    return (data && data.title) ? String(data.title) : null
+  }
+
 
   uploadAttachment(attachment) {
     const file = attachment.file;
@@ -134,241 +252,6 @@ export default class extends Controller {
     xhr.send(formData);
   }
 
-
-  disconnect() {
-    // Remove toolbar listener to prevent duplicates on reconnection
-    if (this.onToolbarSetup) {
-      document.removeEventListener("trix-toolbar-setup", this.onToolbarSetup)
-    }
-
-
-    if (this.hasSquakEditorTarget) {
-
-    }
-
-
-
-    const formEl = this.element.closest("form")
-    if (formEl) {
-      formEl.removeEventListener("turbo:submit-start", this._boundOnSubmitStart)
-      formEl.removeEventListener("turbo:submit-end", this._boundOnSubmitEnd)
-    }
-  }
-
-  // Called before the request is sent
-  onSubmitStart() {
-    this.resetPreviews()
-  }
-
-  // Optional: also clear editor once submit finishes successfully
-  onSubmitEnd(event) {
-    // event.detail.success is true/false
-    if (event.detail?.success) {
-      if (this.hasSquakEditorTarget) this.squakEditorTarget.innerHTML = ""
-      this.sync()
-    }
-  }
-
-
-  format(event) {
-    const cmd = event.currentTarget?.dataset?.format
-    if (!cmd) return
-
-    this.restoreSelection()
-    this.squakEditorTarget.focus()
-    document.execCommand(cmd, false, null)
-    this.sync()
-
-  }
-
-  // Save current selection range
-  saveSelection = () => {
-    const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      this.savedRange = sel.getRangeAt(0)
-    }
-  }
-
-
-  // Restore saved selection range
-  restoreSelection = () => {
-    if (!this.savedRange) return
-    const sel = window.getSelection()
-    if (!sel) return
-    sel.removeAllRanges()
-    sel.addRange(this.savedRange)
-  }
-
-
-  // Mirror editor HTML into hidden input for submission
-  sync = () => {
-    if (this.hasHtmlTarget && this.hasSquakEditorTarget) {
-      this.htmlTarget.value = this.squakEditorTarget.innerHTML
-    }
-  }
-
-  // URL detection and preview
-  scanForUrlsDebounced() {
-    if (this._debouncedScan) this._debouncedScan()
-  }
-
-  scanForUrls() {
-    const text = this.squakEditorTarget.innerText || ""
-    const urls = this.extractUrls(text)
-    // console.log('scan for urls:', urls)
-
-    urls.forEach((url) => {
-      // Always ensure it’s linkified immediately
-      this.linkifyUrlInEditor(url, url)
-
-      // Then fetch preview once
-      if (!this.seenUrls) this.seenUrls = new Set()
-      if (this.seenUrls.has(url)) return
-      this.seenUrls.add(url)
-      this.fetchPreview(url)
-    })
-
-  }
-
-  extractUrls(text) {
-    if (!text) return []
-
-    // Basic http/https URL regex
-    const re = /\bhttps?:\/\/[^\s<>"')]+/gi
-    const matches = Array.from(text.matchAll(re)).map((m) => this.normalizeUrlText(m[0]))
-
-    return [...new Set(matches.filter(Boolean))]
-
-  }
-
-  // Fetch preview and update editor: linkify URL using title
-  async fetchPreview(url) {
-    try {
-      const resp = await fetch(`/link_preview?url=${encodeURIComponent(url)}`, {
-        headers: { Accept: "application/json" },
-        credentials: "same-origin",
-      })
-      if (!resp.ok) return
-      const data = await resp.json()
-      if (!data) return
-
-      // 1) Render side preview card
-      this.renderPreviewCard(url, data)
-
-      // 2) Linkify the URL in the editor using the preview title
-      const title = (data.title || url).toString().trim()
-      this.linkifyUrlInEditor(url, title)
-
-      this.seenUrls.add(url)
-      this.sync()
-    } catch (e) {
-      console.warn("link preview error", e)
-    }
-  }
-
-  // Replace your linkifyUrlInEditor with this corrected version
-linkifyUrlInEditor(url, title) {
-  const normalized = this.normalizeUrlText(url)
-  if (!normalized) return
-
-  // 1) Correct existing-anchor check: compare to normalized
-  const existing = Array.from(this.squakEditorTarget.querySelectorAll("a"))
-    .find(a => (a.getAttribute("href") || "") === normalized)
-  if (existing) {
-    // If we have a title and the current text is the raw URL, replace it
-    const safeTitle = (title || "").toString().trim()
-    if (safeTitle && existing.textContent.trim() === normalized) {
-      existing.textContent = safeTitle
-    }
-    return
-  }
-
-
-  const walker = document.createTreeWalker(this.squakEditorTarget, NodeFilter.SHOW_TEXT, null)
-  const urlRe = new RegExp(this.escapeForRegex(normalized))
-
-  let node
-  while ((node = walker.nextNode())) {
-    const txt = node.nodeValue
-    if (!txt) continue
-
-    let idx = txt.search(urlRe)
-    if (idx === -1) {
-      const withPunct = new RegExp(this.escapeForRegex(normalized) + "[)\\]\\}.,!?\"'“”’]*")
-      idx = txt.search(withPunct)
-    }
-    if (idx !== -1) {
-      const after = txt.slice(idx)
-      const m = after.match(new RegExp("^" + this.escapeForRegex(normalized)))
-      const matchLen = m ? m[0].length : normalized.length
-
-      const anchor = document.createElement("a")
-      anchor.href = normalized
-      anchor.textContent = title || normalized
-      anchor.target = "_blank"
-      anchor.rel = "noopener noreferrer"
-
-      const range = document.createRange()
-      range.setStart(node, idx)
-      range.setEnd(node, idx + matchLen)
-      range.deleteContents()
-      range.insertNode(anchor)
-
-      const sel = window.getSelection()
-      if (sel) {
-        sel.removeAllRanges()
-        const caret = document.createRange()
-        caret.setStartAfter(anchor)
-        caret.setEndAfter(anchor)
-        sel.addRange(caret)
-      }
-      return
-    }
-  }
-
-  // 2) Fallback appended only after we've searched all nodes
-  const fallback = document.createElement("a")
-  fallback.href = normalized
-  fallback.textContent = title || normalized
-  fallback.target = "_blank"
-  fallback.rel = "noopener noreferrer"
-  this.squakEditorTarget.appendChild(fallback)
-  this.squakEditorTarget.appendChild(document.createTextNode(" "))
-}
-
-
-
-  renderPreviewCard(url, data) {
-    if (!this.hasPreviewsTarget) return
-
-    const card = document.createElement("div")
-    card.className = "link-preview card my-2 w-100"
-    card.dataset.url = url
-
-    card.innerHTML = `
-      <div class="row g-0 align-items-center">
-        ${data.image ? `
-          <div class="col-auto">
-            <img src="${this.escapeAttr(data.image)}" alt="" 
-            class="img-thumbnail" style="max-width: 120px; max-height: 120px; 
-            object-fit: cover;">
-          </div>` : ""}
-        <div class="col">
-          <div class="card-body py-2">
-            <a href="${this.escapeAttr(data.url || url)}" target="_blank" 
-               rel="noopener noreferrer" class="card-title h6 d-block mb-1">
-                ${this.escapeHtml(data.title || url)}
-            </a>
-            ${data.site_name ? `<div class="text-muted small">${this.escapeHtml(data.site_name)}</div>` : ""}
-            ${data.desc ? `<div class="small mt-1">${this.escapeHtml(data.desc)}</div>` : ""}
-          </div>
-        </div>
-      </div>
-    `
-    console.log('rendering preview card', this.previewsTarget)
-    this.previewsTarget.appendChild(card)
-  }
-
   // utils
   debounce(fn, delay) {
     let t
@@ -377,51 +260,51 @@ linkifyUrlInEditor(url, title) {
       t = setTimeout(() => fn.apply(this, args), delay)
     }
   }
-  escapeHtml(s) {
-    return (s || "").replace(/[&<>"']/g, (c) => (
-        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-    ))
-  }
-  escapeAttr(s) {
-    return this.escapeHtml(String(s || ""))
+
+  cssEscapeAttr(s) {
+    // Minimal escape for attribute selector usage in querySelector
+    return String(s || "").replace(/["\\]/g,
+        (c) => ({ '"': '\\"', "\\": "\\\\" }[c]))
   }
 
-// After you clear editor on submit or after receive, also reset seenUrls:
-  resetPreviews() {
-    if (this.hasPreviewsTarget) this.previewsTarget.innerHTML = ""
-    this.seenUrls = new Set()
-  }
-
-  // 1) Robust escape for building a RegExp from a literal URL
-  escapeForRegex(s) {
-    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  }
 
 // 2) Normalize URLs: trim whitespace and trailing punctuation that
 // commonly attaches in typing (.,),],},!,"', etc.)
   normalizeUrlText(raw) {
     if (!raw) return ""
     let url = raw.trim()
-
-    // strip common trailing punctuation that may be typed accidentally
+    // Strip trailing punctuation commonly typed after URLs
     url = url.replace(/[)\]\}.,!?'"“”’]+$/, "")
-
-
-    // Strip trailing punctuation while keeping a balanced closing parenthesis case
-    // Example: https://x.com/foo) -> keep ) only if there is a matching (
-    const trailing = /[)\]\}.,!?'"“”’]+$/
-
-    if (trailing.test(url)) {
-      // Preserve a trailing ")" if there are more "(" than ")"
-      const closes = (url.match(/\)/g) || []).length
-      const opens  = (url.match(/\(/g) || []).length
-      url = url.replace(trailing, (punct) => {
-        if (punct === ")" && opens > closes - 1) return ")" // keep one ")"
-        return "" // otherwise drop trailing punctuation
-      })
+    // If the original ended with a closing paren and appears balanced, keep one
+    if (/\)$/.test(raw)) {
+      const opens = (raw.match(/\(/g) || []).length
+      const closes = (raw.match(/\)/g) || []).length
+      if (closes > opens) url += ")"
     }
     return url
   }
 
+  // Called after Turbo finishes the request
+  resetEditor(event) {
+    // Only clear on success
+    if (!event?.detail?.success) return
+
+    // Find the editor associated with this form
+    const form = event.target
+    const trixEl = form.querySelector('trix-editor[input="squak-body"]')
+    const hiddenInput = form.querySelector('#squak-body')
+
+    if (trixEl?.editor) {
+      trixEl.editor.loadHTML("") // clears the editor content
+    }
+    if (hiddenInput) {
+      hiddenInput.value = "" // keep hidden input in sync
+    }
+
+    // Optional: clear any client-side URL previews tracked by this controller
+    this._seenLinks = new Set()
+    const previews = form.querySelector('[data-paste-image-target="previews"], [data-squakeditor-target="previews"]')
+    if (previews) previews.innerHTML = ""
+  }
 
 }

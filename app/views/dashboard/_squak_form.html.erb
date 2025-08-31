@@ -10,34 +10,30 @@
 </div>
 <%= form_with model: Squak.new, id: "squak-form",
               data: {
-                action: "submit->paste-image#beforeSubmit",
+                action: "submit->paste-image#beforeSubmit turbo:submit-end->squakeditor#resetEditor",
                 controller: "squakeditor paste-image",
               } do |f| %>
+
+  <trix-toolbar id="squak-toolbar" data-controller="squakeditor"></trix-toolbar>
 
   <%# Wrapper runs both controllers so paste-image can access its targets %>
   <%# and squakeditor can access its targets %>
   <trix-editor
     data-controller="squakeditor"
     toolbar="squak-toolbar"
+    input="squak-body"
   >
   </trix-editor>
-  <trix-toolbar id="squak-toolbar" data-controller="squakeditor"></trix-toolbar>
+
+
+  <%# Hidden textarea (Rails will submit this as squak[body]) %>
+  <%= f.text_area :body, id: "squak-body",
+                  style: "display: none;",
+                  data: { 'squakeditor_target': "html" } %>
+
   <div class="row align-items-start"
        data-squakeditor-circle-id-value="<%= circle_id %>"
        data-controller="squakeditor paste-image">
-
-    <div class="mx-4 flex-shrink-1 form-control" id="squak-editor"
-         contenteditable="true"
-         data-action="paste->paste-image#onPaste input->paste-image#onEditorInput"
-         data-paste-image-target="editor"
-         data-squakeditor-target="squakEditor">
-    </div>
-
-    <%# Hidden textarea (Rails will submit this as squak[body]) %>
-    <%= f.text_area :body, id: "squak-body",
-                    style: "display: none;",
-                    data: { 'squakeditor_target': "html" } %>
-
     <%# Hidden direct-upload-capable input: gives us the directUploadUrl  %>
     <%= f.file_field :images,
                      multiple: true,
@@ -51,58 +47,25 @@
     <%# Simple Previews %>
     <div class="d-flex flex-wrap mt-2" data-paste-image-target="previews"></div>
 
-
     <%= f.hidden_field :circle_id, value: circle_id, data: { squakeditor_target: "circleId" } %>
 
-
-    <div class="row justify-content-start ms-2 mt-2">  <!-- Bootstrap row for buttons -->
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="bold">
-          <i class="bi bi-type-bold"></i>  <!-- Bootstrap icon for bold -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="italic">
-          <i class="bi bi-type-italic"></i>  <!-- Bootstrap icon for italic -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="underline">
-          <i class="bi bi-type-underline"></i>  <!-- Bootstrap icon for underline -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="insertUnorderedList">
-          <i class="bi bi-list-ul"></i>  <!-- Bootstrap icon for unordered list -->
-        </button>
-      </div>
-      <div class="col-auto">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                data-action="click->squakeditor#format"
-                data-format="insertOrderedList">
-          <i class="bi bi-list-ol"></i>  <!-- Bootstrap icon for ordered list -->
-        </button>
+    <div class="d-flex justify-content-between ms-2 mt-1">
+      <div class="d-flex flex-column flex-shrink-1">
+        <div>Squak to: </div>
+        <div class="mx-2 flex-shrink-1"
+             id="editor-circle-name"
+             data-controller="circles"
+             data-circles-circle-role-value="squak_to_display"
+             data-circles-circle-name-value="<%= @selected_circle_name %>" >
+          active circle
+        </div>
       </div>
 
-      <div class="col-auto ms-auto me-3">
+      <div class=" me-3">
         <%= f.submit "Squak It", class: "btn btn-primary" %>
       </div>
     </div>
-
-    <!-- URL previews will appear here (client-only for now) -->
+    <%# URL previews will appear here (client-only for now) %>
     <div class="mt-2" data-squakeditor-target="previews"></div>
 
   </div>

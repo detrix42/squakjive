@@ -12,13 +12,14 @@
 @import "custom_colors"; // custom_colors imports bootstrap/scss/bootstrap
 @import "custom_variables";
 @import "bootstrap";
+@import "trix";
 
 @import "main/all";
 @import "squak_editor/all";
 @import "circles/all";
 @import "squaks/all";
 
-@import "trix";
+
 
 // Additional custom styles for dark theme
 .card {

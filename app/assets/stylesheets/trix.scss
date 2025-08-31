@@ -1,13 +1,57 @@
 @import url("https://unpkg.com/trix@2.0.8/dist/trix.css");
 
+
+
+//* Underline icon using an SVG mask */
+trix-toolbar button.trix-button.trix-button--icon-underline::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0.6;
+  /* Trix expects empty content for masked icons */
+  content: "" !important;
+
+  /* Layout and sizing to match other Trix icons */
+  $icon-size: 1.4em;
+  display: inline-block;
+  width: $icon-size;
+  height: $icon-size;
+
+  /* Center the icon */
+  margin: auto;
+
+  /* Provide our own mask (stroke “U” + underline) */
+  -webkit-mask: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">\
+  <path d="M5 3v7a5 5 0 0 0 10 0V3" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"/>\
+  <path d="M4 17h12" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"/>\
+</svg>') no-repeat center / contain !important;
+
+  mask: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">\
+  <path d="M5 3v7a5 5 0 0 0 10 0V3" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"/>\
+  <path d="M4 17h12" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"/>\
+</svg>') no-repeat center / contain !important;
+
+  /* Fallback: visible inline SVG if mask is stripped by some global rule */
+  background-image: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">\
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">\
+    <path d="M5 3v7a5 5 0 0 0 10 0V3" />\
+    <path d="M4 17h12" />\
+  </g>\
+</svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: $icon-size $icon-size;
+
+  /* If you apply a global filter to ::before and don’t want it here, uncomment: */
+  /* filter: none !important; */
+}
+
 trix-toolbar .trix-button::before {
   filter: invert(1) hue-rotate(45deg) saturate(1.9) brightness(1.3);
 }
 
-/* CSS */
-.trix-button--icon-underline::before {
-  content: "U";
-  font-weight: 700;
-  text-decoration: underline;
-  font-family: inherit;
-}
