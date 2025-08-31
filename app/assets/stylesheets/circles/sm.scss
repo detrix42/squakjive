@@ -293,3 +293,24 @@ $fg-color: #ffeeb4;
 
 }
 
+/* Ensure pasted/posted images never overflow their container */
+[contenteditable="true"] img,
+#squak-view img,
+.squak-editor img,
+.squak-body img,
+.squak img {
+  max-width: 100%;
+  height: auto;
+  display: block;         /* avoids baseline overflow/gaps */
+  object-fit: contain;    /* extra safety for very large images */
+}
+
+/* Optional: keep long unbroken text/URLs from stretching the layout */
+#squak-view,
+.squak-editor,
+.squak-body,
+.squak {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+

@@ -20,7 +20,7 @@ class SquaksController < ApplicationController
   end
 
   def create
-    squak_params = params.expect(squak: [:body, :circle_id, {images: []}])
+    squak_params = params.expect(squak: [:body, :circle_id, { images: [], files: [] }])
     # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
     # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
@@ -29,7 +29,8 @@ class SquaksController < ApplicationController
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
     # If user attached images but provided no text, set a minimal placeholder
-    if @squak.body.to_s.strip.blank? && Array(params.dig(:squak, :images)).present?
+    if @squak.body.to_s.strip.blank? && (
+      Array(params.dig(:squak, :images)).present? || Array(params.dig(:squak, :files))).present?
       @squak.body = "Image is attached"
     end
 
@@ -67,8 +68,6 @@ class SquaksController < ApplicationController
       end
 
     end
-
-
 
     # redirect_to dashboard_path
   end

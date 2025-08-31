@@ -2,6 +2,7 @@ class Squak < ApplicationRecord
   belongs_to :user
   belongs_to :circle, optional: true
   has_many_attached :images
+  has_many_attached :files
 
   before_validation :strip_inline_images_from_body
 

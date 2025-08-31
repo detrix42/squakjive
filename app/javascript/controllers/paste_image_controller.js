@@ -108,6 +108,7 @@ export default class extends Controller {
     // Optimistic preview
     this.addPreview(URL.createObjectURL(file))
 
+    console.debug("[paste_image] Direct uploading:", file.name, file.type)
     upload.create((error, blob) => {
       if (error) {
         console.error("Direct upload failed:", error)
@@ -116,9 +117,12 @@ export default class extends Controller {
         // Append hidden input with signed_id so Rails attaches on submit
         const input = document.createElement("input")
         input.type = "hidden"
-        input.name = "squak[images][]"
+        input.name = file.type && file.type.startsWith("image/")
+            ? "squak[images][]"
+            : "squak[files][]"
         input.value = blob.signed_id
         this.signedIdsTarget.appendChild(input)
+        console.debug("[paste_image] Added signed_id:", blob.signed_id, "->", input.name)
       }
     })
   }

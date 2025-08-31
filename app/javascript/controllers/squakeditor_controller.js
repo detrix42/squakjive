@@ -108,6 +108,12 @@ export default class extends Controller {
   connect() {
     console.log("Squakeditor controller connected")
 
+    // Where to append signed_id inputs. We reuse the same container as paste_image_controller.
+    this.form = this.element.closest("form")
+    this.signedIdsContainer = this.form?.querySelector('[data-paste-image-target="signedIds"]')
+
+
+
     // Attach listeners (do this in connect so they are reattached on Turbo visits)
     document.addEventListener("trix-toolbar-setup", this.onToolbarSetup)
     document.addEventListener("trix-initialize", this.onTrixInitialize)
@@ -118,7 +124,66 @@ export default class extends Controller {
     })
 
     this.element.addEventListener("trix-change", this.onTrixChange)
-    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd)
+
+    this._blockActionTextUpload = (event) => {
+      const att = event.attachment
+      if (att && att.file) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        console.debug("[squakeditor] Blocked ActionText upload for:", att.file.name, att.file.type)
+      }
+    }
+    document.addEventListener("trix-attachment-add", this._blockActionTextUpload, true)
+
+
+    this._onTrixAttachmentAdd = async (event) => {
+      const attachment = event.attachment
+      const file = attachment?.file
+      if (!file) return
+
+      // Stop ActionText default upload
+      event.preventDefault()
+      event.stopImmediatePropagation()
+
+      // Progress feedback
+      attachment.setUploadProgress(0)
+
+      // Resolve direct upload URL (from your hidden file input with direct_upload: true)
+      const uploader = this.form?.querySelector('[data-paste-image-target="uploader"]')
+      let uploadUrl = uploader?.dataset?.directUploadUrl || "/rails/active_storage/direct_uploads"
+
+      try {
+        const blob = await this.directUpload(file, uploadUrl)
+
+        // Add hidden input so Rails attaches it on submit
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = file.type?.startsWith("image/") ? "squak[images][]" : "squak[files][]"
+        input.value = blob.signed_id
+        ;(this.signedIdsContainer || this.form).appendChild(input)
+
+        // Set an in-editor preview so users see something
+        if (file.type?.startsWith("image/")) {
+          // Let Trix render an <img> preview; URL is not persisted server-side
+          attachment.setAttributes({ url: URL.createObjectURL(file), href: "#" })
+        } else {
+          // Render a simple file badge
+          const label = file.name || "file"
+          attachment.setAttributes({
+            content: `<figure class="attachment attachment--file"><span>${label}</span></figure>`
+          })
+        }
+
+        attachment.setUploadProgress(100)
+      } catch (e) {
+        console.error("[squakeditor] Direct upload failed:", e)
+        attachment.remove()
+      }
+    }
+
+    this.element.addEventListener("trix-attachment-add", this._onTrixAttachmentAdd, true)
+
+
 
     // Optional: File validation
     this.element.addEventListener("trix-file-accept", this.onFileAccept)
@@ -128,8 +193,30 @@ export default class extends Controller {
     document.removeEventListener("trix-toolbar-setup", this.onToolbarSetup)
     document.removeEventListener("trix-initialize", this.onTrixInitialize)
     this.element.removeEventListener("trix-change", this.onTrixChange)
-    this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+
+    if (this._onTrixAttachmentAdd) {
+      this.element.removeEventListener("trix-attachment-add", this._onTrixAttachmentAdd)
+    }
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
+  }
+
+  beforeSubmit() {
+    const hidden = document.querySelector("#squak-body")
+    if (!this.hasEditorTarget || !hidden) return
+
+    const clean = this.stripDataUris(this.editorTarget.innerHTML).trim()
+    const hasAnyAttachment =
+        this.hasSignedIdsTarget &&
+        this.signedIdsTarget.querySelector('input[name="squak[images][]"], input[name="squak[files][]"]')
+
+    hidden.value = (clean.length === 0 && hasAnyAttachment) ? "Attachment(s) below" : clean
+  }
+
+  directUpload(file, uploadUrl) {
+    return new Promise((resolve, reject) => {
+      const upload = new DirectUpload(file, uploadUrl)
+      upload.create((error, blob) => (error ? reject(error) : resolve(blob)))
+    })
   }
 
   // ---- URL detection/linkification using Trix editor API ----

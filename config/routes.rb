@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount ActiveStorage::Engine => "/rails/active_storage"
+
   get "attachments/create"
 
   get "link_preview/show"
