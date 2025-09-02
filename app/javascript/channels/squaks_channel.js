@@ -14,10 +14,10 @@ consumer.subscriptions.create("SquaksChannel", {
   received(data) {
     // Called when data is broadcast to this channel
 
-    const squakEditor = document.querySelector('#squak-editor')
-    if (squakEditor) {
-      squakEditor.innerHTML = ''
-    }
+    // const squakEditor = document.querySelector('#squak-editor')
+    // if (squakEditor) {
+    //   squakEditor.innerHTML = ''
+    // }
 
     const previews =
         document.querySelector('[data-squakeditor-target=\'previews\']')

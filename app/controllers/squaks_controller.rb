@@ -20,7 +20,7 @@ class SquaksController < ApplicationController
   end
 
   def create
-    squak_params = params.expect(squak: [:body, :circle_id, { images: [], files: [] }])
+    squak_params = params.expect(squak: [ :body, :circle_id ])
     # Rails.logger.debug "squaks_controller --> RAW PARAMS:\n #{params.inspect}\n************************"
     # Rails.logger.debug "SQUAK_PARAMS: #{squak_params.inspect}"
 
@@ -29,10 +29,10 @@ class SquaksController < ApplicationController
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
     # If user attached images but provided no text, set a minimal placeholder
-    if @squak.body.to_s.strip.blank? && (
-      Array(params.dig(:squak, :images)).present? || Array(params.dig(:squak, :files))).present?
-      @squak.body = "Image is attached"
-    end
+    # if @squak.body.to_s.strip.blank? && (
+    #   Array(params.dig(:squak, :images)).present? || Array(params.dig(:squak, :files))).present?
+    #   @squak.body = "Image is attached"
+    # end
 
     if @squak.save
       squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak })
@@ -46,13 +46,14 @@ class SquaksController < ApplicationController
       # Turbo Stream response for the submitter (immediate UI update)
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: [turbo_stream.prepend(
-            "squaks-list",
-            partial: "squaks/squak",
-            locals: { squak: @squak }
+          render turbo_stream: [
+            turbo_stream.prepend(
+              "squaks-list",
+              partial: "squaks/squak",
+              locals: { squak: @squak }
           ),
-          turbo_stream.update("squak-editor", ""),
-          turbo_stream.update("squak-body", "")
+          # turbo_stream.update("squak-editor", ""),
+          # turbo_stream.update("squak-body", "")
           ]
         end
 
@@ -68,8 +69,6 @@ class SquaksController < ApplicationController
       end
 
     end
-
-    # redirect_to dashboard_path
   end
 
   def squaks

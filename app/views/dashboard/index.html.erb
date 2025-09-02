@@ -15,6 +15,7 @@
         <%= render partial: 'squaks/squak_index', locals: { squaks: @squaks,
                                                             circleId: @selected_circle&.id || 0 } %>
       <% end %>
+
     </div>
     <div class="col-3" style="background-color: #343934; height: 100vh;">
       <%= render partial: "user_info_card" %>

@@ -17,4 +17,8 @@ pin_all_from "app/javascript/channels", under: "channels"
 # config/importmap.rb
 pin "@rails/activestorage", to: "activestorage.esm.js"
 pin "trix", to: "https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"
-pin "@rails/actiontext", to: "actiontext.esm.js"
+pin "@rails/actiontext", to: "actiontext.js"
+
+
+
+# pin "@rails/actiontext", to: "actiontext.esm.js"

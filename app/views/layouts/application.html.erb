@@ -19,11 +19,12 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "trix", "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
   </head>
 
-  <body style="visibility: hidden;">
+  <body style="">
 
   <div class="container flash-msg" style="max-width: 580px">
     <div id="flash">
