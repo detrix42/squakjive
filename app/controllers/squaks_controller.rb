@@ -57,9 +57,13 @@ class SquaksController < ApplicationController
           ]
         end
 
-        format.html { head :ok }
+        format.html do
+          redirect_to dashboard_path, notice: "Squak created"
+        end
         format.json { head :ok }
       end
+
+
 
     else
       respond_to do |format|

@@ -1,0 +1,14 @@
+<!-- app/views/action_text/attachments/_html.html.erb -->
+<%# Renders HTML files as a link (not just a caption) %>
+<% attachable = attachment.attachable %>
+<figure class="attachment attachment--file" data-test="html-test">
+  <a href="<%= rails_blob_path(attachable, disposition: :inline) %>"
+     data-turbo="false"
+     rel="noopener">
+    <%= attachable.respond_to?(:filename) ? attachable.filename.to_s : (attachment.caption.presence || "file") %>
+    <% if attachable.respond_to?(:byte_size) %>
+      (<%= number_to_human_size(attachable.byte_size) %><%= attachable.content_type.present? ? ", #{attachable.content_type}" : "" %>)
+    <% end %>
+  </a>
+</figure>
+<% invalid %>

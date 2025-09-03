@@ -1,16 +1,4 @@
 <!-- app/views/dashboard/_squak_form.html.erb -->
-<div class="d-flex w-100 ms-3">
-  <div>Squak to: </div>
-  <div class="mx-2 flex-shrink-1"
-       id="editor-circle-name"
-       data-controller="circles"
-       data-circles-circle-role-value="squak_to_display"
-       data-circles-circle-name-value="<%= @selected_circle_name %>">
-    active circle
-  </div>
-</div>
-
-
 <%= form_with model: Squak.new,
               id: "squak-form",
               url: squaks_path,
@@ -21,7 +9,7 @@
   <%= f.hidden_field :circle_id, value: (defined?(circle_id) ? circle_id : params[:circle_id]) %>
 
   <div class="mb-3" id="squak-editor">
-    <%= f.label :body, "Squak", class: "form-label" %>
+    <%#= f.label :body, "Squak", class: "form-label" %>
     <%= f.rich_text_area :body, class: "form-control" %>
   </div>
 

@@ -6,7 +6,7 @@ module SquakHelper
   def render_squak_body(squak)
     return "" if squak.blank? || squak.body.blank?
 
-    html = squak.body.to_s
+    html = squak.body
     frag = Nokogiri::HTML::DocumentFragment.parse(html)
 
     # 1) Linkify plain-text URLs that are NOT already inside anchors

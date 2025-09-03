@@ -26,41 +26,8 @@
       </div>
 
       <div class="ms-4 squak-body">
-        <%= render_squak_body(squak) %>
+        <%= squak.body %>
       </div>
-
-      <%# Render attached images (pasted/uploaded) %>
-      <% if squak.respond_to?(:images) && squak.images.attached? %>
-        <div class="ms-4 mt-2 d-flex flex-wrap gap-2">
-          <% squak.images.each do |img| %>
-            <% if img.image? %>
-              <%= link_to url_for(img),
-                          data: { controller: "image-lightbox", action: "click->image-lightbox#open" },
-                          class: "d-inline-block" do %>
-                <%= image_tag img.variant(resize_to_limit: [1000, 1000]).processed,
-                              class: "img-fluid rounded",
-                              style: "max-width: 280px;" %>
-              <% end %>
-
-              <%#= image_tag img.variant(resize_to_limit: [1000, 1000]).processed, class: "img-fluid rounded", style: "max-width: 280px;" %>
-            <% end %>
-          <% end %>
-        </div>
-      <% end %>
-
-
-      <%# Preview goes here (bottom of squak) %>
-      <% urls = all_urls_from_html(squak.body) %>
-      <% if urls.present? %>
-        <div class="ms-4 mt-2 squak-previews-scroll">
-          <% urls.each do |u| %>
-            <% if (preview = link_preview_for(u)) %>
-              <%= render partial: "squaks/link_preview", locals: { preview: preview, url: u } %>
-            <% end %>
-          <% end %>
-        </div>
-      <% end %>
-
 
       <div class="squak-footer">
         <div class="squak-date text-end" style="color: #587a91;">

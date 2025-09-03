@@ -22,7 +22,7 @@ export default class extends Controller {
   uploadAttachment(attachment) {
     const file = attachment.file;
     const formData = new FormData();
-    formData.append("Content-Type", file.type);
+    formData.append("Content-Type", file.type || "application/octet-stream");
     formData.append("attachment[file]", file); // 'attachment[file]' matches backend params
 
     const xhr = new XMLHttpRequest();
@@ -40,7 +40,9 @@ export default class extends Controller {
         attachment.setAttributes({
           url: data.url,
           href: data.url, // For downloadable links on non-media files
-          sgid: data.sgid // Optional for Action Text-like embedding
+          sgid: data.attachable_sgid, // Optional for Action Text-like embedding
+          filename: data.filename || file.name,
+          contentType: data.content_type || file.type,
         });
       } else {
         attachment.remove();
