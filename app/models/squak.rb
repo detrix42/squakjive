@@ -33,7 +33,6 @@ end
 
 # create_table "squaks", force: :cascade do |t|
 #   t.bigint "user_id", null: false
-#   t.text "body"
 #   t.datetime "created_at", null: false
 #   t.datetime "updated_at", null: false
 #   t.bigint "circle_id"

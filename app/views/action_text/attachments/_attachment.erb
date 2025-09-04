@@ -1,25 +1,18 @@
-<%# app/views/action_text/attachments/_attachment.html.erb %>
-<% attachable = attachment.attachable %>
-<% content_type = attachable.respond_to?(:content_type) ? attachable.content_type.to_s : "" %>
-<% is_image = content_type.start_with?("image/") %>
-<% is_pdf   = content_type == "application/pdf" %>
-
-<% if is_image || (is_pdf && attachment.previewable?) %>
-  <figure class="attachment attachment--preview <%= is_image ? "attachment--image" : "attachment--pdf" %>" data-test="custom-attachment">
-    <a href="<%= url_for(attachment) %>" data-turbo="false" target="_blank" rel="noopener">
-      <%= image_tag attachment.previewable_variant %>
-    </a>
-    <figcaption class="attachment__caption">
-      <%= (attachable.respond_to?(:filename) ? attachable.filename.to_s : attachment.caption).presence || (is_image ? "image" : "document") %>
-    </figcaption>
-  </figure>
+<% if attachment.representable? %>
+  <%= link_to rails_blob_path(attachment, disposition: "inline"), class: "attachment__link", target: "_blank", rel: "noopener" do %>
+    <%= image_tag attachment, class: "attachment attachment--preview attachment--#{attachment.blob.filename.extension}" %>
+  <% end %>
 <% else %>
-  <figure class="attachment attachment--file" data-test="custom-attachment">
-    <a href="<%= rails_blob_path(attachable, disposition: :attachment) %>" data-turbo="false" rel="noopener">
-      <%= attachable.respond_to?(:filename) ? attachable.filename.to_s : (attachment.caption.presence || "file") %>
-      <% if attachable.respond_to?(:byte_size) %>
-        (<%= number_to_human_size(attachable.byte_size) %><%= content_type.present? ? ", #{content_type}" : "" %>)
-      <% end %>
-    </a>
-  </figure>
+  <%= link_to rails_blob_path(attachment, disposition: "attachment"), class: "attachment__link", target: "_blank", rel: "noopener" do %>
+    <figure class="attachment attachment--file attachment--<%= attachment.blob.filename.extension %>">
+      <figcaption class="attachment__caption">
+        <% if caption = attachment.blob.try(:caption) %>
+          <%= caption %>
+        <% else %>
+          <span class="attachment__name"><%= attachment.blob.filename %></span>
+          <span class="attachment__size"><%= number_to_human_size(attachment.blob.byte_size) %></span>
+        <% end %>
+      </figcaption>
+    </figure>
+  <% end %>
 <% end %>
