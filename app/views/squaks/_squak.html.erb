@@ -26,7 +26,9 @@
       </div>
 
       <div class="ms-4 squak-body">
-        <%= squak.body %>
+        <% if squak.body.present? %>
+          <%= render_rich_text_with_attachments(squak.body) %>
+        <% end %>
       </div>
 
       <div class="squak-footer">

@@ -1,0 +1,10 @@
+<!-- app/views/action_text/attachables/_active_storage_blob.html.erb -->
+<figure class="attachment attachment--preview attachment--<%= attachable.filename.extension %>">
+  <%= link_to rails_blob_url(attachable, disposition: "attachment"), title: "Download #{attachable.filename}" do %>
+    <%= image_tag attachable.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{attachable.filename}" %>
+  <% end %>
+  <figcaption class="attachment__caption">
+    <%= attachable.filename %>
+    <span class="attachment__size">(<%= number_to_human_size(attachable.byte_size) %>)</span>
+  </figcaption>
+</figure>

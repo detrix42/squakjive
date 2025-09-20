@@ -1,27 +1,10 @@
-# README
+# things that need to be installed
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+- mu-tools
+  - sudo apt-get install mu-tools
+  - add the following to app/config/application.rb
+    - config.active_storage.previewers << ActiveStorage::Previewer::MuPDFPreviewer
+  - add the following system package
+    - sudo apt install libvips 
+    - 
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
- 
-    be sure to install redis on produciton server
-
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...

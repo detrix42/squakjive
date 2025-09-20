@@ -1,18 +1,23 @@
-<% if blob.representable? %>
-  <%= link_to rails_blob_path(blob, disposition: "inline"), class: "attachment__link", target: "_blank", rel: "noopener" do %>
-    <%= image_tag blob, class: "attachment attachment--preview attachment--#{blob.filename.extension}" %>
+<!-- DEBUG: Using custom _blob.html.erb -->
+<figure class="attachment attachment--<%= blob.representable? ? 'preview' : 'file' %> attachment--<%= blob.filename.extension %>">
+  <p>DEBUG: Rendering blob <%= blob.filename %></p>
+  <% if blob.representable? %>
+    <% if blob.image? %>
+      <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
+        <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+      <% end %>
+    <% elsif blob.previewable? %>
+      <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
+        <%= image_tag blob.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+      <% end %>
+    <% else %>
+      <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
+    <% end %>
+  <% else %>
+    <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
   <% end %>
-<% else %>
-  <%= link_to rails_blob_path(blob, disposition: "attachment"), class: "attachment__link", target: "_blank", rel: "noopener" do %>
-    <figure class="attachment attachment--file attachment--<%= blob.filename.extension %>">
-      <figcaption class="attachment__caption">
-        <% if caption = blob.try(:caption) %>
-          <%= caption %>
-        <% else %>
-          <span class="attachment__name"><%= blob.filename %></span>
-          <span class="attachment__size"><%= number_to_human_size blob.byte_size %></span>
-        <% end %>
-      </figcaption>
-    </figure>
-  <% end %>
-<% end %>
+  <figcaption class="attachment__caption">
+    <%= blob.filename %>
+    <span class="attachment__size">(<%= number_to_human_size(blob.byte_size) %>)</span>
+  </figcaption>
+</figure>

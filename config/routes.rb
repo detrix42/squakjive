@@ -45,7 +45,14 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-  resources :attachments, only: [:create]
+  # resources :attachments, only: [:create]
+  # # Handles GET /rails/active_storage/blobs/:sgid/preview
+  get "/rails/active_storage/blobs/:sgid/preview",
+      to: "active_storage/blobs#preview",
+      as: :blob_preview
+  post "/rails/active_storage/blobs/:sgid/analyze",
+       to: "active_storage/blobs#analyze",
+       as: :blob_analyze
   # Defines the root path route ("/")
   # root "posts#index"
 

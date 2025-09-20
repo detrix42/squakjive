@@ -12,7 +12,7 @@ class SquaksChannel < ApplicationCable::Channel
   def unsubscribed
     return unless current_user
 
-    $redis.srem("squaks_channel_users", current_user.id)
+    $redis.srem?("squaks_channel_users", current_user.id)
     broadcast_count
 
   end

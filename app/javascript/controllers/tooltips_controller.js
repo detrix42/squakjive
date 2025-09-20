@@ -11,8 +11,6 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log('tooltips connected')
-    console.log('tooltip content:', this.contentValue)
     this.tooltip = new Tooltip(this.element, {
       title: this.contentValue || "",
       placement: this.placementValue,

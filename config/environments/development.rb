@@ -74,4 +74,9 @@ Rails.application.configure do
 
   config.web_console.permissions = "192.168.1.11"
   config.hosts += ["192.168.1.11", "novasector.net"]
+
+
+
+  config.active_job.queue_adapter = :inline
+
 end

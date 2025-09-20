@@ -475,6 +475,7 @@ DEPENDENCIES
   redis (~> 4.5)
   rspec-rails (~> 8.0.1)
   rubocop-rails-omakase
+  ruby-vips (~> 2.2)
   selenium-webdriver
   shoulda-matchers (~> 6.0)
   solid_cable

@@ -25,5 +25,28 @@ module Jitter
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.asset_pipeline = :propshaft
+
+    # Enable MuPDF-based previews for PDFs in all environments
+    # config.active_storage.previewers << ActiveStorage::Previewer::MuPDFPreviewer
+    # config.active_storage.previewers = [
+    #   ActiveStorage::Previewer::PopplerPreviewer,
+    #   ActiveStorage::Previewer::VideoPreviewer
+    # ]
+
+    # Use libvips for image variants (fast and recommended)
+    config.active_storage.variant_processor = :vips
+
+    # Set URL options for Active Storage to generate correct URLs in development
+    config.active_storage.url_options = {
+      host: '192.168.1.11',
+      port: 4200,
+      protocol: 'http'
+    }
+
+    config.action_controller.default_url_options = {
+      host: '192.168.1.11',
+      port: 4200,
+      protocol: 'http' }
+    config.active_job.queue_adapter = :inline # Ensure inline jobs for testing
   end
 end

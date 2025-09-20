@@ -1,0 +1,6 @@
+<!-- app/views/action_text/attachables/_attachment.html.erb -->
+<% if attachment.attachable.is_a?(ActiveStorage::Blob) %>
+  <%= render partial: "action_text/attachments/active_storage_blob", locals: { attachable: attachment.attachable } %>
+<% else %>
+  <%= attachment.to_html %>
+<% end %>

@@ -1,0 +1,10 @@
+
+<%# raw rich_text.body.to_html %>
+
+<%# Renders ActionText::RichText using server-side attachment rendering when possible %>
+<% content_html =
+     if defined?(rich_text) && rich_text.respond_to?(:body) && rich_text.body.respond_to?(:to_html)
+       rich_text.body.to_html.presence
+     end %>
+
+<%= content_html ? raw(content_html) : rich_text.to_s %>

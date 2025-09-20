@@ -4,15 +4,15 @@
               url: squaks_path,
               data: {
                 turbo: true,
-                controller: "squakeditor",
+                controller: "squakeditor attachments",
+                direct_upload_url: "/rails/active_storage/direct_uploads"
               } do |f| %>
-  <%= f.hidden_field :circle_id, value: (defined?(circle_id) ? circle_id : params[:circle_id]) %>
-
+  <%= f.hidden_field :circle_id,
+                     value: (defined?(circle_id) ? circle_id : params[:circle_id]) %>
   <div class="mb-3" id="squak-editor">
-    <%#= f.label :body, "Squak", class: "form-label" %>
-    <%= f.rich_text_area :body, class: "form-control" %>
+    <%= f.rich_text_area :body, class: "form-control",
+                         data: { controller: "attachments" } %>
   </div>
-
   <div class="ms-auto me-3">
     <%= f.submit "Squak It", class: "btn btn-primary" %>
   </div>
