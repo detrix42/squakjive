@@ -27,8 +27,23 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
-# Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-port ENV.fetch("PORT", 3000)
+renv = ENV.fetch('RAILS_ENV_SQUAKJIVE') {'production'}
+
+if renv == 'production' or renv == 'prod_pg'
+  #  puts "in production mode, binding to a unix socket"
+  # bind "unix:///home/detrix42/www/socks/novasector"
+  bind "unix:///opt/www/socks/squakjive"
+
+else
+  # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
+  #
+  port ENV.fetch("PORT") { 4200 }
+end
+# Specifies the `environment` that Puma will run in.
+#
+environment renv
+# Specifies the `pidfile` that Puma will use.
+pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
 
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
