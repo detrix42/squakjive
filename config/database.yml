@@ -88,7 +88,7 @@ production:
     <<: *default
     database: squakjive_production
     username: squakjive
-    password: <%= ENV["JITTER_DATABASE_PASSWORD"] %>
+    password: <%= ENV["SQUAKJIVE_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
     database: squakjive_production_cache
