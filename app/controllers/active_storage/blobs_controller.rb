@@ -2,9 +2,10 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
   include Rails.application.routes.url_helpers
 
   def default_url_options
-    Rails.configuration.active_storage.url_options || {
+     {
       host: "squakjive.novasector.net",
-      protocol: "https" }
+      protocol: "https"
+     }
   end
 
   def analyze
