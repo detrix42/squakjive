@@ -42,7 +42,7 @@ module Jitter
     #   port: 4200,
     #   protocol: 'http'
     # }
-
+    #
     # config.action_controller.default_url_options = {
     #   host: '192.168.1.11',
     #   port: 4200,
