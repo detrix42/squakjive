@@ -2,7 +2,9 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
   include Rails.application.routes.url_helpers
 
   def default_url_options
-    Rails.configuration.active_storage.url_options || { host: 'localhost', port: 3000, protocol: 'http' }
+    Rails.configuration.active_storage.url_options || {
+      host: "squakjive.novasector.net",
+      protocol: "https" }
   end
 
   def analyze
@@ -21,6 +23,7 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
       render json: { error: "Failed to analyze blob: #{e.message}" }, status: :unprocessable_entity
     end
   end
+
 
   def preview
     Rails.logger.debug "Preview endpoint called with SGID: #{params[:sgid]}"

@@ -87,4 +87,13 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Ensure Active Storage generates HTTPS URLs for your public host
+  config.active_storage.url_options = {
+    host: "squakjive.novasector.net",
+    protocol: "https"
+  }
+
+  # Strongly recommended so Rails treats requests as HTTPS and sets secure cookies
+  config.force_ssl = true
 end
