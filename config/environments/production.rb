@@ -96,4 +96,8 @@ Rails.application.configure do
 
   # Strongly recommended so Rails treats requests as HTTPS and sets secure cookies
   config.force_ssl = true
+  config.assume_ssl = true
+
+
+
 end
