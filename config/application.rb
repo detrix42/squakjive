@@ -37,16 +37,16 @@ module Jitter
     config.active_storage.variant_processor = :vips
 
     # Set URL options for Active Storage to generate correct URLs in development
-    config.active_storage.url_options = {
-      host: '192.168.1.11',
-      port: 4200,
-      protocol: 'http'
-    }
+    # config.active_storage.url_options = {
+    #   host: '192.168.1.11',
+    #   port: 4200,
+    #   protocol: 'http'
+    # }
 
-    config.action_controller.default_url_options = {
-      host: '192.168.1.11',
-      port: 4200,
-      protocol: 'http' }
+    # config.action_controller.default_url_options = {
+    #   host: '192.168.1.11',
+    #   port: 4200,
+    #   protocol: 'http' }
     config.active_job.queue_adapter = :inline # Ensure inline jobs for testing
   end
 end
