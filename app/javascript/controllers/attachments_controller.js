@@ -7,7 +7,7 @@ export default class extends Controller {
     console.log("AttachmentsController connected")
     this.element.addEventListener("trix-file-accept", event => {
       const { file } = event
-      if (file.size > 100 * 1024 * 1024) {
+      if (file.size > 500 * 1024 * 1024) {
         event.preventDefault()
         alert("File too large!")
       }
