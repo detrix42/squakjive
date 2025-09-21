@@ -25,54 +25,32 @@ export default class extends Controller {
   async createDirectUpload(attachment) {
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
-
-    let lastProgress = -1
     const upload = new DirectUpload(file, this.uploadURL, {
-      // Add CSRF for create-blob POST (helps avoid occasional 422s)
-      directUploadWillCreateBlobWithXHR: xhr => {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-        if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken)
-      },
       directUploadWillStoreFileWithXHR: xhr => {
         xhr.upload.addEventListener("progress", event => {
-          if (!event.lengthComputable || !event.total) return
-          const progress = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)))
-          // Only update when it actually changes to reduce flicker
-          if (progress !== lastProgress) {
-            lastProgress = progress
-            attachment.setUploadProgress(progress)
-          }
+          const progress = (event.loaded / event.total) * 100
+          attachment.setUploadProgress(progress)
         })
       }
     })
-
 
     try {
       const blob = await new Promise((resolve, reject) => {
         upload.create((error, blob) => {
           if (error) {
-            // Some proxies cause "Status: 0" transiently — retry once
-            const msg = String(error || "")
-            if (/Status:\s*0\b/.test(msg)) {
-              console.warn("Direct upload got Status: 0; retrying once...")
-              upload.create((retryErr, retryBlob) => {
-                if (retryErr) {
-                  console.error("Direct upload retry failed:", retryErr)
-                  reject(retryErr)
-                } else {
-                  resolve(retryBlob)
-                }
-              })
-            } else {
-              console.error("Direct upload failed:", error)
-              reject(error)
-            }
+            console.error("Direct upload failed:", error)
+            reject(error)
           } else {
+            console.log("Direct upload succeeded, blob:", {
+              id: blob.id,
+              filename: blob.filename,
+              content_type: blob.content_type,
+              signed_id: blob.signed_id
+            })
             resolve(blob)
           }
         })
       })
-
       if (file.type === "application/pdf") {
         await this.analyzeBlob(blob.signed_id)
         await this.fetchPreviewUrl(blob.signed_id, attachment)
@@ -98,10 +76,8 @@ export default class extends Controller {
         contentType: file.type,
         previewable: false
       })
-      // Avoid blocking alerts that interrupt UX; log instead
-      // alert("Upload failed: " + error.message)
+      alert("Upload failed: " + error.message)
     }
-
   }
 
   async analyzeBlob(sgid, attempt = 0, maxAttempts = 5) {
