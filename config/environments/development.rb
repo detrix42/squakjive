@@ -75,7 +75,15 @@ Rails.application.configure do
   config.web_console.permissions = "192.168.1.11"
   config.hosts += ["192.168.1.11", "novasector.net"]
 
+  # Ensure Active Storage generates HTTPS URLs for your public host
+  config.active_storage.url_options = {
+    host: "192.168.1.11",
+    protocol: "http",
+    port: 4200
+  }
 
+  # Relax CSRF origin checks in development to avoid 422s when using IP/ports
+  config.action_controller.forgery_protection_origin_check = false
 
   config.active_job.queue_adapter = :inline
 

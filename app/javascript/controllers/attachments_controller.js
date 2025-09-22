@@ -25,13 +25,31 @@ export default class extends Controller {
   async createDirectUpload(attachment) {
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
+
+    let lastProgress = -1
+
     const upload = new DirectUpload(file, this.uploadURL, {
+      // Add CSRF for create-blob POST (helps avoid occasional 422s)
+      directUploadWillCreateBlobWithXHR: xhr => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+        console.log("CSRF token:", csrfToken)
+        if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken)
+        // Help Rails treat this as an XHR and pass CSRF heuristics
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
+
+      },
+      // Track upload progress for the PUT to storage
       directUploadWillStoreFileWithXHR: xhr => {
         xhr.upload.addEventListener("progress", event => {
-          const progress = (event.loaded / event.total) * 100
-          attachment.setUploadProgress(progress)
+          if (!event.lengthComputable || !event.total) return
+          const progress = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)))
+          if (progress !== lastProgress) {
+            lastProgress = progress
+            attachment.setUploadProgress(progress)
+          }
         })
       }
+
     })
 
     try {
@@ -76,7 +94,14 @@ export default class extends Controller {
         contentType: file.type,
         previewable: false
       })
-      alert("Upload failed: " + error.message)
+      const msg =
+          (error && (error.message ||
+              error.response?.data?.error ||
+              error.response?.statusText ||
+              (typeof error === "string" ? error : null))) ||
+          "Unknown error (see console for details)"
+      alert("Upload failed: " + msg)
+
     }
   }
 

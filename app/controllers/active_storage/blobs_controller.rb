@@ -1,12 +1,12 @@
 class ActiveStorage::BlobsController < ActiveStorage::BaseController
   include Rails.application.routes.url_helpers
 
-  def default_url_options
-     {
-      host: "squakjive.novasector.net",
-      protocol: "https"
-     }
-  end
+  # def default_url_options
+  #    {
+  #     host: "squakjive.novasector.net",
+  #     protocol: "https"
+  #    }
+  # end
 
   def analyze
     Rails.logger.debug "Analyze endpoint called with SGID: #{params[:sgid]}"

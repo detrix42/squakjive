@@ -36,17 +36,17 @@ module Jitter
     # Use libvips for image variants (fast and recommended)
     config.active_storage.variant_processor = :vips
 
-    # Set URL options for Active Storage to generate correct URLs in development
-    # config.active_storage.url_options = {
-    #   host: '192.168.1.11',
-    #   port: 4200,
-    #   protocol: 'http'
-    # }
-    #
-    # config.action_controller.default_url_options = {
-    #   host: '192.168.1.11',
-    #   port: 4200,
-    #   protocol: 'http' }
     config.active_job.queue_adapter = :inline # Ensure inline jobs for testing
+
+    Rails.application.config.session_store :cookie_store,
+                                           key: "_squakjive_session",
+                                           same_site: :lax,
+                                           secure: Rails.env.production?,
+                                           domain: (Rails.env.production? ? ".novasector.net" : nil)
+    # Notes:
+    # - In development, domain: nil keeps the cookie bound to the exact host (e.g., 192.168.1.11).
+    # - In production, domain: ".novasector.net" lets subdomains share the session if needed.
+    # - secure is true only in production, so dev over HTTP still works.
+
   end
 end
