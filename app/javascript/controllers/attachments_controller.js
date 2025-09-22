@@ -49,7 +49,16 @@ export default class extends Controller {
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
 
+    // Show a brief "preparing" state while checksum is computed
+    attachment.setUploadProgress(1)
+
     let lastProgress = -1
+    let lastPaint = 0
+    const minDelta = 2           // only update if progress moves by 2% or more
+    const minInterval = 100      // ms between UI updates
+    let started = false
+
+
 
     const upload = new DirectUpload(file, this.uploadURL, {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
@@ -65,12 +74,28 @@ export default class extends Controller {
       directUploadWillStoreFileWithXHR: xhr => {
         xhr.upload.addEventListener("progress", event => {
           if (!event.lengthComputable || !event.total) return
-          const progress = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)))
-          if (progress !== lastProgress) {
-            lastProgress = progress
-            attachment.setUploadProgress(progress)
+          if (!started) {
+            // First readable progress means PUT started; clear the "preparing" illusion
+            started = true
+          }
+
+          const raw = (event.loaded / event.total) * 100
+          // Clamp to [1, 99] to avoid bouncing 100 before we finalize
+          const pct = Math.max(1, Math.min(99, Math.round(raw)))
+          const now = performance.now()
+
+
+          if (
+              lastProgress < 0 ||
+              Math.abs(pct - lastProgress) >= minDelta ||
+              (now - lastPaint) >= minInterval
+          ) {
+            lastProgress = pct
+            lastPaint = now
+            attachment.setUploadProgress(pct)
           }
         })
+
       }
 
     })
