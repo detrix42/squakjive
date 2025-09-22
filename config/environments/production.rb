@@ -98,6 +98,13 @@ Rails.application.configure do
   config.force_ssl = true
   config.assume_ssl = true
 
+  # Write logs to file (TEMP for debugging); revert to STDOUT after investigation
+  log_path = Rails.root.join("log", "production.log")
+  file_logger = ActiveSupport::Logger.new(log_path, 10, 50.megabytes)
+  file_logger.formatter = ::Logger::Formatter.new
+  config.logger = ActiveSupport::TaggedLogging.new(file_logger)
 
+  # Increase verbosity while debugging
+  config.log_level = :debug
 
 end
