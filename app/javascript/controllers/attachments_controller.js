@@ -79,7 +79,7 @@ export default class extends Controller {
 
           const raw = (event.loaded / event.total) * 100
           // Clamp to [1, 99] to avoid bouncing 100 before we finalize
-          let pct = 0
+          let pct = Math.round(raw)
           pct = Math.max(0, Math.min(99, pct))
 
           const now = performance.now()
