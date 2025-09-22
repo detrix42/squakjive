@@ -55,7 +55,7 @@ export default class extends Controller {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
       directUploadWillCreateBlobWithXHR: xhr => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-        // console.log("CSRF token:", csrfToken)
+        console.log("CSRF token:", csrfToken)
         if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken)
         // Help Rails treat this as an XHR and pass CSRF heuristics
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
