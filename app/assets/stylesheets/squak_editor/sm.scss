@@ -19,3 +19,36 @@
   }
 }
 
+#squak_body {
+  min-height: 200px;
+}
+
+/* The container that holds filename/size and the progress bar */
+.trix-attachment {
+  position: relative;
+  padding-bottom: 20px; /* height of bar + gap (adjust) */
+}
+
+/* The progress bar itself */
+trix-editor .attachment__progress {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;               /* lift it slightly above the edge */
+  height: 8px;               /* bar height */
+  background: rgba(0,0,0,0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;                /* ensure over background but under modals */
+}
+
+trix-editor .attachment__caption {
+  position: relative;
+  z-index: 0;
+  margin-bottom: 6px; /* slight spacing above the bar */
+
+  background: #2b8a3e;       /* theme color */
+  transition: width 120ms linear;
+}
+
