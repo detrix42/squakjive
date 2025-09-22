@@ -13,14 +13,37 @@ export default class extends Controller {
       }
     })
 
-    this.element.addEventListener("trix-attachment-add", event => {
+    // Bind handlers so we can remove them in disconnect()
+    this.onFileAccept = event => {
+      const { file } = event
+      if (file.size > 500 * 1024 * 1024) {
+        event.preventDefault()
+        alert("File too large!")
+      }
+    }
+
+    this.onAttachmentAdd = event => {
+      // Prevent Trix's default direct upload to avoid duplicate uploads
+      event.preventDefault()
       const { attachment } = event
       if (attachment.file) {
         console.log("trix-attachment-add triggered for file:", attachment.file.name)
         this.createDirectUpload(attachment)
       }
-    })
+    }
+
+    this.element.addEventListener("trix-file-accept", this.onFileAccept)
+    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd)
+
   }
+
+  disconnect() {
+    // Remove listeners to prevent stacking on Turbo reconnects
+    if (this.onFileAccept) this.element.removeEventListener("trix-file-accept", this.onFileAccept)
+    if (this.onAttachmentAdd) this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+  }
+
+
 
   async createDirectUpload(attachment) {
     const file = attachment.file
@@ -32,7 +55,7 @@ export default class extends Controller {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
       directUploadWillCreateBlobWithXHR: xhr => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-        console.log("CSRF token:", csrfToken)
+        // console.log("CSRF token:", csrfToken)
         if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken)
         // Help Rails treat this as an XHR and pass CSRF heuristics
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
@@ -104,6 +127,10 @@ export default class extends Controller {
 
     }
   }
+
+
+
+
 
   async analyzeBlob(sgid, attempt = 0, maxAttempts = 5) {
     console.log("Analyzing blob for SGID:", sgid, "Attempt:", attempt + 1)
