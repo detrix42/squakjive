@@ -1,5 +1,7 @@
 # config/initializers/active_storage_csrf_dev.rb
-if Rails.env.development?
+
+
+
   Rails.application.config.to_prepare do
     ActiveStorage::DirectUploadsController.skip_forgery_protection
 
@@ -35,6 +37,5 @@ if Rails.env.development?
         )
       end
     end
-  end
-end# frozen_string_literal: true
+  end# frozen_string_literal: true
 
