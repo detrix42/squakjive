@@ -5,13 +5,13 @@ import "axios"
 export default class extends Controller {
   connect() {
     console.log("AttachmentsController connected")
-    this.element.addEventListener("trix-file-accept", event => {
-      const { file } = event
-      if (file.size > 500 * 1024 * 1024) {
-        event.preventDefault()
-        alert("File too large!")
-      }
-    })
+    // this.element.addEventListener("trix-file-accept", event => {
+    //   const { file } = event
+    //   if (file.size > 500 * 1024 * 1024) {
+    //     event.preventDefault()
+    //     alert("File too large!")
+    //   }
+    // })
 
     // Bind handlers so we can remove them in disconnect()
     this.onFileAccept = event => {
@@ -49,16 +49,14 @@ export default class extends Controller {
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
 
-    // Show a brief "preparing" state while checksum is computed
-    attachment.setUploadProgress(1)
-
-    let lastProgress = -1
+    let lastProgress = 0
     let lastPaint = 0
     const minDelta = 2           // only update if progress moves by 2% or more
     const minInterval = 100      // ms between UI updates
-    let started = false
+    // let started = false
 
-
+    // Show a brief "preparing" state while checksum is computed
+    attachment.setUploadProgress(0)
 
     const upload = new DirectUpload(file, this.uploadURL, {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
@@ -74,20 +72,21 @@ export default class extends Controller {
       directUploadWillStoreFileWithXHR: xhr => {
         xhr.upload.addEventListener("progress", event => {
           if (!event.lengthComputable || !event.total) return
-          if (!started) {
-            // First readable progress means PUT started; clear the "preparing" illusion
-            started = true
-          }
+          // if (!started) {
+          //   // First readable progress means PUT started; clear the "preparing" illusion
+          //   started = true
+          // }
 
           const raw = (event.loaded / event.total) * 100
           // Clamp to [1, 99] to avoid bouncing 100 before we finalize
-          const pct = Math.max(1, Math.min(99, Math.round(raw)))
-          const now = performance.now()
+          let pct = 0
+          pct = Math.max(0, Math.min(99, pct))
 
+          const now = performance.now()
 
           if (
               lastProgress < 0 ||
-              Math.abs(pct - lastProgress) >= minDelta ||
+              (pct - lastProgress) >= minDelta ||
               (now - lastPaint) >= minInterval
           ) {
             lastProgress = pct
@@ -117,6 +116,10 @@ export default class extends Controller {
           }
         })
       })
+
+      // Upload is complete: snap to 100% once, after success
+      attachment.setUploadProgress(100)
+
       if (file.type === "application/pdf") {
         await this.analyzeBlob(blob.signed_id)
         await this.fetchPreviewUrl(blob.signed_id, attachment)
