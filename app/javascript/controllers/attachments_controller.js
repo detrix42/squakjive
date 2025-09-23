@@ -13,24 +13,8 @@ export default class extends Controller {
     //   }
     // })
 
-    // Bind handlers so we can remove them in disconnect()
-    this.onFileAccept = event => {
-      const { file } = event
-      if (file.size > 500 * 1024 * 1024) {
-        event.preventDefault()
-        alert("File too large!")
-      }
-    }
-
-    this.onAttachmentAdd = event => {
-      // Prevent Trix's default direct upload to avoid duplicate uploads
-      event.preventDefault()
-      const { attachment } = event
-      if (attachment.file) {
-        console.log("trix-attachment-add triggered for file:", attachment.file.name)
-        this.createDirectUpload(attachment)
-      }
-    }
+    this.element.removeEventListener("trix-file-accept", this.onFileAccept)
+    this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
 
     this.element.addEventListener("trix-file-accept", this.onFileAccept)
     this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd)
@@ -39,9 +23,29 @@ export default class extends Controller {
 
   disconnect() {
     // Remove listeners to prevent stacking on Turbo reconnects
-    if (this.onFileAccept) this.element.removeEventListener("trix-file-accept", this.onFileAccept)
-    if (this.onAttachmentAdd) this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+    this.element.removeEventListener("trix-file-accept", this.onFileAccept)
+    this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
   }
+
+// Bind handlers so we can remove them in disconnect()
+  onFileAccept = event => {
+    const { file } = event
+    if (file.size > 500 * 1024 * 1024) {
+      event.preventDefault()
+      alert("File too large!")
+    }
+  }
+
+  onAttachmentAdd = event => {
+    // Prevent Trix's default direct upload to avoid duplicate uploads
+    event.preventDefault()
+    const { attachment } = event
+    if (attachment.file) {
+      console.log("trix-attachment-add triggered for file:", attachment.file.name)
+      this.createDirectUpload(attachment)
+    }
+  }
+
 
 
 
