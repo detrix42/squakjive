@@ -13,12 +13,13 @@ export default class extends Controller {
     //   }
     // })
 
+    this.attachment_in_progress = false
+
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
     this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
 
     this.element.addEventListener("trix-file-accept", this.onFileAccept)
-    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd)
-
+    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd, this.attachment_in_progress)
   }
 
   disconnect() {
@@ -38,6 +39,8 @@ export default class extends Controller {
 
   onAttachmentAdd = event => {
     // Prevent Trix's default direct upload to avoid duplicate uploads
+    if(this.attachment_in_progress) return
+    this.attachment_in_progress = true
     event.preventDefault()
     const { attachment } = event
     if (attachment.file) {
@@ -49,7 +52,16 @@ export default class extends Controller {
 
 
 
-  async createDirectUpload(attachment) {
+  async createDirectUpload(attachment, in_progress = false) {
+    this.attachment_in_progress = true
+    // try {
+    //   await this.startDirectUpload(attachment)
+    // } catch (error) {
+    //   console.error("Error starting direct upload:", error)
+    //   alert("Upload failed: " + (error.response?.data?.error || error.message))
+    // } finally {
+    //   this.attachment_in_progress = false
+    // }
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
 
@@ -138,6 +150,7 @@ export default class extends Controller {
 
       // Upload is complete: snap to 100% once, after success
       attachment.setUploadProgress(100)
+      this.attachment_in_progress = false
 
       if (file.type === "application/pdf") {
         await this.analyzeBlob(blob.signed_id)
