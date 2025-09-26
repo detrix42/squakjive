@@ -54,14 +54,6 @@ export default class extends Controller {
 
   async createDirectUpload(attachment, in_progress = false) {
     this.attachment_in_progress = true
-    // try {
-    //   await this.startDirectUpload(attachment)
-    // } catch (error) {
-    //   console.error("Error starting direct upload:", error)
-    //   alert("Upload failed: " + (error.response?.data?.error || error.message))
-    // } finally {
-    //   this.attachment_in_progress = false
-    // }
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
 
