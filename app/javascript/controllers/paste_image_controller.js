@@ -1,11 +1,42 @@
 // app/javascript/controllers/paste_image_controller.js
 import { Controller } from "@hotwired/stimulus"
 import { DirectUpload } from "@rails/activestorage"
+import { getClipboardImageItems, getPastedText } from "trix_paste_utils"
 
 export default class extends Controller {
+
   static targets = ["uploader", "signedIds", "previews", "editor"]
 
   connect() {
+    console.log("Paste image controller connected")
+    // Ensure we bind to the real trix-editor node
+    this.trixEl = this.element.tagName === "TRIX-EDITOR"
+        ? this.element
+        : this.element.querySelector("trix-editor")
+
+    if (!this.trixEl) {
+      console.warn("[paste_image] No <trix-editor> found to bind paste handlers")
+      return
+    }
+
+    this.onPaste = this.onPaste.bind(this)
+    this.onPasteCapture = (e) => {
+      // Only handle paste events originating inside our trix editor
+      const targetEditor = e.target?.closest?.("trix-editor")
+      if (!targetEditor || targetEditor !== this.trixEl) return
+      // Run our handler in capture phase before Trix
+      this.onPaste(e)
+    }
+
+    window.addEventListener("paste", this.onPasteCapture, true)
+    // Bind both Trix’s synthetic and native paste events
+    this.trixEl.addEventListener("trix-paste", this.onPaste)
+    this.trixEl.addEventListener("paste", this.onPaste)
+
+    // console.debug("[paste_image] connected and listening for paste on", this.trixEl)
+
+
+
     // Ensure we can clean up before submit
     this.form = this.element.closest("form")
 
@@ -16,16 +47,24 @@ export default class extends Controller {
       this.form.addEventListener("turbo:submit-start", this._onTurboSubmitStart)
       this.form.addEventListener("turbo:submit-end", this._onTurboSubmitEnd)
     }
-
   }
 
   disconnect() {
+    if (this.trixEl && this.onPaste) {
+      this.trixEl.removeEventListener("trix-paste", this.onPaste)
+    }
+    if (this.onPasteCapture) {
+      window.removeEventListener("paste", this.onPasteCapture, true)
+    }
+
     if (this.form) {
       if (this._onTurboSubmitStart) this.form.removeEventListener("turbo:submit-start", this._onTurboSubmitStart)
       if (this._onTurboSubmitEnd) this.form.removeEventListener("turbo:submit-end", this._onTurboSubmitEnd)
     }
 
   }
+
+
 
   // Keep previews visible during the request so the user sees what's being sent.
   onTurboSubmitStart() {
@@ -54,50 +93,168 @@ export default class extends Controller {
 
   }
 
+  get editor() {
+    return this.trixEl?.editor || this.element.editor
+  }
 
 
   onPaste(event) {
+    console.debug("[paste_image] onPaste fired:", event.type)
+    if (event.__handled) return
     if (!event.clipboardData) return
 
-    const items = Array.from(event.clipboardData.items || [])
-    const imageItems = items.filter(i => i.kind === "file" && i.type.startsWith("image/"))
+    // Clipboard presence can be missing on the Trix synthetic event; prefer native
+    const cd = event.clipboardData || event.paste
+    if (!cd) return
 
-    if (imageItems.length > 0) {
-      // Prevent the image being inserted as a base64 blob into the editor
-      event.preventDefault()
 
-      imageItems.forEach(item => {
-        const file = item.getAsFile()
-        if (!file) return
-        this.uploadFile(file)
-      })
-
-      // Insert any text/plain that came with the paste, otherwise a placeholder
-      const plain = (event.clipboardData.getData("text/plain") || "").trim()
-      if (plain) {
-        this.insertTextAtCursor(plain + " ")
-      } else {
-        this.insertTextAtCursor("See attached image(s)")
+    // Detect pasted images
+    const imageItems = getClipboardImageItems(event)
+    if (imageItems.length === 0) {
+      // Optional: sanitize pasted HTML with data URIs when no images present
+      const html = event.clipboardData?.getData("text/html")
+      if (html && this.containsDataUri(html)) {
+        event.preventDefault()
+        event.__handled = true
+        event.stopImmediatePropagation()
+        const text = event.clipboardData.getData("text/plain") || ""
+        this.insertTextAtCursor(text)
+        return
       }
-      // Trigger input pipeline (e.g., syncing to hidden textarea)
-      this.onEditorInput()
+
+      // If there's no text and no images, insert the "no content" message
+      const plain = (getPastedText(event) || "").trim()
+      if (!plain) {
+        event.preventDefault()
+        event.__handled = true
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation()
+        }
+        this.insertTextAtCursor("There is no conent")
+      }
+      // Otherwise, let normal text paste happen
       return
     }
 
-    // If someone copies HTML that contains data URIs, block them and optionally paste plain text
-    const html = event.clipboardData.getData("text/html")
-    if (html && this.containsDataUri(html)) {
-      event.preventDefault()
-      const text = event.clipboardData.getData("text/plain") || ""
-      this.insertTextAtCursor(text)
-    }
-    // Otherwise let the paste fall through (normal text paste)
 
+    // Stop default before Trix inserts base64
+    event.preventDefault()
+    event.__handled = true
+    if (typeof event.stopImmediatePropagation === "function") {
+      event.stopImmediatePropagation()
+    }
+
+    // Suspend any other interceptors while we insert our own attachment
+    window.__suspendAttachmentInterception = true
+
+    imageItems.forEach(item => {
+      const file = item.getAsFile()
+      if (!file) return
+
+      // Insert a real Trix attachment with a temporary URL so it renders inline
+      const tempUrl = URL.createObjectURL(file)
+      const attachment = new Trix.Attachment({
+        contentType: file.type || "image/*",
+        filename: file.name,
+        url: tempUrl
+      })
+
+      const editor = this.editor
+      editor.insertAttachment(attachment)
+
+      // Direct upload, then swap URLs on the existing attachment
+      this.directUploadFile(file)
+          .then(async (signedId) => {
+            try {
+              attachment.setAttributes({
+                sgid: signedId,
+                filename: file.name,
+                contentType: file.type || "image/*"
+              })
+
+              const res = await fetch("/api/v1/uploads", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ signed_id: signedId })
+              })
+              if (!res.ok) throw new Error("Failed to resolve blob URLs")
+              const data = await res.json()
+
+              attachment.setAttributes({
+                url: data.preview_url,
+                href: data.download_url
+              })
+            } catch (e) {
+              console.error("Failed to finalize uploaded image:", e)
+              attachment.setAttributes({ caption: "Image upload failed" })
+            } finally {
+              URL.revokeObjectURL(tempUrl)
+            }
+          })
+          .catch(err => {
+            console.error("Direct upload failed:", err)
+            attachment.setAttributes({ caption: "Image upload failed" })
+            URL.revokeObjectURL(tempUrl)
+          })
+
+      // this.uploadFile(file)
+    })
+
+    // If clipboard also contains plain text, insert it; otherwise a placeholder
+    const text = getPastedText(event).trim()
+    if (text) {
+      this.insertTextAtCursor(text + " ")
+    }
+
+    // Re-enable on next tick
+    setTimeout(() => {
+      window.__suspendAttachmentInterception = false
+    }, 0)
+
+
+    // Done handling images; do not fall through to other logic
+    return
+  }
+
+  // Return a Promise that resolves with blob.signed_id
+  directUploadFile(file) {
+    const uploadUrl = this.directUploadUrl
+    if (!uploadUrl) {
+      return Promise.reject(new Error("Missing direct upload URL"))
+    }
+    return new Promise((resolve, reject) => {
+      const upload = new DirectUpload(file, uploadUrl)
+      upload.create((error, blob) => {
+        if (error) {
+          reject(error)
+        } else {
+          // If you still need hidden inputs for non-ActionText attachments, you can add them here.
+          resolve(blob.signed_id)
+        }
+      })
+    })
+  }
+
+  get directUploadUrl() {
+    // Prefer the form that contains the actual <trix-editor>
+    const form =
+        this.trixEl?.closest?.("form") ||
+        this.element?.closest?.("form") ||
+        document.querySelector("form[data-direct-upload-url]")
+
+    const url = form?.dataset?.directUploadUrl
+    if (!url) {
+      console.error(
+          "[paste_image] Missing data-direct-upload-url. Ensure your form has:",
+          'data-direct-upload-url="/rails/active_storage/direct_uploads"'
+      )
+    }
+    return url || "/rails/active_storage/direct_uploads"
   }
 
 
   uploadFile(file) {
-    const uploadUrl = this.uploaderTarget.dataset.directUploadUrl
+    const uploadUrl = this.directUploadUrl
     if (!uploadUrl) {
       console.error("Active Storage direct upload URL missing. Ensure ActiveStorage.start() and data-direct-upload='true' on the file input.")
       return

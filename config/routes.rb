@@ -5,7 +5,7 @@ Rails.application.routes.draw do
 
   get "link_preview/show"
 
-  get "link_preview", to: "link_preview#show"
+  # get "link_preview", to: "link_preview#show"
 
   get "user_profile/selected_circle"
 
@@ -58,7 +58,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      get "uploads/create"
       resource :metadata, only: [:show]
+      resources :uploads, only: [:create]
     end
   end
 

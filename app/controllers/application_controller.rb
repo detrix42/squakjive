@@ -21,6 +21,14 @@ class ApplicationController < ActionController::Base
   private
 
   def log_params
+    # Skip logging for Active Storage, cable, and uploads endpoints to avoid touching streams
+    if self.class.name.start_with?("ActiveStorage::") ||
+       controller_path.start_with?("rails/active_storage") ||
+       controller_path.start_with?("action_cable") ||
+       controller_path == "api/v1/uploads"
+      return
+    end
+
 
     Rails.logger.debug "application controller --> PARAMS: #{params.inspect}"
 

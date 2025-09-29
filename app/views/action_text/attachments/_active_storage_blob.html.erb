@@ -1,10 +1,23 @@
-<!-- app/views/action_text/attachables/_active_storage_blob.html.erb -->
-<figure class="attachment attachment--preview attachment--<%= attachable.filename.extension %>">
-  <%= link_to rails_blob_url(attachable, disposition: "attachment"), title: "Download #{attachable.filename}" do %>
-    <%= image_tag attachable.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{attachable.filename}" %>
+<!-- DEBUG: Using custom _active_storage_blob.html.erb -->
+<figure class="attachment attachment--<%= blob.representable? ? 'preview' : 'file' %> attachment--<%= blob.filename.extension %>">
+  <p>###DEBUG###: Rendering blob <%= blob.filename %></p>
+  <% if blob.representable? %>
+    <% if blob.image? %>
+      <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
+        <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+      <% end %>
+    <% elsif blob.previewable? %>
+      <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
+        <%= image_tag blob.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+      <% end %>
+    <% else %>
+      <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
+    <% end %>
+  <% else %>
+    <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
   <% end %>
   <figcaption class="attachment__caption">
-    <%= attachable.filename %>
-    <span class="attachment__size">(<%= number_to_human_size(attachable.byte_size) %>)</span>
+    <%#= blob.filename %>
+    <span class="attachment__size">(<%= number_to_human_size(blob.byte_size) %>)</span>
   </figcaption>
 </figure>

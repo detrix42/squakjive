@@ -15,7 +15,7 @@
           <%= squak.user.username %>
         </div>
 
-        <% if can_destroy_squak?(current_user, squak) %>
+        <% if can_destroy_squak?(user, squak) %>
           <%= link_to squak_path(squak),
                       data: { turbo_method: :delete, turbo_confirm: "Delete this squak?" },
                       class: "text-danger text-decoration-none",
@@ -27,7 +27,7 @@
 
       <div class="ms-4 squak-body">
         <% if squak.body.present? %>
-          <%= render_rich_text_with_attachments(squak.body) %>
+          <%= squak.body %>
         <% end %>
       </div>
 

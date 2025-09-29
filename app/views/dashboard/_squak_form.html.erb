@@ -11,7 +11,8 @@
                      value: (defined?(circle_id) ? circle_id : params[:circle_id]) %>
   <div class="mb-3" id="squak-editor">
     <%= f.rich_text_area :body, class: "form-control",
-                         data: { controller: "attachments paste" } %>
+        data: { controller: "attachments paste-image paste-url"  }
+    %>
   </div>
   <div class="ms-auto me-3">
     <%= f.submit "Squak It", class: "btn btn-primary" %>

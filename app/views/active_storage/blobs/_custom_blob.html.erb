@@ -1,6 +1,5 @@
 <!-- DEBUG: Using custom _blob.html.erb -->
 <figure class="attachment attachment--<%= blob.representable? ? 'preview' : 'file' %> attachment--<%= blob.filename.extension %>">
-  <p>DEBUG: Rendering blob <%= blob.filename %></p>
   <% if blob.representable? %>
     <% if blob.image? %>
       <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>

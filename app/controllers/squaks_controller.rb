@@ -14,11 +14,13 @@ class SquaksController < ApplicationController
     Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
 
     if @squak.save
-      squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak }, formats: [:html], cache: false)
-      Turbo::StreamsChannel.broadcast_prepend_to(
+      # squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak }, formats: [:html], cache: false)
+      # Broadcast to other subscribed clients asynchronously (no render_to_string needed)
+      Turbo::StreamsChannel.broadcast_prepend_later_to(
         "squaks",
         target: "squaks-list",
-        html: squak
+        partial: "squaks/squak",
+        locals: { squak: @squak, user: current_user }
       )
 
       respond_to do |format|
@@ -27,7 +29,7 @@ class SquaksController < ApplicationController
             turbo_stream.prepend(
               "squaks-list",
               partial: "squaks/squak",
-              locals: { squak: @squak }
+              locals: { squak: @squak, user: current_user }
             )
           ]
         end

@@ -1,6 +1,6 @@
 module SquakHelper
-  ALLOWED_TAGS  = %w[p br div span strong b em i u a ul ol li img video source].freeze
-  ALLOWED_ATTRS = %w[href rel target class src alt controls].freeze
+  ALLOWED_TAGS  = %w[p br div span strong b em i u a ul ol li img video source action-text-attachment]
+  ALLOWED_ATTRS = %w[href rel target class src alt controls sgid].freeze
 
   # Usage: <%= render_squak_body(squak) %>
   def render_squak_body(squak)

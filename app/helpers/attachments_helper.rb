@@ -56,4 +56,5 @@ module AttachmentsHelper
 
     fragment.to_html.html_safe
   end
+
 end

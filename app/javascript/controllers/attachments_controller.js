@@ -5,15 +5,18 @@ import "axios"
 export default class extends Controller {
   connect() {
     console.log("AttachmentsController connected")
-    // this.element.addEventListener("trix-file-accept", event => {
-    //   const { file } = event
-    //   if (file.size > 500 * 1024 * 1024) {
-    //     event.preventDefault()
-    //     alert("File too large!")
-    //   }
-    // })
 
     this.attachment_in_progress = false
+    this.csrfTkn = document.querySelector('meta[name="csrf-token"]')?.content || ""
+
+
+    // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    if(window.axios) {
+      window.axios.defaults.headers.common['X-CSRF-Token'] = this.csrfTkn
+      window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+      window.axios.defaults.headers.common['Accept'] = 'application/json'
+      window.axios.defaults.headers.common['Content-Type'] = 'application/json'
+    }
 
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
     this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
@@ -38,15 +41,24 @@ export default class extends Controller {
   }
 
   onAttachmentAdd = event => {
+    // If another flow (e.g., paste-image) is inserting its own attachment,
+    // don't interfere with Trix's handling.
+    if (window.__suspendAttachmentInterception) return
+
     // Prevent Trix's default direct upload to avoid duplicate uploads
     if(this.attachment_in_progress) return
-    this.attachment_in_progress = true
-    event.preventDefault()
     const { attachment } = event
-    if (attachment.file) {
-      console.log("trix-attachment-add triggered for file:", attachment.file.name)
-      this.createDirectUpload(attachment)
+
+    // If there's no attachment or it doesn't have a File (e.g., a temp URL you inserted),
+    // let Trix handle it normally so it stays in the editor.
+    if (!attachment || !attachment.file) {
+      return
     }
+
+    event.preventDefault()
+    console.log("trix-attachment-add triggered for file:", attachment.file.name)
+    this.createDirectUpload(attachment)
+
   }
 
 
@@ -86,9 +98,9 @@ export default class extends Controller {
     const upload = new DirectUpload(file, this.uploadURL, {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
       directUploadWillCreateBlobWithXHR: xhr => {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-        console.log("CSRF token:", csrfToken)
-        if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken)
+        // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+        // console.log("CSRF token:", csrfToken)
+        if (this.csrfTkn) xhr.setRequestHeader("X-CSRF-Token", this.csrfTkn)
         // Help Rails treat this as an XHR and pass CSRF heuristics
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
 
@@ -186,15 +198,11 @@ export default class extends Controller {
 
   async analyzeBlob(sgid, attempt = 0, maxAttempts = 5) {
     console.log("Analyzing blob for SGID:", sgid, "Attempt:", attempt + 1)
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-    if (!csrfToken) {
-      console.error("CSRF token not found")
-      return
-    }
+
     try {
       const response = await window.axios.post(`/rails/active_storage/blobs/${sgid}/analyze`, {}, {
         headers: {
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-Token": this.csrfTkn
         }
       })
       console.log("Blob analysis response:", response.data)
