@@ -107,4 +107,6 @@ Rails.application.configure do
   # Increase verbosity while debugging
   config.log_level = :debug
 
+  config.active_storage.service = :roci
+
 end
