@@ -5,7 +5,7 @@ module Api
       include Rails.application.routes.url_helpers
 
       protect_from_forgery with: :null_session
-      skip_before_action :log_params
+      # skip_before_action :log_params
 
 
       def create
