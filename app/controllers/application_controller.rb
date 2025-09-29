@@ -17,9 +17,6 @@ class ApplicationController < ActionController::Base
     dashboard_path
   end
 
-
-  private
-
   def log_params
     # Skip logging for Active Storage, cable, and uploads endpoints to avoid touching streams
     if self.class.name.start_with?("ActiveStorage::") ||
@@ -37,4 +34,9 @@ class ApplicationController < ActionController::Base
     puts "PARAMS: #{params.inspect}"
     puts "---------------------------------------------\n\n"
   end
+
+
+  private
+
+
 end
