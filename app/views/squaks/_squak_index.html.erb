@@ -40,3 +40,12 @@
 
   <p>No squaks in this circle yet.</p>
 <% end %>
+
+<script>
+  document.addEventListener("turbo:connect", () => {
+    console.log("Turbo connected!");
+  });
+  document.addEventListener("turbo:cable-ready", () => {
+    console.log("ActionCable subscription active!");
+  });
+</script>
