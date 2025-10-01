@@ -1,4 +1,24 @@
-  <h1>SquakJive</h1>
-  <%= link_to "Sign up", new_user_registration_path, class: "btn btn-primary btn-lg" %>
-  <%= link_to "Log in", new_user_session_path, class: "btn btn-outline-primary btn-lg" %>
+<div class="container-fluid center-text">
+  <div class="row" style="background-color: #1d2e3a;">
+    <div class="col-3"
+         id="home-view-header">
+      <%= image_tag "https://robohash.org/squak42?size=60x60", class: "img-fluid" %>
+
+    </div>
+
+    <div class="col-6 text-center">
+      <h1>
+        SquakJive
+      </h1>
+    </div>
+
+    <div class="col-3 d-flex justify-content-end align-items-center">
+      <%= link_to "Sign up", new_user_registration_path, class: "btn btn-primary btn-lg me-2" %>
+      <%= link_to "Log in", new_user_session_path, class: "btn btn-outline-primary btn-lg" %>
+    </div>
+
+  </div>
+</div>
+
+
 
