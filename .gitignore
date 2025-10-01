@@ -40,6 +40,6 @@
 .rspec_status
 coverage/
 
-storage/
+storage/*
 
 nohup.out
