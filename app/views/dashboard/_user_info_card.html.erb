@@ -8,26 +8,21 @@
       <%= image_tag "https://robohash.org/#{@username}?size=60x60", class: "rounded-circle m-2" %>
 
     </div>
-    <div class="col-8">
+    <div class="col">
       <div class="card-body">
         <h6 class="card-title fw-bold mb-0"><%= @username %></h6>
         <p class="card-text text-muted"><small>@<%= @email %></small></p>
       </div>
     </div>
-    <div class="col-2">
-      <div class="dropdown">
-        <i class="bi bi-three-dots-vertical icon-vdots"
-           role="button"
-           data-bs-toggle="dropdown"
-           aria-expanded="false"></i>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <%= button_to destroy_user_session_path,
-                        method: :delete,
-                        class: "dropdown-item text-danger",
-                        form: { data: { turbo: true } } do %>
-            <i class="bi bi-box-arrow-right me-2"></i>Logout
-          <% end %>
-        </ul>
+    <div class="col-1" id="user-action-col">
+      <div class="logout">
+        <%= button_to destroy_user_session_path,
+                      method: :delete,
+                      class: "text-danger bg-transparent border-0",
+                      form: { data: { turbo: true } } do %>
+          <i class="bi bi-box-arrow-right ms-1"></i>
+        <% end %>
+
       </div>
 
     </div>

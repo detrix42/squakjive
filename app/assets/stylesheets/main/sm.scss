@@ -6,18 +6,3 @@
 
 }
 
-.user-info-card {
-  position: relative;
-  margin-bottom: 1rem;
-  height: $userinfo-card-height;
-
-  .icon-vdots {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    //margin: auto;
-    color: $body-color;
-    font-size: 1.5rem;
-  }
-}
