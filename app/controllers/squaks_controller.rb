@@ -37,10 +37,24 @@ class SquaksController < ApplicationController
         format.json { head :ok }
       end
     else
+      Rails.logger.error "Squak save failed: #{@squak.errors.full_messages}"
       respond_to do |format|
-        format.turbo_stream { head :unprocessable_entity }
-        format.html { head :unprocessable_entity }
-        format.json { head :unprocessable_entity }
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.replace(
+              "squak-form",  # Target an element with the form (e.g., <div id="squak-form">)
+              partial: "squaks/form",
+              locals: { squak: @squak, errors: @squak.errors.full_messages }
+            )
+          ], status: :unprocessable_entity
+        end
+        format.html do
+          flash.now[:alert] = @squak.errors.full_messages.to_sentence
+          render :new, status: :unprocessable_entity
+        end
+        format.json do
+          render json: { errors: @squak.errors.full_messages }, status: :unprocessable_entity
+        end
       end
     end
   end

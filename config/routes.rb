@@ -56,6 +56,11 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
+  # Ensure ActiveStorage routes are accessible
+  direct :rails_storage_disk do
+    get "/rails/active_storage/disk/:encoded_key/*filename", to: "active_storage/disk#show", as: :rails_disk_service
+  end
+
   namespace :api do
     namespace :v1 do
       get "uploads/create"

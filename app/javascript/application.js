@@ -1,5 +1,5 @@
 import "trix"
-import "@rails/actiontext"
+// import "@rails/actiontext"
 
 // ;(async () => {
 //   if (!window.Trix) {
@@ -22,6 +22,10 @@ import "@hotwired/turbo-rails"
 import "controllers"
 import "channels"
 
+Trix.config.attachments.preview.caption = {
+  name: false,
+  size: false
+}
 
 
 // app/javascript/application.js

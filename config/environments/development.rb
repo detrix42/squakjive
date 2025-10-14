@@ -81,10 +81,16 @@ Rails.application.configure do
     protocol: "http",
     port: 4200
   }
+  config.active_storage.queues.analysis = nil
+  config.active_storage.queues.purge = nil
+  config.active_storage.service = :local
+  config.active_storage.resolve_model_to_route = :rails_storage_redirect
 
   # Relax CSRF origin checks in development to avoid 422s when using IP/ports
   config.action_controller.forgery_protection_origin_check = false
 
   config.active_job.queue_adapter = :inline
+
+
 
 end

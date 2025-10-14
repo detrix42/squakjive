@@ -20,19 +20,23 @@ export default class extends Controller {
 
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
     this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+    this.element.removeEventListener("trix-attachment-remove", this.onAttachmentRemove)
 
     this.element.addEventListener("trix-file-accept", this.onFileAccept)
     this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd, this.attachment_in_progress)
+    this.element.addEventListener("trix-attachment-remove", this.onAttachmentRemove)
   }
 
   disconnect() {
     // Remove listeners to prevent stacking on Turbo reconnects
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
     this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
+    this.element.removeEventListener("trix-attachment-remove", this.onAttachmentRemove)
   }
 
 // Bind handlers so we can remove them in disconnect()
   onFileAccept = event => {
+    console.log('onFileAccept')
     const { file } = event
     if (file.size > 500 * 1024 * 1024) {
       event.preventDefault()
@@ -41,30 +45,40 @@ export default class extends Controller {
   }
 
   onAttachmentAdd = event => {
-    // If another flow (e.g., paste-image) is inserting its own attachment,
-    // don't interfere with Trix's handling.
-    if (window.__suspendAttachmentInterception) return
+    console.log('onAttachmentAdd');
+    event.preventDefault();
+    event.stopPropagation();
 
-    // Prevent Trix's default direct upload to avoid duplicate uploads
-    if(this.attachment_in_progress) return
-    const { attachment } = event
+    if (window.__suspendAttachmentInterception) return;
 
-    // If there's no attachment or it doesn't have a File (e.g., a temp URL you inserted),
-    // let Trix handle it normally so it stays in the editor.
+    const { attachment } = event;
     if (!attachment || !attachment.file) {
-      return
+      console.log("No file or attachment, letting Trix handle normally");
+      return;
     }
 
-    event.preventDefault()
-    console.log("trix-attachment-add triggered for file:", attachment.file.name)
-    this.createDirectUpload(attachment)
+    if (!attachment || !attachment.file) return;
 
+    if (attachment.__uploadProcessed) return;
+    attachment.__uploadProcessed = true;
+
+    attachment.setAttributes({ upload: null });
+
+    console.log("trix-attachment-add triggered for file:", attachment.file.name);
+    this.createDirectUpload(attachment);
+  }
+
+  onAttachmentRemove = event => {
+    console.log("trix-attachment-remove triggered", event.attachment)
   }
 
 
+  async createDirectUpload(attachment) {
+    if (this.attachment_in_progress) {
+      console.log("Upload in progress, skipping:", attachment.file.name)
+      return
+    }
 
-
-  async createDirectUpload(attachment, in_progress = false) {
     this.attachment_in_progress = true
     const file = attachment.file
     console.log("Starting direct upload for:", file.name)
@@ -98,8 +112,6 @@ export default class extends Controller {
     const upload = new DirectUpload(file, this.uploadURL, {
       // Add CSRF for create-blob POST (helps avoid occasional 422s)
       directUploadWillCreateBlobWithXHR: xhr => {
-        // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-        // console.log("CSRF token:", csrfToken)
         if (this.csrfTkn) xhr.setRequestHeader("X-CSRF-Token", this.csrfTkn)
         // Help Rails treat this as an XHR and pass CSRF heuristics
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
@@ -154,20 +166,61 @@ export default class extends Controller {
 
       // Upload is complete: snap to 100% once, after success
       attachment.setUploadProgress(100)
-      this.attachment_in_progress = false
+      const serviceUrl = `/rails/active_storage/blobs/redirect/${blob.signed_id}/${encodeURIComponent(blob.filename)}?disposition=inline`;
+      console.log("Service URL:", serviceUrl)
 
-      if (file.type === "application/pdf") {
+      // Define previewable MIME types (PDFs and videos need server-side previews)
+      const previewableTypes = [
+        "application/pdf",
+        "video/mp4",
+        "video/mpeg",
+        "video/webm",
+        "video/mov",
+        "video/avi"
+      ]
+
+      // Define image types (use browser scaling, no server-side preview)
+      const imageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/bmp",
+        "image/webp",
+        "image/tiff"
+      ]
+
+      if (previewableTypes.includes(blob.content_type)) {
+        // PDFs and videos: analyze and fetch preview
         await this.analyzeBlob(blob.signed_id)
         await this.fetchPreviewUrl(blob.signed_id, attachment)
-      } else {
-        console.log("Setting attributes for non-PDF:", blob.filename)
+      }
+      else if (imageTypes.includes(blob.content_type)) {
+        // Images: use blob.service_url directly, let browser scale
+        console.log("Setting attributes for image:", blob.filename)
+        setTimeout(() => {
+          attachment.setAttributes({
+            url: serviceUrl,
+            href: serviceUrl,
+            sgid: blob.signed_id,
+            filename: blob.filename,
+            contentType: blob.content_type,
+            previewable: true,
+            caption: blob.filename || "",
+          });
+          console.log("Image attributes set:", attachment.getAttributes());
+        }, 100);
+      }
+      else {
+        // Non-previewable files
+        console.log("Setting attributes for non-previewable file:", blob.filename)
         attachment.setAttributes({
           url: blob.service_url,
           href: blob.service_url,
           sgid: blob.signed_id,
           filename: blob.filename,
           contentType: blob.content_type,
-          previewable: blob.representable
+          previewable: false,
+          caption: blob.filename || "",
         })
       }
     } catch (error) {
@@ -190,11 +243,12 @@ export default class extends Controller {
       alert("Upload failed: " + msg)
 
     }
+    finally {
+      this.attachment_in_progress = false
+      // Reset progress to 0
+      attachment.__uploadProcessed = false; // Reset for future uploads
+    }
   }
-
-
-
-
 
   async analyzeBlob(sgid, attempt = 0, maxAttempts = 5) {
     console.log("Analyzing blob for SGID:", sgid, "Attempt:", attempt + 1)
@@ -222,33 +276,26 @@ export default class extends Controller {
     }
   }
 
-  async fetchPreviewUrl(sgid, attachment, attempt = 0, maxAttempts = 10) {
+  async fetchPreviewUrl(sgid, attachment, attempt = 0, maxAttempts = 5) {
     console.log("Fetching preview URL for SGID:", sgid, "Attempt:", attempt + 1)
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-    if (!csrfToken) {
-      console.error("CSRF token not found")
-      return
-    }
     try {
       const response = await window.axios.get(`/rails/active_storage/blobs/${sgid}/preview`, {
-        headers: {
-          "X-CSRF-Token": csrfToken
-        }
+        headers: { "X-CSRF-Token": this.csrfTkn }
       })
       console.log("Preview URL response:", response.data)
       attachment.setAttributes({
         url: response.data.preview_url,
-        href: response.data.url, // PDF download link
+        href: response.data.url,
         sgid: response.data.sgid,
         filename: response.data.filename,
-        contentType: "image/png",
+        contentType: response.data.content_type || attachment.file.type,
         previewable: true
       })
       console.log("Trix attachment attributes set:", {
         url: response.data.preview_url,
         href: response.data.url,
         sgid: response.data.sgid,
-        contentType: "image/png",
+        contentType: response.data.content_type || attachment.file.type,
         previewable: true
       })
     } catch (error) {
@@ -265,8 +312,8 @@ export default class extends Controller {
       }
       console.log("Falling back to file attributes for:", attachment.file.name)
       attachment.setAttributes({
-        url: attachment.file.service_url || attachment.file.url || attachment.file.name,
-        href: attachment.file.service_url || attachment.file.url || attachment.file.name,
+        url: attachment.file.url || attachment.file.name,
+        href: attachment.file.url || attachment.file.name,
         sgid: sgid,
         filename: attachment.file.name,
         contentType: attachment.file.type,
