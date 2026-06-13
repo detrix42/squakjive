@@ -1,4 +1,3 @@
-<!-- DEBUG: Using custom _image.html.erb -->
 <% if attachment.attachable %>
   <%= link_to rails_blob_url(attachment.attachable, disposition: "attachment"), title: "Download #{attachment.filename}" do %>
     <img src="<%= attachment.url %>" <% if attachment.width %>width="<%= attachment.width %>"<% end %> <% if attachment.height %>height="<%= attachment.height %>"<% end %> alt="<%= attachment.filename %>">
@@ -8,5 +7,5 @@
 <% end %>
 <figcaption class="attachment__caption">
   <%= attachment.filename %>
-  <span class="attachment__size">(<%= number_to_human_size attachment.filesize if attachment.filesize %>)</span>
+  <span class="attachment__size">(<%= number_to_human_size(attachment.filesize) if attachment.filesize %>)</span>
 </figcaption>

@@ -289,15 +289,23 @@ export default class extends Controller {
         sgid: response.data.sgid,
         filename: response.data.filename,
         contentType: response.data.content_type || attachment.file.type,
+        preview_url: response.data.preview_url,
         previewable: true
       })
-      console.log("Trix attachment attributes set:", {
-        url: response.data.preview_url,
-        href: response.data.url,
-        sgid: response.data.sgid,
-        contentType: response.data.content_type || attachment.file.type,
-        previewable: true
-      })
+
+      // Add a hidden input to the form with the preview_url
+      const form = this.element.closest('form')
+      if (form) {
+        let hiddenInput = form.querySelector(`input[type="hidden"][name="squak[body_attributes][preview_urls][${sgid}]"]`)
+        if (!hiddenInput) {
+          hiddenInput = document.createElement('input')
+          hiddenInput.type = 'hidden'
+          hiddenInput.name = `squak[preview_urls][${sgid}]`
+          form.appendChild(hiddenInput)
+        }
+        hiddenInput.value = response.data.preview_url
+      }
+
     } catch (error) {
       console.error("Error fetching preview URL:", {
         message: error.message,

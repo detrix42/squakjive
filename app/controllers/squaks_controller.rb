@@ -8,12 +8,130 @@ class SquaksController < ApplicationController
   end
 
   def create
-    squak_params = params.expect(squak: [:body, :circle_id])
-    @squak = current_user.squaks.new(squak_params)
+    squak_attrs = params.expect(squak: [:body, :circle_id, preview_urls: {}])
+    preview_urls = (squak_attrs.delete(:preview_urls) || {}).to_h
+    @squak = current_user.squaks.new(squak_attrs)
 
-    Rails.logger.debug "SQUAK ERRORS: #{@squak.errors.full_messages}" if @squak.errors.any?
+    Rails.logger.debug "Squak params: #{squak_attrs.inspect}"
+    Rails.logger.debug "Squak body before save: #{@squak.body&.body&.to_s.truncate(200)}"
+    Rails.logger.debug "Embeds before save: #{@squak.body&.embeds.inspect}"
+
+    # Process any embedded sgids from the rich text body (from the Trix editor HTML).
+    # - Merge client-provided preview_url (from the separate preview_urls form field populated
+    #   by attachments_controller.js) into blob metadata so our custom PDF rendering partials
+    #   can emit the thumbnail <img> using the pre-generated representation URL.
+    # - Force analyze (so previewable? is true and the /preview endpoint would have worked).
+    #
+    # We collect the blobs here, then AFTER the save (when the RichText record exists) we
+    # explicitly do rich_text_body.embeds.attach(blob). This guarantees the
+    # active_storage_attachments row (record_type: 'ActionText::RichText', name: 'embeds')
+    # that ActionText's attachment resolver needs at render time.
+    #
+    # In this app the normal auto-creation of those embeds attachments from sgids present
+    # in the saved body was not firing for PDF attachments (even after ActionText normalizes
+    # the trix figure into <action-text-attachment sgid=...>). The previous manual build
+    # was also broken (wrong `record:`). Explicit attach after save fixes the link without
+    # the side-effects we saw.
+    processed_blobs = []
+
+    if @squak.body&.body&.to_s.match(/sgid="([^"]+)"/)
+      sgids = @squak.body.body.to_s.scan(/sgid="([^"]+)"/).flatten.uniq
+      Rails.logger.debug "Found SGIDs in body: #{sgids}"
+
+      sgids.each do |sgid|
+        begin
+          blob = ActiveStorage::Blob.find_signed(sgid)
+          Rails.logger.debug "Processing blob #{blob.id}: #{blob.filename}"
+
+          if preview_urls.key?(sgid)
+            preview_url = preview_urls[sgid]
+            blob.update!(metadata: blob.metadata.merge(preview_url: preview_url))
+            Rails.logger.debug "Updated blob #{blob.id} metadata with preview_url: #{preview_url}"
+          end
+
+          # Ensure blob is analyzed synchronously
+          blob.analyze unless blob.analyzed?
+
+          processed_blobs << blob
+        rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.error "Blob not found for sgid: #{sgid}, error: #{e.message}"
+        end
+      end
+    end
+
+    # Inline custom HTML for PDF attachments.
+    # We replace the <action-text-attachment sgid=...> (and its preceding text node if present)
+    # with the preview figure block FIRST, followed by the squak text in its own <p>.
+    # This ensures:
+    #   - Preview image
+    #   - Centered text link to the PDF directly below the preview
+    #   - The original squak text in its own paragraph below the whole PDF block
+    # It completely bypasses ActionText's sgid resolver / missing attachable for PDFs.
+    if @squak.body&.body&.to_s.present?
+      html = @squak.body.body.to_s
+      processed_blobs.each do |blob|
+        next unless blob.content_type.start_with?('application/pdf')
+        sgid = blob.signed_id
+        preview_url = preview_urls[sgid].presence || blob.metadata.with_indifferent_access['preview_url'].presence
+        next unless preview_url
+
+        download_url = rails_blob_url(blob, disposition: "attachment")
+        size_text = helpers.number_to_human_size(blob.byte_size)
+
+        figure_html = <<~HTML.strip
+          <figure class="attachment attachment-pdf" style="text-align: center; margin: 8px 0;">
+            <a href="#{download_url}" target="_blank" rel="noopener">
+              <img src="#{preview_url}" alt="#{blob.filename}" width="500" height="600" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+            </a>
+            <figcaption style="text-align: center; margin-top: 4px; font-size: 0.9em;">
+              <a href="#{download_url}" target="_blank" rel="noopener" style="text-decoration: underline;">
+                #{blob.filename} (#{size_text})
+              </a>
+            </figcaption>
+          </figure>
+        HTML
+
+        # Capture preceding text (non-tag content right before the tag) and put figure first, then the text in a paragraph below.
+        # This gives the desired order: PDF preview + centered link under it, then squak text paragraph below.
+        pattern = /([^<]*?)(<action-text-attachment[^>]*sgid="#{Regexp.escape(sgid)}"[^>]*>.*?<\/action-text-attachment>)/m
+        html = html.gsub(pattern) do
+          pre_text = $1
+          # $2 is the original tag, we discard it
+          if pre_text.strip.present?
+            "#{figure_html}<p>#{pre_text.strip}</p>"
+          else
+            figure_html
+          end
+        end
+      end
+      @squak.body.body = html if html != @squak.body.body.to_s
+    end
 
     if @squak.save
+      # Force a fresh load so we have the persisted RichText id.
+      @squak.reload
+      rich_text = @squak.rich_text_body
+
+      processed_blobs.each do |blob|
+        next unless rich_text
+        # Use direct find_or_create_by on the attachment table to guarantee the linking row
+        # (record_type ActionText::RichText, record_id = the rich text's own id, name 'embeds', the blob).
+        # This is what the ActionText content renderer + sgid resolver uses to turn the
+        # <action-text-attachment sgid=...> in the saved body into a real attachable (your blob)
+        # so our PDF partials get called instead of _missing_attachable.
+        # Using the association .attach was not resulting in a visible row in the logs even
+        # after reload (stale proxy or integration detail with how the body was assigned).
+        ActiveStorage::Attachment.find_or_create_by!(
+          name: 'embeds',
+          record_type: 'ActionText::RichText',
+          record_id: rich_text.id,
+          blob_id: blob.id
+        )
+      end
+
+      embed_count = @squak.body.embeds.count rescue 0
+      rich_text_embed_count = rich_text&.embeds&.reload&.count rescue 0
+      Rails.logger.debug "Squak saved successfully. in-memory embeds count: #{embed_count}, rich_text_body embeds attachments: #{rich_text_embed_count} (we just attached #{processed_blobs.size} blob(s))"
       # squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak }, formats: [:html], cache: false)
       # Broadcast to other subscribed clients asynchronously (no render_to_string needed)
       Turbo::StreamsChannel.broadcast_prepend_later_to(

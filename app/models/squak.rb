@@ -19,6 +19,10 @@ class Squak < ApplicationRecord
     end
   end
 
+  def render_attachment_partial
+    'active_storage/blobs/_custom_blob'
+  end
+
   private
   def ensure_content
     # Check if body has text or an attachment tag

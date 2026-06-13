@@ -27,12 +27,11 @@ module Jitter
 
     config.asset_pipeline = :propshaft
 
-    # Enable MuPDF-based previews for PDFs in all environments
-    # config.active_storage.previewers << ActiveStorage::Previewer::MuPDFPreviewer
-    # config.active_storage.previewers = [
-    #   ActiveStorage::Previewer::PopplerPreviewer,
-    #   ActiveStorage::Previewer::VideoPreviewer
-    # ]
+    # Enable MuPDF-based previews for PDFs (and other document types).
+    # Requires mu-tools / mupdf (or poppler) system packages to be installed.
+    # See README.md for setup. Must be enabled for PDF thumbnails in squaks to work
+    # server-side for both the /preview endpoint and ActionText rendering.
+    config.active_storage.previewers << ActiveStorage::Previewer::MuPDFPreviewer
 
     # Use libvips for image variants (fast and recommended)
     config.active_storage.variant_processor = :vips

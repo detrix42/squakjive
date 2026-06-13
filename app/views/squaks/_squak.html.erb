@@ -28,13 +28,7 @@
       </div>
 
       <div class="ms-4 squak-body">
-        <p>Squak Body</p>
         <%= squak.body %>
-        <% if squak.rich_text_body&.body.present? %>
-          <p>Debug: Rich text body present, content: <%= squak.rich_text_body.body.to_s.truncate(50) %></p>
-        <% else %>
-          <p>Debug: Rich text body empty or nil</p>
-        <% end %>
       </div>
 
       <div class="squak-footer">

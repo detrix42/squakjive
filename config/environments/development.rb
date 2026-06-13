@@ -91,6 +91,7 @@ Rails.application.configure do
 
   config.active_job.queue_adapter = :inline
 
-
+  config.active_storage.queues.purge = :default
+  config.active_job.queue_adapter = :async
 
 end

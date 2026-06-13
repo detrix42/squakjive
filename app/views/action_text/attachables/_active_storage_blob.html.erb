@@ -1,0 +1,18 @@
+<% if attachable.content_type&.start_with?('application/pdf') %>
+  <figure class="attachment attachment-pdf">
+    <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener">
+      <% preview_url = attachable.metadata.with_indifferent_access['preview_url'].presence %>
+      <% if preview_url.present? %>
+        <%= image_tag preview_url, alt: attachable.filename.to_s, width: 500, height: 600 %>
+      <% elsif attachable.previewable? %>
+        <%= image_tag attachable.preview(resize_to_limit: [500, 600]).processed,
+                      alt: attachable.filename.to_s, width: 500, height: 600 %>
+      <% else %>
+        <%= attachable.filename %>
+      <% end %>
+    </a>
+    <figcaption><%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)</figcaption>
+  </figure>
+<% else %>
+  <%= super %>
+<% end %>

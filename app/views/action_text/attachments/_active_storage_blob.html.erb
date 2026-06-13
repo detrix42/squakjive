@@ -1,7 +1,21 @@
-<!-- DEBUG: Using custom _active_storage_blob.html.erb -->
+<%#
+  Attachment rendering partial for blobs. Supports PDF thumbnails via pre-stored
+  metadata['preview_url'] (populated during squak composition for non-image files).
+%>
 <figure class="attachment attachment--<%= blob.representable? ? 'preview' : 'file' %> attachment--<%= blob.filename.extension %>">
-  <p>###DEBUG###: Rendering blob <%= blob.filename %></p>
-  <% if blob.representable? %>
+  <% if blob.content_type&.start_with?('application/pdf') %>
+    <a href="<%= rails_blob_url(blob, disposition: "attachment") %>" target="_blank" rel="noopener">
+      <% preview_url = blob.metadata.with_indifferent_access['preview_url'].presence %>
+      <% if preview_url.present? %>
+        <%= image_tag preview_url, alt: blob.filename.to_s, width: 500, height: 600 %>
+      <% elsif blob.previewable? %>
+        <%= image_tag blob.preview(resize_to_limit: [500, 600]).processed, alt: blob.filename.to_s, width: 500, height: 600 %>
+      <% else %>
+        <%= blob.filename %>
+      <% end %>
+    </a>
+    <figcaption><%= blob.filename %> (<%= number_to_human_size(blob.byte_size) %>)</figcaption>
+  <% elsif blob.representable? %>
     <% if blob.image? %>
       <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
         <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
@@ -17,7 +31,6 @@
     <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
   <% end %>
   <figcaption class="attachment__caption">
-    <%#= blob.filename %>
     <span class="attachment__size">(<%= number_to_human_size(blob.byte_size) %>)</span>
   </figcaption>
 </figure>

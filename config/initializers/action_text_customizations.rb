@@ -25,3 +25,4 @@ ActiveSupport.on_load(:action_text_attachables_remote_image) do
     @previewable = previewable
   end
 end
+

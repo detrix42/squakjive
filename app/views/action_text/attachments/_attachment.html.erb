@@ -1,4 +1,4 @@
-<!-- app/views/action_text/attachables/_attachment.html.erb -->
+<!-- Renders an ActionText attachment. For AS::Blob, use our PDF-aware custom partial. -->
 <% if attachment.attachable.is_a?(ActiveStorage::Blob) %>
   <%= render partial: "action_text/attachments/active_storage_blob", locals: { attachable: attachment.attachable } %>
 <% else %>
