@@ -101,3 +101,18 @@ trix-editor .attachment__caption {
   font-size: 0.9em;
 }
 
+/* Playable video in squaks (replaces the old static thumbnail + download link for the media part).
+   Uses the same .attachment container as the cleaned div structure from inlining/normalizer.
+   The .attachment-video-player gets the responsive treatment similar to preview imgs.
+*/
+.squak-body .attachment video,
+.squak-body .attachment-video-player {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  /* subtle border to separate from background, matching common img treatment */
+  border: 1px solid #3a3f44;
+  border-radius: 4px;
+}
+

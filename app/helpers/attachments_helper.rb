@@ -3,12 +3,29 @@ module AttachmentsHelper
   # Low-level builder for the clean (no inline styles) preview + filename link block.
   # Prefers classes + CSS (see squak_editor/sm.scss) over style="".
   # Used by attachment_figure_html and by the render-time normalizer.
-  def build_attachment_figure_html(preview_src:, download_url:, filename:, size_text: nil, is_video: false)
+  #
+  # For videos: outputs a playable <video> with poster (thumbnail) instead of static img.
+  # The download link below remains for saving the original.
+  def build_attachment_figure_html(preview_src:, download_url:, filename:, size_text: nil, is_video: false, video_url: nil)
     icon = is_video ? '🎥 ' : '📄 '
     attachment_class = is_video ? 'attachment-video' : 'attachment-pdf'
     size_part = size_text.present? ? " (#{size_text})" : ''
 
-    if preview_src.present? && download_url.present?
+    if is_video && (video_url || download_url).present?
+      vsrc = video_url || download_url
+      poster_attr = preview_src.present? ? " poster=\"#{preview_src}\"" : ''
+      <<~HTML.strip
+        <div class="attachment #{attachment_class}">
+          <video controls preload="metadata"#{poster_attr} class="attachment-video-player">
+            <source src="#{vsrc}">
+          </video>
+          <br>
+          <a href="#{download_url}" target="_blank" rel="noopener" class="attachment-caption-link">
+            #{icon}#{filename}#{size_part}
+          </a>
+        </div>
+      HTML
+    elsif preview_src.present? && download_url.present?
       <<~HTML.strip
         <div class="attachment #{attachment_class}">
           <a href="#{download_url}" target="_blank" rel="noopener">
@@ -42,6 +59,7 @@ module AttachmentsHelper
 
     is_video = blob.content_type.start_with?('video/')
     download_url = rails_blob_url(blob, disposition: "attachment")
+    video_url = is_video ? rails_blob_url(blob, disposition: "inline") : nil
     size_text = number_to_human_size(blob.byte_size)
 
     effective_preview = preview_url.presence || blob.metadata.with_indifferent_access['preview_url'].presence
@@ -60,7 +78,8 @@ module AttachmentsHelper
       download_url: download_url,
       filename: blob.filename.to_s,
       size_text: size_text,
-      is_video: is_video
+      is_video: is_video,
+      video_url: video_url
     )
   end
 
@@ -314,7 +333,8 @@ module AttachmentsHelper
       download_url: download_url,
       filename: filename,
       size_text: size_text,
-      is_video: is_video
+      is_video: is_video,
+      video_url: is_video ? download_url : nil
     )
 
     if clean.present?
