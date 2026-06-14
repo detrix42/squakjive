@@ -19,6 +19,7 @@ class CirclesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
+            turbo_stream.remove("circles-empty-message"),
             turbo_stream.append("circles-list", partial: "circles/circle_item", locals: { circle: @circle }),
             turbo_stream.update("new-circle-modal", "")
           ]

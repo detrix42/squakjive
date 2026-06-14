@@ -6,13 +6,12 @@
   >
   <h3 class="circles-header">Your Circles</h3>
   <% if current_user.circles.empty? && current_user.joined_circles.empty? %>
-    <p>You have no circles yet. Create one or join one to start!</p>
-  <% else %>
-    <ul class="circles-index"
-        id="circles-list" data-circles-target="user-list">
-      <%= render partial: "circles/circle_item", collection: @grouped_circles, as: :circle %>
-    </ul>
+    <p id="circles-empty-message">You have no circles yet. Create one or join one to start!</p>
   <% end %>
+  <ul class="circles-index"
+      id="circles-list" data-circles-target="user-list">
+    <%= render partial: "circles/circle_item", collection: @grouped_circles, as: :circle %>
+  </ul>
   <%= link_to "Create New Circle",
               new_circle_path,
               class: "btn btn-primary btn-add-circle",
