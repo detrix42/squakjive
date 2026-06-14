@@ -33,15 +33,16 @@ class SquaksController < ApplicationController
     # was also broken (wrong `record:`). Explicit attach after save fixes the link without
     # the side-effects we saw.
     processed_blobs = []
+    sgid_list = []
 
     # Process sgids defensively. A bad/malformed attachment sgid (or resolver issue) must never
     # 500 the entire Squak create. We log and continue so the text (if any) can still save.
     begin
       if @squak.body&.body&.to_s.match(/sgid="([^"]+)"/)
-        sgids = @squak.body.body.to_s.scan(/sgid="([^"]+)"/).flatten.uniq
-        Rails.logger.debug "Found SGIDs in body: #{sgids}"
+        sgid_list = @squak.body.body.to_s.scan(/sgid="([^"]+)"/).flatten.uniq
+        Rails.logger.debug "Found SGIDs in body: #{sgid_list}"
 
-        sgids.each do |sgid|
+        sgid_list.each do |sgid|
           begin
             blob = nil
             begin
@@ -131,6 +132,25 @@ class SquaksController < ApplicationController
           record_id: rich_text.id,
           blob_id: blob.id
         )
+      end
+
+      # Post-save: ensure linking for *every* sgid that was in the submitted body.
+      # This is robust against any pre-save resolve timing issues (e.g. blob record visibility
+      # or GID signature expiry at scan time). By now the blobs are committed.
+      # We re-resolve using the robust safe resolver (payload extract first) and attach.
+      sgid_list.each do |sgid|
+        begin
+          blob = safe_resolve_blob_from_sgid(sgid)
+          next unless blob && rich_text
+          ActiveStorage::Attachment.find_or_create_by!(
+            name: 'embeds',
+            record_type: 'ActionText::RichText',
+            record_id: rich_text.id,
+            blob_id: blob.id
+          )
+        rescue => e
+          Rails.logger.error "Post-save embed link error for sgid #{sgid}: #{e.class} #{e.message}"
+        end
       end
 
       embed_count = @squak.body.embeds.count rescue 0
