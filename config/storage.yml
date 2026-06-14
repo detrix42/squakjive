@@ -6,9 +6,19 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# Local disk storage. In production (Kamal on roci) we use a bind mount (see deploy.yml)
+# so you can point uploads to any host directory you want (e.g. a dedicated disk/partition
+# for large video files).
 roci:
   service: Disk
-  root: /home/SquakJive_storage/
+#  root: <%= ENV.fetch("ACTIVE_STORAGE_ROOT", "/rails/storage") %>
+  root: <%= ENV.fetch("ACTIVE_STORAGE_ROOT", Rails.root.join("storage")) %>
+
+# In your setup (Docker + systemd on roci), map the host directory with a volume/bind mount:
+#   -v /home/SquakJive_storage:/rails/storage
+# Then set in /etc/squakjive.env :
+#   ACTIVE_STORAGE_ROOT=/rails/storage
+# All uploads (including videos) will then physically live under /home/SquakJive_storage on the host.
 
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
