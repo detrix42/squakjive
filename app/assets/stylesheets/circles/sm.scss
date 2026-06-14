@@ -15,6 +15,16 @@ $fg-color: #ffeeb4;
   //padding: 1rem;
 }
 
+/* Right sidebar: stick to the page (doesn't move while center feed scrolls).
+   If its own content (user card + invites) is taller than the viewport, it scrolls internally. */
+#right-column-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: flex-start;
+}
+
 
   .circle-index-container {
     display: flex;

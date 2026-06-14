@@ -59,40 +59,27 @@ class SquaksController < ApplicationController
       end
     end
 
-    # Inline custom HTML for PDF attachments.
+    # Inline custom HTML for PDF and video attachments.
     # We replace the <action-text-attachment sgid=...> (and its preceding text node if present)
     # with the preview figure block FIRST, followed by the squak text in its own <p>.
     # This ensures:
-    #   - Preview image
-    #   - Centered text link to the PDF directly below the preview
-    #   - The original squak text in its own paragraph below the whole PDF block
-    # It completely bypasses ActionText's sgid resolver / missing attachable for PDFs.
+    #   - Preview image (thumbnail for video)
+    #   - Centered text link to the file directly below the preview
+    #   - The original squak text in its own paragraph below the whole attachment block
+    # It completely bypasses ActionText's sgid resolver / missing attachable.
     if @squak.body&.body&.to_s.present?
       html = @squak.body.body.to_s
       processed_blobs.each do |blob|
-        next unless blob.content_type.start_with?('application/pdf')
+        next unless blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/')
         sgid = blob.signed_id
         preview_url = preview_urls[sgid].presence || blob.metadata.with_indifferent_access['preview_url'].presence
-        next unless preview_url
 
-        download_url = rails_blob_url(blob, disposition: "attachment")
-        size_text = helpers.number_to_human_size(blob.byte_size)
-
-        figure_html = <<~HTML.strip
-          <figure class="attachment attachment-pdf" style="text-align: center; margin: 8px 0;">
-            <a href="#{download_url}" target="_blank" rel="noopener">
-              <img src="#{preview_url}" alt="#{blob.filename}" width="500" height="600" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
-            </a>
-            <figcaption style="text-align: center; margin-top: 4px; font-size: 0.9em;">
-              <a href="#{download_url}" target="_blank" rel="noopener" style="text-decoration: underline;">
-                #{blob.filename} (#{size_text})
-              </a>
-            </figcaption>
-          </figure>
-        HTML
+        # Delegate to the shared helper so the exact same structure (with filename + size in the link text,
+        # and consistent preview sizing) is used for new posts. The helper also does the server fallback.
+        figure_html = helpers.attachment_figure_html(blob, preview_url: preview_url)
 
         # Capture preceding text (non-tag content right before the tag) and put figure first, then the text in a paragraph below.
-        # This gives the desired order: PDF preview + centered link under it, then squak text paragraph below.
+        # This gives the desired order: attachment preview + centered link under it, then squak text paragraph below.
         pattern = /([^<]*?)(<action-text-attachment[^>]*sgid="#{Regexp.escape(sgid)}"[^>]*>.*?<\/action-text-attachment>)/m
         html = html.gsub(pattern) do
           pre_text = $1
@@ -134,8 +121,9 @@ class SquaksController < ApplicationController
       Rails.logger.debug "Squak saved successfully. in-memory embeds count: #{embed_count}, rich_text_body embeds attachments: #{rich_text_embed_count} (we just attached #{processed_blobs.size} blob(s))"
       # squak = render_to_string(partial: "squaks/squak", locals: { squak: @squak }, formats: [:html], cache: false)
       # Broadcast to other subscribed clients asynchronously (no render_to_string needed)
+      # Broadcast only to clients currently viewing this circle's list
       Turbo::StreamsChannel.broadcast_prepend_later_to(
-        "squaks",
+        "circle-#{@squak.circle_id}-squaks",
         target: "squaks-list",
         partial: "squaks/squak",
         locals: { squak: @squak, user: current_user }
@@ -158,11 +146,14 @@ class SquaksController < ApplicationController
       Rails.logger.error "Squak save failed: #{@squak.errors.full_messages}"
       respond_to do |format|
         format.turbo_stream do
+          # Use the real form partial (in dashboard) so turbo error re-renders the composer
+          # without hitting MissingTemplate. Pass circle_id so the hidden field is correct.
+          circle_id = squak_params[:circle_id] if defined?(squak_params)
           render turbo_stream: [
             turbo_stream.replace(
-              "squak-form",  # Target an element with the form (e.g., <div id="squak-form">)
-              partial: "squaks/form",
-              locals: { squak: @squak, errors: @squak.errors.full_messages }
+              "squak-form",
+              partial: "dashboard/squak_form",
+              locals: { circle_id: circle_id, squak: @squak, errors: @squak.errors.full_messages }
             )
           ], status: :unprocessable_entity
         end
@@ -227,7 +218,8 @@ class SquaksController < ApplicationController
 
     @squak.destroy
     target_id = "squak-#{@squak.id}"
-    Turbo::StreamsChannel.broadcast_remove_to("squaks", target: target_id)
+    # Notify only viewers of this circle's list
+    Turbo::StreamsChannel.broadcast_remove_to("circle-#{@squak.circle_id}-squaks", target: target_id)
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove(target_id) }

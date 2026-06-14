@@ -11,6 +11,7 @@
       </div>
     </div>
 
+    <%# feed column  %>
     <div class="col-sm-9 col-md-10 col-lg-11">
       <div class="d-flex align-items-start justify-content-between">
         <div class="ms-1 squak-username">
@@ -28,7 +29,7 @@
       </div>
 
       <div class="ms-4 squak-body">
-        <%= squak.body %>
+        <%= render_rich_text_with_attachments(squak.body) %>
       </div>
 
       <div class="squak-footer">

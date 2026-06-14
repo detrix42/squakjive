@@ -1,18 +1,39 @@
 <% if attachable.content_type&.start_with?('application/pdf') %>
-  <figure class="attachment attachment-pdf">
+  <div class="attachment attachment-pdf">
     <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener">
       <% preview_url = attachable.metadata.with_indifferent_access['preview_url'].presence %>
       <% if preview_url.present? %>
-        <%= image_tag preview_url, alt: attachable.filename.to_s, width: 500, height: 600 %>
+        <%= image_tag preview_url, alt: attachable.filename.to_s, class: "attachment-preview-img" %>
       <% elsif attachable.previewable? %>
         <%= image_tag attachable.preview(resize_to_limit: [500, 600]).processed,
-                      alt: attachable.filename.to_s, width: 500, height: 600 %>
+                      alt: attachable.filename.to_s, class: "attachment-preview-img" %>
       <% else %>
         <%= attachable.filename %>
       <% end %>
     </a>
-    <figcaption><%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)</figcaption>
-  </figure>
+    <br>
+    <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
+      📄 <%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)
+    </a>
+  </div>
+<% elsif attachable.content_type&.start_with?('video/') %>
+  <div class="attachment attachment--video">
+    <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener">
+      <% preview_url = attachable.metadata.with_indifferent_access['preview_url'].presence %>
+      <% if preview_url.present? %>
+        <%= image_tag preview_url, alt: "Video thumbnail for #{attachable.filename}", class: "attachment-preview-img" %>
+      <% elsif attachable.previewable? %>
+        <%= image_tag attachable.preview(resize_to_limit: [500, 600]).processed,
+                      alt: "Video thumbnail for #{attachable.filename}", class: "attachment-preview-img" %>
+      <% else %>
+        🎥 Video
+      <% end %>
+    </a>
+    <br>
+    <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
+      🎥 <%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)
+    </a>
+  </div>
 <% else %>
   <%= super %>
 <% end %>

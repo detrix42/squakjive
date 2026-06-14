@@ -61,3 +61,43 @@ trix-editor .attachment__caption {
   transition: width 120ms linear;
 }
 
+/*
+ * Clean (class-based, no inline style="") rendering for PDF/video attachment
+ * previews that appear in final posted squaks (inside .squak-body).
+ *
+ * Structure produced by attachment_figure_html + render_rich_text_with_attachments:
+ *   <div class="attachment attachment-video|attachment-pdf">
+ *     <a ...><img class="attachment-preview-img" ...></a>
+ *     <br>
+ *     <a class="attachment-caption-link">🎥/📄 filename (size)</a>
+ *   </div>
+ *
+ * This lives in sm.scss (default, no @media) per project convention.
+ * Responsive tweaks (if any) can go in md.scss / lg.scss.
+ */
+.squak-body .attachment {
+  text-align: center;
+  margin: 8px 0;
+}
+
+.squak-body .attachment img,
+.squak-body .attachment-preview-img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.squak-body .attachment .attachment-caption-link {
+  text-decoration: underline;
+  font-size: 0.9em;
+  color: #b9d4ff; /* visible against squak backgrounds */
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* Fallback for any figure-based attachments that slip through before full normalization */
+.squak-body figure.attachment figcaption {
+  font-size: 0.9em;
+}
+

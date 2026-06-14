@@ -9,23 +9,42 @@
     <a href="<%= rails_blob_url(blob, disposition: "attachment") %>" target="_blank" rel="noopener">
       <% preview_url = blob.metadata.with_indifferent_access['preview_url'].presence %>
       <% if preview_url.present? %>
-        <%= image_tag preview_url, alt: blob.filename.to_s, width: 500, height: 600 %>
+        <%= image_tag preview_url, alt: blob.filename.to_s, class: "attachment-preview-img" %>
       <% elsif blob.previewable? %>
         <%# Fallback: generate on the fly if previewer is available %>
-        <%= image_tag blob.preview(resize_to_limit: [500, 600]).processed, alt: blob.filename.to_s, width: 500, height: 600 %>
+        <%= image_tag blob.preview(resize_to_limit: [500, 600]).processed, alt: blob.filename.to_s, class: "attachment-preview-img" %>
       <% else %>
         <%= blob.filename %>
       <% end %>
     </a>
-    <figcaption><%= blob.filename %> (<%= number_to_human_size(blob.byte_size) %>)</figcaption>
+    <br>
+    <a href="<%= rails_blob_url(blob, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
+      📄 <%= blob.filename %> (<%= number_to_human_size(blob.byte_size) %>)
+    </a>
+  <% elsif blob.content_type&.start_with?('video/') %>
+    <a href="<%= rails_blob_url(blob, disposition: "attachment") %>" target="_blank" rel="noopener">
+      <% preview_url = blob.metadata.with_indifferent_access['preview_url'].presence %>
+      <% if preview_url.present? %>
+        <%= image_tag preview_url, alt: "Video thumbnail for #{blob.filename}", class: "attachment-preview-img" %>
+      <% elsif blob.previewable? %>
+        <%# Fallback: generate on the fly if VideoPreviewer + ffmpeg available %>
+        <%= image_tag blob.preview(resize_to_limit: [500, 600]).processed, alt: "Video thumbnail for #{blob.filename}", class: "attachment-preview-img" %>
+      <% else %>
+        🎥 Video
+      <% end %>
+    </a>
+    <br>
+    <a href="<%= rails_blob_url(blob, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
+      🎥 <%= blob.filename %> (<%= number_to_human_size(blob.byte_size) %>)
+    </a>
   <% elsif blob.representable? %>
     <% if blob.image? %>
       <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
-        <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+        <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}", class: "attachment-preview-img" %>
       <% end %>
     <% elsif blob.previewable? %>
       <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
-        <%= image_tag blob.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}" %>
+        <%= image_tag blob.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}", class: "attachment-preview-img" %>
       <% end %>
     <% else %>
       <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
@@ -33,7 +52,9 @@
   <% else %>
     <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
   <% end %>
+  <% unless blob.content_type&.start_with?('application/pdf') || blob.content_type&.start_with?('video/') %>
   <figcaption class="attachment__caption">
     <span class="attachment__size">(<%= number_to_human_size(blob.byte_size) %>)</span>
   </figcaption>
+  <% end %>
 </figure>
