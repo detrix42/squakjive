@@ -18,12 +18,17 @@ export default class extends Controller {
       window.axios.defaults.headers.common['Content-Type'] = 'application/json'
     }
 
+    // Always use consistent options so removeEventListener can match exactly
+    // (passing a changing boolean as the third arg can cause duplicate listeners
+    // on reconnects/Turbo and lead to double uploads).
+    const listenerOpts = { capture: false }
+
     this.element.removeEventListener("trix-file-accept", this.onFileAccept)
     this.element.removeEventListener("trix-attachment-add", this.onAttachmentAdd)
     this.element.removeEventListener("trix-attachment-remove", this.onAttachmentRemove)
 
     this.element.addEventListener("trix-file-accept", this.onFileAccept)
-    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd, this.attachment_in_progress)
+    this.element.addEventListener("trix-attachment-add", this.onAttachmentAdd, listenerOpts)
     this.element.addEventListener("trix-attachment-remove", this.onAttachmentRemove)
   }
 
@@ -47,7 +52,7 @@ export default class extends Controller {
   onAttachmentAdd = event => {
     console.log('onAttachmentAdd');
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation(); // stronger than stopPropagation
 
     if (window.__suspendAttachmentInterception) return;
 
@@ -57,8 +62,9 @@ export default class extends Controller {
       return;
     }
 
-    if (!attachment || !attachment.file) return;
-
+    // Strong per-attachment guard to prevent the double-upload we see in logs
+    // for images/GIFs (the event can fire more than once due to Trix internals
+    // or multiple listeners during Turbo navigation).
     if (attachment.__uploadProcessed) return;
     attachment.__uploadProcessed = true;
 
@@ -195,20 +201,22 @@ export default class extends Controller {
         await this.fetchPreviewUrl(blob.signed_id, attachment)
       }
       else if (imageTypes.includes(blob.content_type)) {
-        // Images: use blob.service_url directly, let browser scale
+        // Images: use the remote URL (browser will scale). Set immediately
+        // (the old setTimeout sometimes let Trix remove the attachment node
+        // from the editor before the user submitted the form). We also
+        // force progress=100 so Trix marks the upload as truly complete.
         console.log("Setting attributes for image:", blob.filename)
-        setTimeout(() => {
-          attachment.setAttributes({
-            url: serviceUrl,
-            href: serviceUrl,
-            sgid: blob.signed_id,
-            filename: blob.filename,
-            contentType: blob.content_type,
-            previewable: true,
-            caption: blob.filename || "",
-          });
-          console.log("Image attributes set:", attachment.getAttributes());
-        }, 100);
+        attachment.setAttributes({
+          url: serviceUrl,
+          href: serviceUrl,
+          sgid: blob.signed_id,
+          filename: blob.filename,
+          contentType: blob.content_type,
+          previewable: true,
+          caption: blob.filename || "",
+        });
+        attachment.setUploadProgress(100);
+        console.log("Image attributes set:", attachment.getAttributes());
       }
       else {
         // Non-previewable files

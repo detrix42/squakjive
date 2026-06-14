@@ -21,16 +21,25 @@ ActiveSupport.on_load(:active_storage_blob) do
     def resolve_from_sgid(sgid)
       return nil if sgid.blank?
 
-      # 1) Plain signed_id from ActiveStorage (most upload JS paths set sgid or pass this to endpoints)
+      # Prioritize payload decode for GID-style attachable sgids that appear
+      # in rich text submissions. This is reliable even if the signature has
+      # expired (common for the forms ActionText embeds in the HTML).
+      if (id = extract_blob_id_from_sgid_payload(sgid))
+        if (blob = find_by(id: id))
+          return blob
+        end
+      end
+
+      # 1) Plain signed_id from ActiveStorage
       begin
         if (blob = find_signed(sgid))
           return blob
         end
       rescue ActiveRecord::RecordNotFound
-        # fall through to GlobalID form
+        # fall through
       end
 
-      # 2) Signed GlobalID form used by ActionText/Trix for attachables in rich text HTML
+      # 2) Signed GlobalID form
       begin
         located = GlobalID::Locator.locate_signed(sgid)
         return located if located.is_a?(ActiveStorage::Blob)
@@ -42,13 +51,7 @@ ActiveSupport.on_load(:active_storage_blob) do
         Rails.logger&.debug("ActiveStorage::Blob.resolve_from_sgid: locate_signed failed: #{e.class} #{e.message}")
       end
 
-      # 3) Decode signed GID payload (before the --signature) to extract the inner
-      #    gid://.../ActiveStorage::Blob/NN even if the signature has expired.
-      if (id = extract_blob_id_from_sgid_payload(sgid))
-        return find_by(id: id)
-      end
-
-      # 4) Defensive: bare id
+      # 3) bare id
       if sgid.to_s =~ /\A\d+\z/
         return find_by(id: sgid.to_i)
       end

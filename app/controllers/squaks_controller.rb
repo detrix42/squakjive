@@ -280,6 +280,19 @@ class SquaksController < ApplicationController
   def safe_resolve_blob_from_sgid(sgid)
     return nil if sgid.blank?
 
+    # Prioritize decoding the (possibly expired) signed GID payload.
+    # This is the most reliable path for sgids that appear in the submitted
+    # rich text HTML (the "gid://..." attachable form that ActionText/Trix
+    # puts in data-trix-attachment and action-text-attachment for images).
+    # We extract the numeric blob id from inside the signed payload and do a
+    # plain find_by. We do not need the signature to be valid for linking
+    # here because the sgid came from the user's own upload in this session.
+    if (id = self.class.extract_blob_id_from_sgid_payload(sgid))
+      if (blob = ActiveStorage::Blob.find_by(id: id))
+        return blob
+      end
+    end
+
     # 1. Plain ActiveStorage signed_id (what most DirectUpload paths provide)
     begin
       if (blob = ActiveStorage::Blob.find_signed(sgid))
@@ -302,16 +315,7 @@ class SquaksController < ApplicationController
       Rails.logger.debug "safe_resolve_blob_from_sgid: locate_signed failed: #{e.class} #{e.message}"
     end
 
-    # 3. Decode the signed GID payload (the part before --) to extract the inner
-    #    gid://.../ActiveStorage::Blob/NN even if the signature has expired.
-    #    This is the key fix for attachable sgids that were fresh when the
-    #    user inserted the image but have a short expiry by the time the form
-    #    is submitted + pre-save processing runs.
-    if (id = self.class.extract_blob_id_from_sgid_payload(sgid))
-      return ActiveStorage::Blob.find_by(id: id)
-    end
-
-    # 4. Last-ditch parse of a bare id
+    # 3. Last-ditch parse of a bare id (from the raw sgid string, rare)
     if sgid.to_s =~ /\A\d+\z/
       return ActiveStorage::Blob.find_by(id: sgid.to_i)
     end
