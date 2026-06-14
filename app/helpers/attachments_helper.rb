@@ -230,20 +230,39 @@ module AttachmentsHelper
       sgids.each do |sgid|
         begin
           blob = ActiveStorage::Blob.resolve_from_sgid(sgid)
-          next unless blob && (blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/'))
+          next unless blob
 
-          # Inject only if we don't already have visible attachment markup (prevents dups on good posts;
-          # for the blank ones this will fire and add the preview + "filename (size)" link).
-          if !has_visible_attachment || !current_output.include?(blob.filename.to_s)
-            figure = attachment_figure_html(blob)
-            if figure.present?
-              node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
-              if fragment.children.any?
-                fragment.children.first.add_previous_sibling(node)
-              else
-                fragment.add_child(node)
+          if blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/')
+            # Inject only if we don't already have visible attachment markup (prevents dups on good posts;
+            # for the blank ones this will fire and add the preview + "filename (size)" link).
+            if !has_visible_attachment || !current_output.include?(blob.filename.to_s)
+              figure = attachment_figure_html(blob)
+              if figure.present?
+                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+                if fragment.children.any?
+                  fragment.children.first.add_previous_sibling(node)
+                else
+                  fragment.add_child(node)
+                end
+                has_visible_attachment = true
               end
-              has_visible_attachment = true
+            end
+          elsif blob.image?
+            # For images, ensure a visible preview img if the standard rendering left the tag or no visible.
+            if !has_visible_attachment || !current_output.match?(/attachment-preview-img.*#{Regexp.escape(blob.filename)}/)
+              url = rails_blob_url(blob, disposition: "inline")
+              href = rails_blob_url(blob, disposition: "attachment")
+              img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
+              figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
+              if figure.present?
+                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+                if fragment.children.any?
+                  fragment.children.first.add_previous_sibling(node)
+                else
+                  fragment.add_child(node)
+                end
+                has_visible_attachment = true
+              end
             end
           end
         rescue ActiveRecord::RecordNotFound
@@ -261,17 +280,35 @@ module AttachmentsHelper
       rich_text.embeds.each do |ea|
         begin
           blob = ea.blob
-          next unless blob && (blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/'))
-          if !current_output.include?(blob.filename.to_s)
-            figure = attachment_figure_html(blob)
-            if figure.present?
-              node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
-              if fragment.children.any?
-                fragment.children.first.add_previous_sibling(node)
-              else
-                fragment.add_child(node)
+          next unless blob
+          if blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/')
+            if !current_output.include?(blob.filename.to_s)
+              figure = attachment_figure_html(blob)
+              if figure.present?
+                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+                if fragment.children.any?
+                  fragment.children.first.add_previous_sibling(node)
+                else
+                  fragment.add_child(node)
+                end
+                has_visible_attachment = true
               end
-              has_visible_attachment = true
+            end
+          elsif blob.image?
+            if !current_output.match?(/attachment-preview-img.*#{Regexp.escape(blob.filename)}/)
+              url = rails_blob_url(blob, disposition: "inline")
+              href = rails_blob_url(blob, disposition: "attachment")
+              img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
+              figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
+              if figure.present?
+                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+                if fragment.children.any?
+                  fragment.children.first.add_previous_sibling(node)
+                else
+                  fragment.add_child(node)
+                end
+                has_visible_attachment = true
+              end
             end
           end
         rescue => e
