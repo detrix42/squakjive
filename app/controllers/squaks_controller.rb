@@ -274,6 +274,9 @@ class SquaksController < ApplicationController
   # Self-contained resolver so the critical create path does not depend on the
   # initializer monkey-patch or the class method being present. Tries plain
   # signed_id then the ActionText attachable signed GlobalID form.
+  # Falls back to decoding the (possibly expired) signed GID payload to extract
+  # the blob id, because attachable sgids embedded in submitted rich text often
+  # have short expiries and locate_signed will fail after a few seconds.
   def safe_resolve_blob_from_sgid(sgid)
     return nil if sgid.blank?
 
@@ -299,15 +302,38 @@ class SquaksController < ApplicationController
       Rails.logger.debug "safe_resolve_blob_from_sgid: locate_signed failed: #{e.class} #{e.message}"
     end
 
-    # 3. Last-ditch parse of a gid string or bare id
-    s = sgid.to_s
-    if s =~ %r{ActiveStorage::Blob/(\d+)}
-      return ActiveStorage::Blob.find_by(id: $1.to_i)
+    # 3. Decode the signed GID payload (the part before --) to extract the inner
+    #    gid://.../ActiveStorage::Blob/NN even if the signature has expired.
+    #    This is the key fix for attachable sgids that were fresh when the
+    #    user inserted the image but have a short expiry by the time the form
+    #    is submitted + pre-save processing runs.
+    if (id = self.class.extract_blob_id_from_sgid_payload(sgid))
+      return ActiveStorage::Blob.find_by(id: id)
     end
-    if s =~ /\A\d+\z/
-      return ActiveStorage::Blob.find_by(id: s.to_i)
+
+    # 4. Last-ditch parse of a bare id
+    if sgid.to_s =~ /\A\d+\z/
+      return ActiveStorage::Blob.find_by(id: sgid.to_i)
     end
 
     nil
   end
+
+  def self.extract_blob_id_from_sgid_payload(sgid)
+    return nil if sgid.blank?
+    encoded = sgid.to_s.split('--').first
+    return nil if encoded.blank?
+    begin
+      json_str = Base64.urlsafe_decode64(encoded)
+      data = JSON.parse(json_str)
+      gid = (data['data'] || data['gid'] || '').to_s
+      if gid =~ %r{ActiveStorage::Blob/(\d+)}
+        return $1.to_i
+      end
+    rescue ArgumentError, JSON::ParserError
+      # invalid base64 or json — ignore
+    end
+    nil
+  end
+end
 end

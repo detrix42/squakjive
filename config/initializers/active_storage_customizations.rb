@@ -12,6 +12,11 @@ ActiveSupport.on_load(:active_storage_blob) do
   #
   # This prevents NoMethodError on nil when processing rich text bodies containing image (or other)
   # attachments, and ensures we can populate the embeds ActiveStorage::Attachment rows for ActionText resolution.
+  #
+  # Robust fallback: decode the (possibly short-lived/expired) signed GID payload to
+  # recover the blob id directly from the embedded gid:// string. This is needed because
+  # the sgids that end up in the submitted rich text HTML are often signed with expiries
+  # that have passed by the time the form is processed.
   class << self
     def resolve_from_sgid(sgid)
       return nil if sgid.blank?
@@ -37,15 +42,34 @@ ActiveSupport.on_load(:active_storage_blob) do
         Rails.logger&.debug("ActiveStorage::Blob.resolve_from_sgid: locate_signed failed: #{e.class} #{e.message}")
       end
 
-      # 3) Defensive: extract from a raw/unsigned gid url in the string, or a bare id
-      s = sgid.to_s
-      if s =~ %r{ActiveStorage::Blob/(\d+)}
-        return find_by(id: $1.to_i)
-      end
-      if s =~ /\A\d+\z/
-        return find_by(id: s.to_i)
+      # 3) Decode signed GID payload (before the --signature) to extract the inner
+      #    gid://.../ActiveStorage::Blob/NN even if the signature has expired.
+      if (id = extract_blob_id_from_sgid_payload(sgid))
+        return find_by(id: id)
       end
 
+      # 4) Defensive: bare id
+      if sgid.to_s =~ /\A\d+\z/
+        return find_by(id: sgid.to_i)
+      end
+
+      nil
+    end
+
+    def extract_blob_id_from_sgid_payload(sgid)
+      return nil if sgid.blank?
+      encoded = sgid.to_s.split('--').first
+      return nil if encoded.blank?
+      begin
+        json_str = Base64.urlsafe_decode64(encoded)
+        data = JSON.parse(json_str)
+        gid = (data['data'] || data['gid'] || '').to_s
+        if gid =~ %r{ActiveStorage::Blob/(\d+)}
+          return $1.to_i
+        end
+      rescue ArgumentError, JSON::ParserError
+        # bad base64 or json
+      end
       nil
     end
   end
