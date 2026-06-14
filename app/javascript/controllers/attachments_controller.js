@@ -8,6 +8,11 @@ export default class extends Controller {
 
     this.attachment_in_progress = false
     this.csrfTkn = document.querySelector('meta[name="csrf-token"]')?.content || ""
+    // Track uploads by a stable file key (name+size+lastModified) so we don't
+    // start duplicate DirectUploads even if the add event fires twice for
+    // slightly different attachment objects (common source of the "brief preview
+    // then disappears" symptom for images/GIFs).
+    this._inFlightByFile = this._inFlightByFile || new Map()
 
 
     // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
@@ -62,16 +67,42 @@ export default class extends Controller {
       return;
     }
 
-    // Strong per-attachment guard to prevent the double-upload we see in logs
-    // for images/GIFs (the event can fire more than once due to Trix internals
-    // or multiple listeners during Turbo navigation).
-    if (attachment.__uploadProcessed) return;
+    const file = attachment.file;
+    const fileKey = `${file.name}:${file.size}:${file.lastModified || 0}`;
+
+    if (this._inFlightByFile.has(fileKey)) {
+      console.log("Upload already in flight for this file, ignoring duplicate event:", file.name);
+      return;
+    }
+    this._inFlightByFile.set(fileKey, true);
+
+    // Per-attachment guard (kept for safety).
+    if (attachment.__uploadProcessed) {
+      this._inFlightByFile.delete(fileKey);
+      return;
+    }
     attachment.__uploadProcessed = true;
 
     attachment.setAttributes({ upload: null });
 
-    console.log("trix-attachment-add triggered for file:", attachment.file.name);
-    this.createDirectUpload(attachment);
+    // For image types, give Trix an immediate local object URL so the
+    // preview <img> appears right away in the editor. This prevents Trix
+    // from removing the attachment node while the background upload
+    // happens (the exact "shows for a split second then removed" behavior).
+    // We'll swap to the real remote URL + sgid once the upload completes.
+    if (file.type && file.type.startsWith('image/')) {
+      const tempUrl = URL.createObjectURL(file);
+      attachment.setAttributes({
+        url: tempUrl,
+        href: tempUrl,
+        contentType: file.type,
+        filename: file.name
+      });
+      attachment._tempObjectUrl = tempUrl; // for cleanup
+    }
+
+    console.log("trix-attachment-add triggered for file:", file.name);
+    this.createDirectUpload(attachment, fileKey);
   }
 
   onAttachmentRemove = event => {
@@ -79,9 +110,10 @@ export default class extends Controller {
   }
 
 
-  async createDirectUpload(attachment) {
+  async createDirectUpload(attachment, fileKey = null) {
     if (this.attachment_in_progress) {
       console.log("Upload in progress, skipping:", attachment.file.name)
+      if (fileKey) this._inFlightByFile.delete(fileKey);
       return
     }
 
@@ -201,11 +233,15 @@ export default class extends Controller {
         await this.fetchPreviewUrl(blob.signed_id, attachment)
       }
       else if (imageTypes.includes(blob.content_type)) {
-        // Images: use the remote URL (browser will scale). Set immediately
-        // (the old setTimeout sometimes let Trix remove the attachment node
-        // from the editor before the user submitted the form). We also
-        // force progress=100 so Trix marks the upload as truly complete.
+        // Swap from the temporary local object URL (set in onAttachmentAdd for
+        // instant preview) to the real remote one, set the sgid from this
+        // specific upload, and force progress 100. Then revoke the temp URL
+        // so we don't leak object URLs.
         console.log("Setting attributes for image:", blob.filename)
+        if (attachment._tempObjectUrl) {
+          URL.revokeObjectURL(attachment._tempObjectUrl);
+          attachment._tempObjectUrl = null;
+        }
         attachment.setAttributes({
           url: serviceUrl,
           href: serviceUrl,
@@ -234,6 +270,10 @@ export default class extends Controller {
     } catch (error) {
       console.error("Upload error:", error)
       console.log("Falling back to file attributes for:", file.name)
+      if (attachment._tempObjectUrl) {
+        URL.revokeObjectURL(attachment._tempObjectUrl);
+        attachment._tempObjectUrl = null;
+      }
       attachment.setAttributes({
         url: file.service_url || file.url || file.name,
         href: file.service_url || file.url || file.name,
@@ -255,6 +295,12 @@ export default class extends Controller {
       this.attachment_in_progress = false
       // Reset progress to 0
       attachment.__uploadProcessed = false; // Reset for future uploads
+      if (fileKey) this._inFlightByFile.delete(fileKey);
+      // Clean any leftover temp object URL (defensive)
+      if (attachment._tempObjectUrl) {
+        URL.revokeObjectURL(attachment._tempObjectUrl);
+        attachment._tempObjectUrl = null;
+      }
     }
   }
 
