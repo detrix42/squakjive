@@ -336,4 +336,3 @@ class SquaksController < ApplicationController
     nil
   end
 end
-end
