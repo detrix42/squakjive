@@ -162,10 +162,11 @@ module AttachmentsHelper
     # 1) Normalize/upgrade any attachment blocks (div or figure) that came from
     #    baked inlines or from the actiontext partials. This ensures filename is
     #    always in the "link text below the image" and removes any leftover inline styles.
+    # Only target PDF/video (and similar file) attachments; do not re-wrap plain image
+    # attachments (which use the custom_blob image case for inline preview).
     fragment.css("div.attachment, figure.attachment").each do |node|
       cls = node['class'].to_s
-      # Target PDF/video ones (or anything that looks like an attachment preview with an image)
-      next unless cls.match?(/attachment-video|attachment-pdf|attachment--video|attachment--preview|attachment--file/) || node.at_css('img')
+      next unless cls.match?(/attachment-video|attachment-pdf|attachment--video|attachment--pdf|attachment--file/)
 
       normalize_attachment_block!(node)
     end
