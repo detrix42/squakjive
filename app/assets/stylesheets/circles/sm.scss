@@ -1,6 +1,27 @@
 @import "../custom_variables";
 $fg-color: #ffeeb4;
 
+// Mixin to reduce repetition for the many small icon/badge elements in circles
+@mixin circle-action-icon($size: 30px, $font-size: 12px, $color: #b5a832) {
+  width: $size;
+  height: $size;
+  font-size: $font-size;
+  line-height: $size;
+  border-radius: 25%;
+  color: $color;
+
+  i.icon {
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+    margin-top: -10px;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
 #circles-column-sidebar {
   position: sticky;
   flex-direction: column;
@@ -66,16 +87,13 @@ $fg-color: #ffeeb4;
       padding: 1rem;
 
       .member-count-badge {
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
-        line-height: 20px;
-        border-radius: 25%;
+        @include circle-action-icon($size: 20px, $font-size: 12px, $color: #fff);
         margin-right: 1rem;
         background: #01515e;
-        color: #fff;
         text-align: center;
-        display: inline-block
+        display: inline-block;
+
+        // Note: no inner i.icon for badges, so mixin 's i rules are inert here
       }
 
 
@@ -94,24 +112,7 @@ $fg-color: #ffeeb4;
         .circle-add-user-icon,
         .circle-remove-icon,
         .owner-icon {
-          width: 30px;
-          height: 30px;
-          font-size: 12px;
-          line-height: 30px;
-          border-radius: 25%;
-          //margin-left: 1rem;
-          color: #b5a832;
-
-          i.icon {
-            width: 30px;
-            height: 30px;
-            font-size: 20px;
-            margin-top: -10px;
-
-            &:hover {
-              cursor: pointer;
-            }
-          }
+          @include circle-action-icon;
         }
 
 
@@ -201,21 +202,8 @@ $fg-color: #ffeeb4;
 
 
       .circle-rem-self-icon {
-
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
-        line-height: 20px;
-        border-radius: 25%;
+        @include circle-action-icon($size: 20px, $font-size: 12px);
         margin-right: 1rem;
-        color: #b5a832;
-
-        i.icon {
-          width: 30px;
-          height: 30px;
-          font-size: 20px;
-          //margin-top: -10px;
-        }
       }
 
       li.selected .circle-rem-self-icon {
@@ -319,9 +307,7 @@ $fg-color: #ffeeb4;
 .squak-editor img,
 .squak-body img,
 .squak img {
-  max-width: 100%;
-  height: auto;
-  display: block;         /* avoids baseline overflow/gaps */
+  @include squak-media;
   object-fit: contain;    /* extra safety for very large images */
 }
 
