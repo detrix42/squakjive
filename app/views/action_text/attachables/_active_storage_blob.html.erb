@@ -13,7 +13,6 @@
     </a>
     <br>
     <span class="download-hint">click link below to download</span>
-    <br>
     <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
       📄 <%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)
     </a>
@@ -28,7 +27,6 @@
     </video>
     <br>
     <span class="download-hint">click link below to download</span>
-    <br>
     <a href="<%= rails_blob_url(attachable, disposition: "attachment") %>" target="_blank" rel="noopener" class="attachment-caption-link">
       🎥 <%= attachable.filename %> (<%= number_to_human_size(attachable.byte_size) %>)
     </a>
