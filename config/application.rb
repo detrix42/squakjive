@@ -33,6 +33,11 @@ module Jitter
     # server-side for both the /preview endpoint and ActionText rendering.
     config.active_storage.previewers << ActiveStorage::Previewer::MuPDFPreviewer
 
+    # Enable video previews (extracts a thumbnail frame).
+    # Requires ffmpeg to be installed on the system (similar to mu-tools for PDFs).
+    # See README.md for setup notes.
+    config.active_storage.previewers << ActiveStorage::Previewer::VideoPreviewer
+
     # Use libvips for image variants (fast and recommended)
     config.active_storage.variant_processor = :vips
 

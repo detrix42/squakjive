@@ -81,3 +81,4 @@ gem "bootstrap", "~> 5.3.5"
 
 gem "devise"
 gem "foreman"
+gem "awesome_print"

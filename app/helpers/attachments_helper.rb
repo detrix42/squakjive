@@ -20,6 +20,8 @@ module AttachmentsHelper
             <source src="#{vsrc}">
           </video>
           <br>
+          <span class="download-hint">click link below to download</span>
+          <br>
           <a href="#{download_url}" target="_blank" rel="noopener" class="attachment-caption-link">
             #{icon}#{filename}#{size_part}
           </a>
@@ -31,6 +33,8 @@ module AttachmentsHelper
           <a href="#{download_url}" target="_blank" rel="noopener">
             <img src="#{preview_src}" alt="#{icon}#{filename}" class="attachment-preview-img">
           </a>
+          <br>
+          <span class="download-hint">click link below to download</span>
           <br>
           <a href="#{download_url}" target="_blank" rel="noopener" class="attachment-caption-link">
             #{icon}#{filename}#{size_part}

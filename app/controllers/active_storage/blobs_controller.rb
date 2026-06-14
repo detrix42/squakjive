@@ -43,8 +43,17 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
           content_type: blob.content_type
         }, status: :ok
       else
-        Rails.logger.error "Blob not previewable: ID: #{blob.id}, Filename: #{blob.filename}"
-        render json: { error: "Cannot generate preview" }, status: :unprocessable_entity
+        # For videos or other files that aren't previewable (no ffmpeg / MuPDF etc.),
+        # still succeed so the trix attachment can be added (JS won't treat as error).
+        # The editor will show the file name; no thumbnail preview.
+        Rails.logger.debug "Blob not previewable (non-fatal for attachment): #{blob.id} #{blob.filename}"
+        render json: {
+          preview_url: nil,
+          url: rails_blob_url(blob, disposition: "attachment"),
+          sgid: blob.signed_id,
+          filename: blob.filename.to_s,
+          content_type: blob.content_type
+        }, status: :ok
       end
     rescue ActiveRecord::RecordNotFound => e
       Rails.logger.error "Blob not found for SGID: #{params[:sgid]}, Error: #{e.message}"

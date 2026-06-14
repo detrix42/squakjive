@@ -1,5 +1,5 @@
 <%# app/views/squaks/_squak_index.html.erb  %>
-<%= turbo_stream_from "squaks" %>
+<%= turbo_stream_from circleId.present? && circleId.to_i != 0 ? "circle-#{circleId}-squaks" : "squaks" %>
 
 <% per_page = 10 %>
 <% if squaks.present? %>

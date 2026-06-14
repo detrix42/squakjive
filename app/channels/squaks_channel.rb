@@ -1,6 +1,7 @@
 class SquaksChannel < ApplicationCable::Channel
   def subscribed
     reject unless current_user # extra safety
+    # Global channel for connected user count (can be made per-circle later if needed)
     stream_from "squaks"
 
 

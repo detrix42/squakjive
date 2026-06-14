@@ -22,8 +22,14 @@ class User < ApplicationRecord
   end
 
   def selected_circle
+    return circles.first unless user_profile&.selected_circle.present?
     cid = user_profile.selected_circle
-    Circle.find_by(id: cid) || circles.first
+    circle = Circle.find_by(id: cid.to_i)
+    if circle.nil?
+      # Fallback if a name was ever stored in the profile (old data/rake)
+      circle = circles.find_by(name: cid) || joined_circles.find_by(name: cid)
+    end
+    circle || circles.first
   end
 
   private

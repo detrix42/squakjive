@@ -19,6 +19,9 @@
           <% else %>
             <%= circle.name %>
           <% end %>
+          <% if circle.user_id != current_user.id %>
+            <small class="text-muted">(by <%= circle.user.username %>)</small>
+          <% end %>
         </div>
 
       </div>

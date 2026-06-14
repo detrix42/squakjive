@@ -8,23 +8,24 @@ class DashboardController < ApplicationController
                  .includes(circle: :user)
 
     all_circles = (current_user.circles + current_user.joined_circles).uniq
-    @grouped_circles = all_circles.group_by { |c| c.name.downcase }.transform_values do |group|
-        # Prioritize owned circle if duplicates
-        owned = group.find { |c| c.user_id == current_user.id
-      }
-      owned || group.first  # Fallback to first if no owned
-    end.values  # Returns array of unique representatives by name
+    # List all circles (including joined) without name-based deduping.
+    # This allows distinct "test circle" (or other same-name) entries in the sidebar
+    # for different circle records, so squaks posted to a specific one show under the
+    # correct selection on refresh and live updates are scoped correctly.
+    @grouped_circles = all_circles
+    # (Previously grouped by name to avoid duplicates in the UI, preferring owned,
+    # but that caused ambiguity when multiple circles shared a name like "test circle".)
 
-    @selected_circle_id = current_user.user_profile&.selected_circle.to_i
-    if(@selected_circle_id)
-      @selected_circle = @grouped_circles.find { |c| c.id.to_i == @selected_circle_id }  # Nil if invalid
-      @squaks = Squak.for_circle(@selected_circle).reorder(id: :desc).limit(20)
-    end
-
-
+    @selected_circle = current_user.selected_circle
     if @selected_circle
+      @selected_circle_id = @selected_circle.id
+      @squaks = Squak.for_circle(@selected_circle).reorder(id: :desc).limit(20)
       @selected_circle_name = @selected_circle.name
       # logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
+    else
+      @selected_circle_id = 0
+      @squaks = []
+      @selected_circle_name = "No circle selected"
     end
 
   end
