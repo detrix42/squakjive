@@ -34,33 +34,46 @@ class SquaksController < ApplicationController
     # the side-effects we saw.
     processed_blobs = []
 
-    if @squak.body&.body&.to_s.match(/sgid="([^"]+)"/)
-      sgids = @squak.body.body.to_s.scan(/sgid="([^"]+)"/).flatten.uniq
-      Rails.logger.debug "Found SGIDs in body: #{sgids}"
+    # Process sgids defensively. A bad/malformed attachment sgid (or resolver issue) must never
+    # 500 the entire Squak create. We log and continue so the text (if any) can still save.
+    begin
+      if @squak.body&.body&.to_s.match(/sgid="([^"]+)"/)
+        sgids = @squak.body.body.to_s.scan(/sgid="([^"]+)"/).flatten.uniq
+        Rails.logger.debug "Found SGIDs in body: #{sgids}"
 
-      sgids.each do |sgid|
-        begin
-          blob = ActiveStorage::Blob.resolve_from_sgid(sgid)
-          if blob.nil?
-            Rails.logger.error "Blob not found for sgid: #{sgid}"
-            next
+        sgids.each do |sgid|
+          begin
+            blob = nil
+            begin
+              blob = ActiveStorage::Blob.resolve_from_sgid(sgid) if ActiveStorage::Blob.respond_to?(:resolve_from_sgid)
+            rescue
+              # fall through to local resolver
+            end
+            blob ||= safe_resolve_blob_from_sgid(sgid)
+
+            if blob.nil?
+              Rails.logger.error "Blob not found for sgid: #{sgid}"
+              next
+            end
+            Rails.logger.debug "Processing blob #{blob.id}: #{blob.filename}"
+
+            if preview_urls.key?(sgid)
+              preview_url = preview_urls[sgid]
+              blob.update!(metadata: blob.metadata.merge(preview_url: preview_url))
+              Rails.logger.debug "Updated blob #{blob.id} metadata with preview_url: #{preview_url}"
+            end
+
+            # Ensure blob is analyzed synchronously
+            blob.analyze unless blob.analyzed?
+
+            processed_blobs << blob
+          rescue => e
+            Rails.logger.error "Error processing sgid #{sgid}: #{e.class} #{e.message}"
           end
-          Rails.logger.debug "Processing blob #{blob.id}: #{blob.filename}"
-
-          if preview_urls.key?(sgid)
-            preview_url = preview_urls[sgid]
-            blob.update!(metadata: blob.metadata.merge(preview_url: preview_url))
-            Rails.logger.debug "Updated blob #{blob.id} metadata with preview_url: #{preview_url}"
-          end
-
-          # Ensure blob is analyzed synchronously
-          blob.analyze unless blob.analyzed?
-
-          processed_blobs << blob
-        rescue => e
-          Rails.logger.error "Error processing sgid #{sgid}: #{e.class} #{e.message}"
         end
       end
+    rescue => e
+      Rails.logger.error "Non-fatal SGID processing error in create (proceeding with save): #{e.class} #{e.message}"
     end
 
     # Inline custom HTML for PDF and video attachments.
@@ -256,5 +269,45 @@ class SquaksController < ApplicationController
     return true if squak.user_id == current_user.id
     owner_id = squak.circle&.user_id
     owner_id.present? && owner_id == current_user.id
+  end
+
+  # Self-contained resolver so the critical create path does not depend on the
+  # initializer monkey-patch or the class method being present. Tries plain
+  # signed_id then the ActionText attachable signed GlobalID form.
+  def safe_resolve_blob_from_sgid(sgid)
+    return nil if sgid.blank?
+
+    # 1. Plain ActiveStorage signed_id (what most DirectUpload paths provide)
+    begin
+      if (blob = ActiveStorage::Blob.find_signed(sgid))
+        return blob
+      end
+    rescue ActiveRecord::RecordNotFound, NoMethodError
+      # try next strategy
+    end
+
+    # 2. Signed GlobalID (the form that ends up in <action-text-attachment sgid="...">
+    #    and in the data-trix-attachment JSON sgid field for images etc.)
+    begin
+      located = GlobalID::Locator.locate_signed(sgid)
+      return located if located.is_a?(ActiveStorage::Blob)
+      if located && located.respond_to?(:blob)
+        b = located.blob
+        return b if b.is_a?(ActiveStorage::Blob)
+      end
+    rescue => e
+      Rails.logger.debug "safe_resolve_blob_from_sgid: locate_signed failed: #{e.class} #{e.message}"
+    end
+
+    # 3. Last-ditch parse of a gid string or bare id
+    s = sgid.to_s
+    if s =~ %r{ActiveStorage::Blob/(\d+)}
+      return ActiveStorage::Blob.find_by(id: $1.to_i)
+    end
+    if s =~ /\A\d+\z/
+      return ActiveStorage::Blob.find_by(id: s.to_i)
+    end
+
+    nil
   end
 end
