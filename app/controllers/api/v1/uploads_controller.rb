@@ -12,7 +12,7 @@ module Api
         signed_id = params[:signed_id].to_s
         return render json: { error: "signed_id required" }, status: :bad_request if signed_id.blank?
 
-        blob = ActiveStorage::Blob.find_signed(signed_id)
+        blob = ActiveStorage::Blob.resolve_from_sgid(signed_id)
         return render json: { error: "Blob not found" }, status: :not_found unless blob
 
         # If you want a real thumbnail, you can create a variant here:

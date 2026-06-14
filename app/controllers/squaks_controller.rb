@@ -40,7 +40,11 @@ class SquaksController < ApplicationController
 
       sgids.each do |sgid|
         begin
-          blob = ActiveStorage::Blob.find_signed(sgid)
+          blob = ActiveStorage::Blob.resolve_from_sgid(sgid)
+          if blob.nil?
+            Rails.logger.error "Blob not found for sgid: #{sgid}"
+            next
+          end
           Rails.logger.debug "Processing blob #{blob.id}: #{blob.filename}"
 
           if preview_urls.key?(sgid)
@@ -53,8 +57,8 @@ class SquaksController < ApplicationController
           blob.analyze unless blob.analyzed?
 
           processed_blobs << blob
-        rescue ActiveRecord::RecordNotFound => e
-          Rails.logger.error "Blob not found for sgid: #{sgid}, error: #{e.message}"
+        rescue => e
+          Rails.logger.error "Error processing sgid #{sgid}: #{e.class} #{e.message}"
         end
       end
     end

@@ -177,7 +177,7 @@ module AttachmentsHelper
       next unless sgid
 
       begin
-        blob = ActiveStorage::Blob.find_signed(sgid)
+        blob = ActiveStorage::Blob.resolve_from_sgid(sgid)
         next unless blob && (blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/'))
 
         figure = attachment_figure_html(blob)
@@ -228,7 +228,7 @@ module AttachmentsHelper
 
       sgids.each do |sgid|
         begin
-          blob = ActiveStorage::Blob.find_signed(sgid)
+          blob = ActiveStorage::Blob.resolve_from_sgid(sgid)
           next unless blob && (blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/'))
 
           # Inject only if we don't already have visible attachment markup (prevents dups on good posts;

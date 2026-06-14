@@ -11,7 +11,12 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
   def analyze
     Rails.logger.debug "Analyze endpoint called with SGID: #{params[:sgid]}"
     begin
-      blob = ActiveStorage::Blob.find_signed(params[:sgid])
+      blob = ActiveStorage::Blob.resolve_from_sgid(params[:sgid])
+      if blob.nil?
+        Rails.logger.error "Blob not found for SGID: #{params[:sgid]}"
+        render json: { error: "Blob not found" }, status: :not_found
+        return
+      end
       Rails.logger.debug "Blob found: ID: #{blob.id}, Filename: #{blob.filename}, ContentType: #{blob.content_type}"
       blob.analyze
       Rails.logger.debug "Blob analyzed: ID: #{blob.id}, Analyzed?: #{blob.analyzed?}, Previewable?: #{blob.previewable?}"
@@ -29,7 +34,12 @@ class ActiveStorage::BlobsController < ActiveStorage::BaseController
   def preview
     Rails.logger.debug "Preview endpoint called with SGID: #{params[:sgid]}"
     begin
-      blob = ActiveStorage::Blob.find_signed(params[:sgid])
+      blob = ActiveStorage::Blob.resolve_from_sgid(params[:sgid])
+      if blob.nil?
+        Rails.logger.error "Blob not found for SGID: #{params[:sgid]}"
+        render json: { error: "Blob not found" }, status: :not_found
+        return
+      end
       Rails.logger.debug "Blob found: ID: #{blob.id}, Filename: #{blob.filename}, Analyzed?: #{blob.analyzed?}, Previewable?: #{blob.previewable?}"
       if blob.previewable?
         blob.analyze

@@ -19,7 +19,12 @@ class AttachmentsController < ApplicationController
   def preview
     logger.debug "Preview endpoint called with SGID: #{params[:sgid]}"
     begin
-      blob = ActiveStorage::Blob.find_signed(params[:sgid])
+      blob = ActiveStorage::Blob.resolve_from_sgid(params[:sgid])
+      if blob.nil?
+        logger.error "Blob not found for SGID: #{params[:sgid].inspect}"
+        render json: { error: "Blob not found" }, status: :not_found
+        return
+      end
       logger.debug "Blob found: ID: #{blob.id}, Filename: #{blob.filename}, Analyzed?: #{blob.analyzed?}, Previewable?: #{blob.previewable?}"
       if blob.previewable?
         blob.analyze
@@ -50,7 +55,12 @@ class AttachmentsController < ApplicationController
   def analyze
     logger.debug "Analyze endpoint called with SGID: #{params[:sgid]}"
     begin
-      blob = ActiveStorage::Blob.find_signed(params[:sgid])
+      blob = ActiveStorage::Blob.resolve_from_sgid(params[:sgid])
+      if blob.nil?
+        logger.error "Blob not found for SGID: #{params[:sgid].inspect}"
+        render json: { error: "Blob not found" }, status: :not_found
+        return
+      end
       logger.debug "Blob found: ID: #{blob.id}, Filename: #{blob.filename}, ContentType: #{blob.content_type}"
       blob.analyze
       logger.debug "Blob analyzed: ID: #{blob.id}, Analyzed?: #{blob.analyzed?}, Previewable?: #{blob.previewable?}"
