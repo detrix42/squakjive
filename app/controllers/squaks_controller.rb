@@ -153,6 +153,11 @@ class SquaksController < ApplicationController
         end
       end
 
+      # Reload to make sure the just-created embeds attachments are visible
+      # to the rich text rendering in the turbo response and broadcast.
+      rich_text&.embeds&.reload
+      @squak.reload
+
       embed_count = @squak.body.embeds.count rescue 0
       rich_text_embed_count = rich_text&.embeds&.reload&.count rescue 0
       Rails.logger.debug "Squak saved successfully. in-memory embeds count: #{embed_count}, rich_text_body embeds attachments: #{rich_text_embed_count} (we just attached #{processed_blobs.size} blob(s))"
