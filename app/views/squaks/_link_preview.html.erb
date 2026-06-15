@@ -14,6 +14,7 @@
            class="card-title h6 d-block mb-1">
           <%= (preview[:title].presence || url) %>
         </a>
+        <div class="link-preview-visit-hint">click link to visit site</div>
         <% if preview[:site_name].present? %>
           <div class="text-muted small"><%= preview[:site_name] %></div>
         <% end %>

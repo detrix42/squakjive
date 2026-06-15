@@ -1,7 +1,7 @@
 <div class="d-flex flex-column circle-index-container"
      data-controller="circles"
      data-circles-circle-role-value="selector"
-     data-circles-selected-circle-id-value="<%= @selected_circle || 0 %>"
+     data-circles-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
      data-circles-circle-name-value="<%= @selected_circle_name%>"
   >
   <h3 class="circles-header">Your Circles</h3>

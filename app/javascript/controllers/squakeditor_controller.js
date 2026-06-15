@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import {turboSubmitSucceeded} from "trix_paste_utils"
 export default class extends Controller {
   static targets = []
 
@@ -88,28 +89,31 @@ export default class extends Controller {
 
 
   onTurboSubmitEnd(event) {
-    console.log('squakeditor onTurboSubmitEnd')
-
-    // Only handle the form this controller is attached to
     if (!(event?.target instanceof HTMLFormElement)) return
     if (this.form && event.target !== this.form) return
+    if (!turboSubmitSucceeded(event)) return
 
-    // Only clear on success
-    if (!event.detail?.success) return
+    this.clearEditor()
+  }
 
-    // Find the Trix editor inside this form
+  clearEditor() {
     const trixEl = this.form?.querySelector("trix-editor")
-    if (trixEl?.editor) {
-      trixEl.editor.loadHTML("") // clear content
-      // Also clear the hidden input that ActionText mirrors
-      const inputId = trixEl.getAttribute("input")
-      if (inputId) {
-        const hidden = this.form.querySelector(`#${CSS.escape(inputId)}`)
-        if (hidden) hidden.value = ""
+    if (!trixEl?.editor) return
+
+    const editor = trixEl.editor
+    editor.recordUndoEntry("Clear")
+    editor.loadHTML("")
+
+    const inputId = trixEl.getAttribute("input")
+    if (inputId) {
+      const hidden = document.getElementById(inputId)
+      if (hidden) {
+        hidden.value = ""
+        hidden.dispatchEvent(new Event("input", {bubbles: true}))
       }
-      // Optional: refocus editor after clearing
-      trixEl.focus()
     }
+
+    trixEl.focus()
   }
 
 

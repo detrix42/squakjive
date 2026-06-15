@@ -95,7 +95,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_02_170148) do
 
   create_table "user_profiles", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.string "selected_circle"
+    t.integer "selected_circle"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_user_profiles_on_user_id"

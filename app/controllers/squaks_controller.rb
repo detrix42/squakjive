@@ -10,7 +10,17 @@ class SquaksController < ApplicationController
   def create
     squak_attrs = params.expect(squak: [:body, :circle_id, preview_urls: {}])
     preview_urls = (squak_attrs.delete(:preview_urls) || {}).to_h
-    @squak = current_user.squaks.new(squak_attrs)
+
+    circle = resolve_circle_for_create(squak_attrs.delete(:circle_id))
+    unless circle
+      return respond_to do |format|
+        format.turbo_stream { head :unprocessable_entity }
+        format.html { redirect_to dashboard_path, alert: "Select a circle before posting a squak." }
+        format.json { render json: { error: "circle required" }, status: :unprocessable_entity }
+      end
+    end
+
+    @squak = current_user.squaks.new(squak_attrs.merge(circle: circle))
 
     Rails.logger.debug "Squak params: #{squak_attrs.inspect}"
     Rails.logger.debug "Squak body before save: #{@squak.body&.body&.to_s.truncate(200)}"
@@ -277,6 +287,16 @@ class SquaksController < ApplicationController
 
   def param_circle_id
     params.expect(:circle_id)
+  end
+
+  def resolve_circle_for_create(circle_id)
+    cid = circle_id.to_i
+    if cid.positive?
+      return current_user.circles.find_by(id: cid) ||
+        current_user.joined_circles.find_by(id: cid)
+    end
+
+    current_user.selected_circle
   end
 
   def getCircle

@@ -8,6 +8,7 @@
                 direct_upload_url: "/rails/active_storage/direct_uploads"
               } do |f| %>
   <%= f.hidden_field :circle_id,
+                     id: "squak-circle-id",
                      value: (defined?(circle_id) ? circle_id : params[:circle_id]) %>
   <div class="mb-3" id="squak-editor">
     <%= f.rich_text_area :body, class: "form-control",

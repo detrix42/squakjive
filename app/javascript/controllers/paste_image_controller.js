@@ -1,5 +1,6 @@
 // app/javascript/controllers/paste_image_controller.js
-import { Controller } from "@hotwired/stimulus"
+import {Controller} from "@hotwired/stimulus"
+import {turboSubmitSucceeded} from "trix_paste_utils"
 import { DirectUpload } from "@rails/activestorage"
 import { getClipboardImageItems, getPastedText } from "trix_paste_utils"
 
@@ -73,11 +74,11 @@ export default class extends Controller {
 
   // After a successful submit, clear previews and hidden signed_id inputs
   onTurboSubmitEnd(event) {
-    if (event.detail?.success) {
-      if (this.hasPreviewsTarget) this.previewsTarget.innerHTML = ""
-      if (this.hasSignedIdsTarget) this.signedIdsTarget.innerHTML = ""
-      if (this.hasUploaderTarget) this.uploaderTarget.value = ""
-    }
+    if (!turboSubmitSucceeded(event)) return
+
+    if (this.hasPreviewsTarget) this.previewsTarget.innerHTML = ""
+    if (this.hasSignedIdsTarget) this.signedIdsTarget.innerHTML = ""
+    if (this.hasUploaderTarget) this.uploaderTarget.value = ""
   }
 
 
@@ -122,7 +123,6 @@ export default class extends Controller {
         return
       }
 
-      // If there's no text and no images, insert the "no content" message
       const plain = (getPastedText(event) || "").trim()
       if (!plain) {
         event.preventDefault()
@@ -131,7 +131,12 @@ export default class extends Controller {
           event.stopImmediatePropagation()
         }
         this.insertTextAtCursor("There is no conent")
+        return
       }
+
+      // Let paste-url handle plain URL pastes.
+      if (event.__handled) return
+
       // Otherwise, let normal text paste happen
       return
     }

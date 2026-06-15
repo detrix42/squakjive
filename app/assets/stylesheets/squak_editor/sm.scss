@@ -120,3 +120,172 @@ trix-editor .attachment__caption {
   line-height: 1.2;
 }
 
+/* Link preview cards inserted by paste-url controller (editor + posted squaks) */
+trix-editor .link-preview.card,
+.squak-body .link-preview.card {
+  background-color: #1f252b;
+  border-color: #3a3f44;
+  max-width: 100%;
+
+  .card-title {
+    color: #b9d4ff;
+    word-break: break-word;
+    text-decoration: none;
+    border-bottom: none;
+    cursor: pointer;
+
+    &::after {
+      content: "↗";
+      display: inline-block;
+      margin-left: 0.35rem;
+      font-size: 1.25em;
+      line-height: 1;
+      opacity: 0.65;
+      text-decoration: none;
+      vertical-align: middle;
+      position: relative;
+      top: -3px;
+    }
+
+    &:hover,
+    &:focus {
+      color: #d4e6ff;
+
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
+
+  .link-preview-visit-hint {
+    display: block;
+    width: 100%;
+    margin-top: 0.2rem;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #7a8490;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  .small,
+  .text-muted {
+    color: #9aa3ad;
+  }
+
+  .row.align-items-center {
+    align-items: flex-start !important;
+  }
+}
+
+/* Title-only previews: inline chip so squak text can continue beside it */
+trix-editor .attachment:has(.link-preview--text-only),
+trix-editor .trix-attachment:has(.link-preview--text-only),
+.squak-body .attachment:has(.link-preview--text-only),
+.squak-body action-text-attachment:has(.link-preview--text-only) {
+  display: inline-block;
+  vertical-align: top;
+  width: auto;
+  max-width: min(100%, 28rem);
+  margin: 0 0.5rem 0.15rem 0;
+  padding-bottom: 0;
+  gap: 0;
+}
+
+trix-editor .trix-attachment:has(.link-preview--text-only) {
+  flex-direction: row;
+}
+
+trix-editor .link-preview--text-only,
+.squak-body .link-preview--text-only {
+  display: inline-block;
+  vertical-align: top;
+  width: auto;
+  max-width: min(100%, 28rem);
+  margin: 0;
+
+  .card-body {
+    padding: 0.4rem 0.65rem;
+    text-align: center;
+  }
+
+  .card-title {
+    display: inline;
+    margin-bottom: 0;
+  }
+}
+
+.link-preview-thumbnail {
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: cover;
+}
+
+.link-preview-thumbnail--wide {
+  max-width: 100%;
+  max-height: none;
+}
+
+/* YouTube previews: wide thumbnail with centered play badge + hint */
+trix-editor .link-preview-youtube,
+.squak-body .link-preview-youtube {
+  display: inline-block;
+  max-width: 100%;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+
+  .link-preview-youtube-thumb {
+    position: relative;
+    display: block;
+    line-height: 0;
+  }
+
+  .link-preview-youtube-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3.5rem;
+    height: 2.45rem;
+    background: #f00;
+    border-radius: 0.45rem;
+    opacity: 0.92;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 54%;
+      transform: translate(-50%, -50%);
+      border-style: solid;
+      border-width: 0.55rem 0 0.55rem 0.95rem;
+      border-color: transparent transparent transparent #fff;
+    }
+  }
+
+  .link-preview-youtube-hint {
+    display: block;
+    width: 100%;
+    margin-top: 0.2rem;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #7a8490;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  &:hover,
+  &:focus {
+    .link-preview-youtube-badge {
+      opacity: 1;
+    }
+
+    .link-preview-youtube-hint {
+      color: #9aa3ad;
+    }
+  }
+}
+

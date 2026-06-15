@@ -1,3 +1,11 @@
+# Allow link preview cards (and other rich embeds) to keep external-link attributes.
+Rails.application.config.after_initialize do
+  sanitizer = ActionText::ContentHelper.sanitizer
+  ActionText::ContentHelper.allowed_attributes = (
+    sanitizer.class.allowed_attributes + ActionText::Attachment::ATTRIBUTES + %w[target rel]
+  ).uniq
+end
+
 ActiveSupport.on_load(:action_text_attachables_remote_image) do
   attr_reader :href, :filename, :filesize, :content_type, :previewable
 

@@ -1,4 +1,5 @@
 module AttachmentsHelper
+  include ActionText::ContentHelper
 
   # Low-level builder for the clean (no inline styles) preview + filename link block.
   # Prefers classes + CSS (see squak_editor/sm.scss) over style="".
@@ -101,7 +102,13 @@ module AttachmentsHelper
     return "" if rich_text.blank? || !rich_text.respond_to?(:body)
 
     content = rich_text.body
-    html = content.respond_to?(:to_html) ? content.to_html.to_s : content.to_s
+    html = if content.respond_to?(:render_attachments)
+             render_action_text_content(content).to_s
+           elsif content.respond_to?(:to_html)
+             content.to_html.to_s
+           else
+             content.to_s
+           end
     return html.html_safe if html.blank?
 
     rendered_html = html
@@ -171,7 +178,27 @@ module AttachmentsHelper
       normalize_attachment_block!(node)
     end
 
-    # 2) Replace any remaining raw <action-text-attachment sgid=...> for PDF/video.
+    # 2) Ensure preview links always open externally in a new tab.
+    fragment.css("a.link-preview-youtube, .link-preview a.card-title").each do |anchor|
+      href = anchor["href"].to_s.strip
+      next if href.blank? || href == "#"
+
+      anchor["target"] = "_blank"
+      anchor["rel"] = "noopener noreferrer"
+    end
+
+    # 3) Unwrap HTML embeds (e.g. link preview cards from Trix content attachments).
+    #    Browsers do not render custom <action-text-attachment> tags; expose the inner figure/card.
+    fragment.css("action-text-attachment[content-type='text/html']").each do |node|
+      inner = node.inner_html.to_s.strip
+      replacement = inner.presence || node['content'].to_s
+      if replacement.present?
+        decoded = CGI.unescapeHTML(replacement)
+        node.replace(Nokogiri::HTML::DocumentFragment.parse(decoded))
+      end
+    end
+
+    # 4) Replace any remaining raw <action-text-attachment sgid=...> for PDF/video.
     #    (If the to_html still left tags, or for other rich text render paths.)
     fragment.css("action-text-attachment").each do |node|
       sgid = node['sgid'].to_s.presence
@@ -190,7 +217,7 @@ module AttachmentsHelper
       end
     end
 
-    # 3) Strong recovery for "blank/empty" squaks (the two in family circle).
+    # 5) Strong recovery for "blank/empty" squaks (the two in family circle).
     #    Some older posts have the <action-text-attachment sgid=...> still in the *raw source*
     #    of the rich text (even if the rendered HTML became the "missing attachment" h4 or nothing,
     #    because the embeds link or resolver didn't produce a visible figure at the time).

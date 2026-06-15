@@ -21,6 +21,9 @@ import "trix"
 import "@hotwired/turbo-rails"
 import "controllers"
 import "channels"
+import {registerLinkPreviewClicks} from "utility/link_preview_clicks"
+
+registerLinkPreviewClicks()
 
 Trix.config.attachments.preview.caption = {
   name: false,

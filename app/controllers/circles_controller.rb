@@ -16,12 +16,20 @@ class CirclesController < ApplicationController
     @circle = current_user.circles.build(circle_params)
 
     if @circle.save
+      current_user.select_circle(@circle.id)
+      @selected_circle_id = @circle.id
+
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
             turbo_stream.remove("circles-empty-message"),
             turbo_stream.append("circles-list", partial: "circles/circle_item", locals: { circle: @circle }),
-            turbo_stream.update("new-circle-modal", "")
+            turbo_stream.update("new-circle-modal", ""),
+            turbo_stream.replace(
+              "squak-circle-id",
+              partial: "dashboard/squak_circle_id_field",
+              locals: { circle_id: @circle.id }
+            )
           ]
         end
       end
