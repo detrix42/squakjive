@@ -78,6 +78,9 @@ class LinkPreviewFetcher
       desc:         text,
       preview_type: :tweet
     }
+  rescue => e
+    Rails.logger.warn("LinkPreviewFetcher X oEmbed error: #{e.class} #{e.message}")
+    nil
   end
 
   def extract_tweet_text(html)
@@ -106,6 +109,9 @@ class LinkPreviewFetcher
       return href if href.include?("pbs.twimg.com")
     end
 
+    nil
+  rescue => e
+    Rails.logger.warn("LinkPreviewFetcher X thumbnail error: #{e.class} #{e.message}")
     nil
   end
 
