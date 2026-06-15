@@ -195,6 +195,10 @@ export default class extends Controller {
       return this.buildYoutubeContent(data)
     }
 
+    if (data.type === "tweet") {
+      return this.buildTweetContent(data)
+    }
+
     return this.buildLinkContent(data)
   }
 
@@ -217,6 +221,42 @@ export default class extends Controller {
         </span>
         ${visitHint}
       </a>`
+  }
+
+  buildTweetContent(data) {
+    const url = this.escapeAttr(data.url)
+    const author = this.escapeHtml(data.title || "Post on X")
+    const tweetTitle = data.text
+      ? `<div class="link-preview-tweet-title">${this.escapeHtml(data.text)}</div>`
+      : `<div class="link-preview-tweet-title">${author}</div>`
+    const authorLine = data.text
+      ? `<div class="link-preview-tweet-author">${author}</div>`
+      : ""
+    const thumbnail = data.thumbnail || data.image
+    const visitHint = `<div class="link-preview-tweet-hint">click to view on X</div>`
+
+    if (thumbnail) {
+      return `
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="link-preview-tweet">
+          <div class="link-preview-tweet-card">
+            <div class="link-preview-tweet-thumb">
+              <img src="${this.escapeAttr(thumbnail)}" alt="" class="link-preview-tweet-thumbnail">
+            </div>
+            ${tweetTitle}
+            ${authorLine}
+            ${visitHint}
+          </div>
+        </a>`
+    }
+
+    return `
+      <div class="link-preview card link-preview--tweet link-preview--text-only">
+        <div class="card-body py-2">
+          ${tweetTitle}
+          ${authorLine}
+          ${visitHint}
+        </div>
+      </div>`
   }
 
   buildLinkContent(data) {

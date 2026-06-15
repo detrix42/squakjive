@@ -7,6 +7,7 @@ import "channels"
 
 const PREVIEW_LINK_SELECTOR = [
   "a.link-preview-youtube",
+  "a.link-preview-tweet",
   ".link-preview a.card-title[href]",
   ".link-preview-thumbnail--wide"
 ].join(", ")
@@ -19,6 +20,9 @@ function findPreviewLink(target) {
 
   const youtube = target.closest(".link-preview-youtube")
   if (youtube instanceof HTMLAnchorElement && youtube.href) return youtube
+
+  const tweet = target.closest(".link-preview-tweet")
+  if (tweet instanceof HTMLAnchorElement && tweet.href) return tweet
 
   const thumbnail = target.closest(".link-preview-thumbnail--wide")
   if (thumbnail) {

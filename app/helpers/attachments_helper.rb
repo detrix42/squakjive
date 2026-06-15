@@ -179,7 +179,7 @@ module AttachmentsHelper
     end
 
     # 2) Ensure preview links always open externally in a new tab.
-    fragment.css("a.link-preview-youtube, .link-preview a.card-title").each do |anchor|
+    fragment.css("a.link-preview-youtube, a.link-preview-tweet, .link-preview a.card-title, .link-preview-tweet-author").each do |anchor|
       href = anchor["href"].to_s.strip
       next if href.blank? || href == "#"
 

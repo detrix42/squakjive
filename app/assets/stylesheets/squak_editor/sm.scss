@@ -289,3 +289,132 @@ trix-editor .link-preview-youtube,
   }
 }
 
+/* X/Twitter tweet previews */
+trix-editor .attachment:has(.link-preview-tweet),
+trix-editor .trix-attachment:has(.link-preview-tweet),
+.squak-body .attachment:has(.link-preview-tweet),
+.squak-body action-text-attachment:has(.link-preview-tweet) {
+  display: inline-block;
+  vertical-align: top;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0.5rem 0.15rem 0;
+}
+
+$link-preview-tweet-thumb-width: 360px;
+
+trix-editor .link-preview-tweet,
+.squak-body .link-preview-tweet {
+  display: inline-block;
+  width: min(100%, calc(#{$link-preview-tweet-thumb-width} + 2rem));
+  max-width: 100%;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+
+  .link-preview-tweet-card {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: calc(#{$link-preview-tweet-thumb-width} + 2rem);
+    padding: 1rem;
+    background-color: #1f252b;
+    border: 1px solid #3a3f44;
+    border-radius: var(--bs-border-radius, 0.375rem);
+  }
+
+  .link-preview-tweet-thumb {
+    display: block;
+    width: 100%;
+    line-height: 0;
+  }
+
+  .link-preview-tweet-thumbnail {
+    display: block;
+    width: 100%;
+    max-width: $link-preview-tweet-thumb-width;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.25rem;
+  }
+
+  .link-preview-tweet-title,
+  .link-preview-tweet-author,
+  .link-preview-tweet-hint {
+    width: 100%;
+    max-width: $link-preview-tweet-thumb-width;
+  }
+
+  .link-preview-tweet-title {
+    display: block;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    color: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .link-preview-tweet-author {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #9aa3ad;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .link-preview-tweet-hint {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #7a8490;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  &:hover,
+  &:focus {
+    .link-preview-tweet-author {
+      color: #b9c4d0;
+    }
+
+    .link-preview-tweet-hint {
+      color: #9aa3ad;
+    }
+  }
+}
+
+trix-editor .link-preview--tweet,
+.squak-body .link-preview--tweet {
+  display: inline-block;
+  width: auto;
+  max-width: min(100%, 28rem);
+  padding: 1rem;
+
+  .link-preview-tweet-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .link-preview-tweet-author {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: #9aa3ad;
+  }
+
+  .link-preview-tweet-hint {
+    margin-top: 0.35rem;
+    font-size: 10px;
+    color: #7a8490;
+    text-align: center;
+  }
+}
+

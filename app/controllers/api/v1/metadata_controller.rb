@@ -42,7 +42,15 @@ module Api
         title = data[:title].presence || "Untitled"
         image = data[:image]
 
-        if youtube_url?(url) || data[:site_name] == "YouTube"
+        if data[:preview_type] == :tweet || data[:site_name] == "X"
+          {
+            type: "tweet",
+            title: title,
+            text: data[:desc],
+            thumbnail: image,
+            url: url
+          }.compact
+        elsif youtube_url?(url) || data[:site_name] == "YouTube"
           {
             type: "youtube",
             title: title.gsub(/ - YouTube$/i, "").strip,
