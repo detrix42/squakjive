@@ -5,9 +5,7 @@ module Api
         url = params[:url]
         return render json: { error: "Invalid URL" }, status: :bad_request unless valid_url?(url)
 
-        data = Rails.cache.fetch(["metadata", url], expires_in: 1.day) do
-          LinkPreviewFetcher.call(url)
-        end
+        data = fetch_metadata(url)
 
         if data.blank?
           return render json: { error: "no preview available" }, status: :not_found
@@ -20,6 +18,16 @@ module Api
       end
 
       private
+
+      def fetch_metadata(url)
+        cache_key = ["metadata", url]
+        cached = Rails.cache.read(cache_key)
+        return cached if cached.present?
+
+        data = LinkPreviewFetcher.call(url)
+        Rails.cache.write(cache_key, data, expires_in: 1.day) if data.present?
+        data
+      end
 
       def valid_url?(url)
         url.to_s.match?(/\Ahttps?:\/\/\S+\z/i)

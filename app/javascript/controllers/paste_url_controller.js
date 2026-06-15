@@ -159,33 +159,35 @@ export default class extends Controller {
   async replaceRangeWithPreview({urlText, normalizedUrl, start, end}) {
     const editor = this.editor
 
+    let data = null
+
     try {
       const response = await fetch(`/api/v1/metadata?url=${encodeURIComponent(normalizedUrl)}`)
-      const data = await response.json()
+      data = await response.json()
 
       if (!response.ok || data.error) {
         throw new Error(data.error || "Metadata fetch failed")
       }
-
-      const currentHref = editor.getDocument().getPieceAtPosition(start)?.getAttribute("href")
-      if (currentHref !== normalizedUrl) {
-        console.warn("Content changed - skipping replacement")
-        return
-      }
-
-      const content = this.buildPreviewContent(data)
-      if (!content) return
-
-      editor.setSelectedRange([start, end])
-      editor.deleteInDirection("backward")
-      editor.insertAttachment(new Trix.Attachment({
-        content: content,
-        contentType: "text/html"
-      }))
     } catch (error) {
-      this.seenUrls.delete(normalizedUrl)
-      console.error("Failed to enhance pasted URL:", error)
+      console.warn("Metadata unavailable, using text-only preview:", error)
+      data = {type: "link", url: normalizedUrl, title: normalizedUrl}
     }
+
+    const currentHref = editor.getDocument().getPieceAtPosition(start)?.getAttribute("href")
+    if (currentHref !== normalizedUrl) {
+      console.warn("Content changed - skipping replacement")
+      return
+    }
+
+    const content = this.buildPreviewContent(data)
+    if (!content) return
+
+    editor.setSelectedRange([start, end])
+    editor.deleteInDirection("backward")
+    editor.insertAttachment(new Trix.Attachment({
+      content: content,
+      contentType: "text/html"
+    }))
   }
 
   buildPreviewContent(data) {
