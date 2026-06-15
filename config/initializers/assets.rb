@@ -7,5 +7,6 @@ Rails.application.config.assets.version = "1.0"
 # Rails.application.config.assets.paths << Emoji.images_path
 
 Rails.application.config.dartsass.builds = {
-  "application.scss" => "application.css"
+  "application.scss" => "application.css",
+  "trix.scss" => "trix.css"
 }

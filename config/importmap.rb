@@ -23,6 +23,6 @@ pin "@rails/actiontext", to: "actiontext.esm.js"
 pin "trix", to: "trix.js"
 
 pin "trix_paste_utils", to: "utility/trix_paste_utils.js"
-pin "utility/link_preview_clicks", to: "utility/link_preview_clicks.js"
+pin_all_from "app/javascript/utility", under: "utility"
 
 # pin "@rails/actiontext", to: "actiontext.esm.js"
