@@ -49,4 +49,6 @@ coverage/
 
 storage/*
 
+/app/assets/builds/*
+
 nohup.out
