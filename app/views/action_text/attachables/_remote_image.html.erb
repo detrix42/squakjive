@@ -3,6 +3,7 @@
   <%= link_to (remote_image.node['href'] || remote_image.url),
               title: "Download #{remote_image.node['filename'] || 'file'}" do %>
     <img src="<%= remote_image.url %>"
+         class="attachment-preview-img"
          <% if remote_image.width %>width="<%= remote_image.width %>"<% end %>
       <% if remote_image.height %>height="<%= remote_image.height %>"<% end %>
       alt="<%= remote_image.node['filename'] || 'file' %>">

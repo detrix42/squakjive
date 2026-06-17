@@ -249,7 +249,10 @@ module AttachmentsHelper
     end
 
     current_output = fragment.to_html
-    has_visible_attachment = current_output.match?(/class=["'][^"']*attachment-(video|pdf)|attachment-preview-img|attachment-caption-link/)
+    has_visible_attachment = fragment.at_css(
+      "img, video.attachment-video-player, .attachment-caption-link, .attachment-preview-img"
+    ).present? ||
+      current_output.match?(/class=["'][^"']*attachment-(video|pdf)/)
 
     if raw_source.present? && raw_source.include?('sgid=')
       sgids = raw_source.scan(/sgid="([^"]+)"/).flatten.uniq
@@ -262,7 +265,7 @@ module AttachmentsHelper
           if blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/')
             # Inject only if we don't already have visible attachment markup (prevents dups on good posts;
             # for the blank ones this will fire and add the preview + "filename (size)" link).
-            if !has_visible_attachment || !current_output.include?(blob.filename.to_s)
+            if !file_blob_visible_in_fragment?(fragment, blob)
               figure = attachment_figure_html(blob)
               if figure.present?
                 node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
@@ -275,8 +278,8 @@ module AttachmentsHelper
               end
             end
           elsif blob.image?
-            # For images, ensure a visible preview img if the standard rendering left the tag or no visible.
-            if !has_visible_attachment || !current_output.match?(/attachment-preview-img.*#{Regexp.escape(blob.filename)}/)
+            # Only recover when the standard render path left no visible image for this blob.
+            unless image_blob_visible_in_fragment?(fragment, blob)
               url = rails_blob_url(blob, disposition: "inline")
               href = rails_blob_url(blob, disposition: "attachment")
               img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
@@ -309,33 +312,33 @@ module AttachmentsHelper
           blob = ea.blob
           next unless blob
           if blob.content_type.start_with?('application/pdf') || blob.content_type.start_with?('video/')
-            if !current_output.include?(blob.filename.to_s)
-              figure = attachment_figure_html(blob)
-              if figure.present?
-                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
-                if fragment.children.any?
-                  fragment.children.first.add_previous_sibling(node)
-                else
-                  fragment.add_child(node)
-                end
-                has_visible_attachment = true
+            next if file_blob_visible_in_fragment?(fragment, blob)
+
+            figure = attachment_figure_html(blob)
+            if figure.present?
+              node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+              if fragment.children.any?
+                fragment.children.first.add_previous_sibling(node)
+              else
+                fragment.add_child(node)
               end
+              has_visible_attachment = true
             end
           elsif blob.image?
-            if !current_output.match?(/attachment-preview-img.*#{Regexp.escape(blob.filename)}/)
-              url = rails_blob_url(blob, disposition: "inline")
-              href = rails_blob_url(blob, disposition: "attachment")
-              img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
-              figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
-              if figure.present?
-                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
-                if fragment.children.any?
-                  fragment.children.first.add_previous_sibling(node)
-                else
-                  fragment.add_child(node)
-                end
-                has_visible_attachment = true
+            next if image_blob_visible_in_fragment?(fragment, blob)
+
+            url = rails_blob_url(blob, disposition: "inline")
+            href = rails_blob_url(blob, disposition: "attachment")
+            img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
+            figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
+            if figure.present?
+              node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+              if fragment.children.any?
+                fragment.children.first.add_previous_sibling(node)
+              else
+                fragment.add_child(node)
               end
+              has_visible_attachment = true
             end
           end
         rescue => e
@@ -348,6 +351,35 @@ module AttachmentsHelper
   end
 
   private
+
+  # True when the fragment already shows a preview image for this blob (custom_blob,
+  # remote_image, or prior recovery). Attribute order in rendered <img> tags is not
+  # reliable, so we match on alt/src content instead of regexing class before filename.
+  def image_blob_visible_in_fragment?(fragment, blob)
+    filename = blob.filename.to_s
+    return false if filename.blank?
+
+    fragment.css("img").any? do |img|
+      alt = img["alt"].to_s
+      src = img["src"].to_s
+      alt.include?(filename) || src.include?(filename)
+    end
+  end
+
+  # True when a PDF/video attachment block is already visible for this blob.
+  def file_blob_visible_in_fragment?(fragment, blob)
+    filename = blob.filename.to_s
+    return false if filename.blank?
+
+    fragment.css(
+      "div.attachment, figure.attachment, .attachment-caption-link, .attachment-video-player, .attachment-preview-img"
+    ).any? do |node|
+      node.text.include?(filename) ||
+        node["alt"].to_s.include?(filename) ||
+        node["src"].to_s.include?(filename) ||
+        node["poster"].to_s.include?(filename)
+    end
+  end
 
   # Extract what we can from a resolved attachment node (div or figure from partial or old bake),
   # strip inline styles, and replace the whole node with a clean classed version
