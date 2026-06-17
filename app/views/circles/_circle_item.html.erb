@@ -1,7 +1,7 @@
 <%= turbo_stream_from [circle, :members] %>
 
 <li id="circle-id-<%= circle.id %>"
-    class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %> <%= 'owner' if circle_owner(circle) == current_user.username %>"
+    class="circle-item <%= 'selected' if @selected_circle_id.to_i == circle.id %> <%= 'owner' if circle_owner(circle) == current_user.username %> <%= 'unread' if circle_unread?(circle) %>"
     data-circles-target="item"  <%# Fixed from data-circles-circle-selection-target %>
     data-action="click->circles#select"
     data-circles-circle-id="<%= circle.id %>"

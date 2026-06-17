@@ -82,6 +82,11 @@
       margin-bottom: 1rem;
       padding: 1rem;
 
+      &.unread:not(.selected) {
+        border-color: c.$tron-orange;
+        box-shadow: 0 0 10px c.$tron-orange-glow, inset 0 0 0 1px c.$tron-orange;
+      }
+
       .member-count-badge {
         @include circle-action-icon($size: 20px, $font-size: 12px, $color: c.$accent-badge-text);
         margin-right: 1rem;

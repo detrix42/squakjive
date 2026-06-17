@@ -18,4 +18,8 @@ module CirclesHelper
   def member_count(circle)
     circle.all_members.count
   end
+
+  def circle_unread?(circle)
+    @unread_circle_ids&.include?(circle.id)
+  end
 end

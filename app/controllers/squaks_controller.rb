@@ -180,6 +180,7 @@ class SquaksController < ApplicationController
         partial: "squaks/squak",
         locals: { squak: @squak, user: current_user }
       )
+      CircleUnreadAlerts.broadcast_new_squak(@squak)
 
       respond_to do |format|
         format.turbo_stream do
@@ -246,6 +247,9 @@ class SquaksController < ApplicationController
             )
           end
         else
+          if circle
+            CircleUnreadAlerts.mark_circle_read!(current_user, circle)
+          end
           render turbo_stream: turbo_stream.replace(
             "squak-view",
             partial: "squaks/turbo_squak_index",

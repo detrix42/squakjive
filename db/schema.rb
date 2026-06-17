@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_15_163114) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_163815) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,6 +64,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_163114) do
     t.datetime "updated_at", null: false
     t.index ["circle_id"], name: "index_circle_memberships_on_circle_id"
     t.index ["user_id"], name: "index_circle_memberships_on_user_id"
+  end
+
+  create_table "circle_read_states", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "circle_id", null: false
+    t.datetime "last_read_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["circle_id"], name: "index_circle_read_states_on_circle_id"
+    t.index ["user_id", "circle_id"], name: "index_circle_read_states_on_user_id_and_circle_id", unique: true
+    t.index ["user_id"], name: "index_circle_read_states_on_user_id"
   end
 
   create_table "circles", force: :cascade do |t|
@@ -120,6 +131,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_163114) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "circle_memberships", "circles"
   add_foreign_key "circle_memberships", "users"
+  add_foreign_key "circle_read_states", "circles"
+  add_foreign_key "circle_read_states", "users"
   add_foreign_key "circles", "users"
   add_foreign_key "squaks", "circles"
   add_foreign_key "squaks", "users"

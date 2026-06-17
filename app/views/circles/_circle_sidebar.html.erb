@@ -1,5 +1,9 @@
+<%= turbo_stream_from current_user, :circle_alerts %>
+
 <div class="d-flex flex-column circle-index-container"
-     data-controller="circles"
+     data-controller="circles browser-alerts"
+     data-browser-alerts-unread-circle-ids-value="<%= (@unread_circle_ids || []).to_json %>"
+     data-browser-alerts-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
      data-circles-circle-role-value="selector"
      data-circles-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
      data-circles-circle-name-value="<%= @selected_circle_name%>"
@@ -8,6 +12,8 @@
   <% if current_user.circles.empty? && current_user.joined_circles.empty? %>
     <p id="circles-empty-message">You have no circles yet. Create one or join one to start!</p>
   <% end %>
+  <div id="circle-alerts-bridge" class="d-none" data-browser-alerts-target="bridge" aria-hidden="true"></div>
+
   <ul class="circles-index"
       id="circles-list" data-circles-target="user-list">
     <%= render partial: "circles/circle_item", collection: @grouped_circles, as: :circle %>

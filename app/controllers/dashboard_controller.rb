@@ -13,6 +13,7 @@ class DashboardController < ApplicationController
     # for different circle records, so squaks posted to a specific one show under the
     # correct selection on refresh and live updates are scoped correctly.
     @grouped_circles = all_circles
+    @unread_circle_ids = CircleUnreadAlerts.unread_circle_ids_for(current_user, @grouped_circles)
     # (Previously grouped by name to avoid duplicates in the UI, preferring owned,
     # but that caused ambiguity when multiple circles shared a name like "test circle".)
 
@@ -21,6 +22,8 @@ class DashboardController < ApplicationController
       @selected_circle_id = @selected_circle.id
       @squaks = Squak.for_circle(@selected_circle).reorder(id: :desc).limit(20)
       @selected_circle_name = @selected_circle.name
+      CircleUnreadAlerts.mark_circle_read!(current_user, @selected_circle)
+      @unread_circle_ids -= [@selected_circle.id]
       # logger.debug "Dashboard controller index (selected circle): #{@selected_circle.name}"
     else
       @selected_circle_id = 0
