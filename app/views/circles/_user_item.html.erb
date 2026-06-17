@@ -2,7 +2,7 @@
 
 <li class="user-item d-flex align-items-center py-1 px-2 mb-1 rounded bg-light border user-list-entry"
      id="sidebar-user-item-<%= user.id %>">
-  <%= image_tag "https://robohash.org/#{user.username}?size=30x30", class: "img-fluid" %>
+  <%= image_tag robohash_avatar_url(user.username, size: "30x30"), class: "img-fluid", alt: user.username %>
   <span class="fw-semibold text-dark flex-grow-1"><%= user.username %></span>
   <% if circle_owner?(circle, user) %>
     <span class="owner-icon"><i class="bi bi-star"></i></span>

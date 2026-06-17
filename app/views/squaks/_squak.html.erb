@@ -7,7 +7,7 @@
 
     <div class="col-sm-3 col-md-2 col-lg-1 squak-avatar-col">
       <div class="squak-avatar">
-        <%= image_tag "https://robohash.org/#{squak.user.username}?size=60x60", class: "img-fluid" %>
+        <%= image_tag robohash_avatar_url(squak.user.username, size: "60x60"), class: "img-fluid", alt: squak.user.username %>
       </div>
     </div>
 

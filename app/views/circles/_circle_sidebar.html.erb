@@ -4,6 +4,7 @@
      data-controller="circles browser-alerts"
      data-browser-alerts-unread-circle-ids-value="<%= (@unread_circle_ids || []).to_json %>"
      data-browser-alerts-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
+     data-browser-alerts-favicon-url-value="<%= brand_icon_path(size: '64x64') %>"
      data-circles-circle-role-value="selector"
      data-circles-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
      data-circles-circle-name-value="<%= @selected_circle_name%>"

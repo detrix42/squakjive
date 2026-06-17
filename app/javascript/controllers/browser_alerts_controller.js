@@ -5,7 +5,8 @@ export default class extends Controller {
 
   static values = {
     unreadCircleIds: { type: Array, default: [] },
-    selectedCircleId: { type: Number, default: 0 }
+    selectedCircleId: { type: Number, default: 0 },
+    faviconUrl: { type: String, default: "" }
   }
 
   connect() {
@@ -120,9 +121,13 @@ export default class extends Controller {
   }
 
   resolveBaseFaviconHref() {
-    const iconLink = document.querySelector('link[rel="icon"][href$=".png"]') ||
-      document.querySelector('link[rel="icon"]')
-    return iconLink?.href || "/icon.png"
+    if (this.faviconUrlValue) return this.faviconUrlValue
+
+    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
+    if (brandIcon?.href) return brandIcon.href
+
+    const iconLink = document.querySelector('link[rel="icon"]')
+    return iconLink?.href || "/brand/icon?size=64x64"
   }
 
   setFaviconBadge() {
@@ -161,6 +166,9 @@ export default class extends Controller {
   }
 
   applyFavicon(href) {
+    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
+    if (brandIcon) brandIcon.setAttribute("disabled", "true")
+
     let link = document.querySelector('link[data-browser-alerts-favicon="true"]')
     if (!link) {
       link = document.createElement("link")
@@ -175,6 +183,9 @@ export default class extends Controller {
   restoreFavicon() {
     const badgeLink = document.querySelector('link[data-browser-alerts-favicon="true"]')
     badgeLink?.remove()
+
+    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
+    if (brandIcon) brandIcon.removeAttribute("disabled")
   }
 
   async setAppBadge(count) {

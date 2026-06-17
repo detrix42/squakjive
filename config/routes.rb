@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "attachments/:signed_id/view", to: "attachments#view", as: :attachment_view
 
   get "link_preview/show"
+  get "brand/icon", to: "brand#icon", as: :brand_icon
 
   # get "link_preview", to: "link_preview#show"
 
