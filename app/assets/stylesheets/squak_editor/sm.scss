@@ -1,12 +1,32 @@
 @import "../custom_variables";
 
 #squak-editor {
-  min-height: 100px;
-  border-radius: 5px;
   margin: 0 auto;
-  padding: 10px;
+  padding: 0;
+}
+
+#squak-editor trix-editor,
+trix-editor {
+  display: block;
+  min-height: 100px;
+  margin: 0;
+  padding: 0.6em 0.75em;
+  border: 1px solid $border-muted;
+  border-radius: 5px;
+  background-color: $editor-bg-idle;
+  @include tron-square-grid($tron-grid-line, $editor-grid-size-idle);
+  color: $text-body;
+  outline: none;
+  transition:
+    background-color $editor-grid-transition,
+    background-size $editor-grid-transition,
+    box-shadow $editor-grid-transition,
+    border-color $editor-grid-transition;
 
   &:focus {
+    background-color: $editor-bg-active;
+    @include tron-square-grid($tron-grid-line, $editor-grid-size-active);
+    border-color: $cyan-border-soft;
     box-shadow: 0 0 12px $cyan-glow, inset 0 0 0 1px $cyan-border-soft;
     outline: none;
   }

@@ -1,75 +1,103 @@
 // =============================================================================
-// SquakJive theme — cyber HUD: near-black navy, electric-cyan borders, cool text
-// Reference vibe: dark command-center panels with glowing cyan outlines.
-// Tune BASE palettes first; everything else derives from these.
+// SquakJive — TRON theme (tron-theme-test branch)
+// Inspired by Tron / Tron: Legacy: black digital void, neon cyan circuits,
+// orange Flynn accents, and red danger states. Tune BASE palettes first.
 // =============================================================================
 
-// --- Void / navy (backgrounds) ---
-$navy-900: #000408;
-$navy-800: #0a0f1a;
-$navy-700: #0c121c;
-$navy-600: #0f1624;
-$navy-500: #141e2e;
-$navy-400: #1a2535;
-$navy-300: #1e2d42;
+// --- The Grid (backgrounds / void) ---
+$tron-void: #000000;
+$tron-void-deep: #020208;
+$tron-grid: #050510;
+$tron-panel: #0a0a18;
+$tron-panel-raised: #0e0e20;
+$tron-panel-lit: #12122c;
 
-// --- Electric cyan (borders, glows, data accents) ---
-$cyan-600: #00b8e6;
-$cyan-500: #00d4ff;
-$cyan-400: #33ddff;
-$cyan-300: #7dd3fc;
-$cyan-200: #a5f3fc;
-$cyan-100: #e0f2fe;
+// Aliases used across the rest of the theme
+$navy-900: $tron-void-deep;
+$navy-800: $tron-grid;
+$navy-700: $tron-panel;
+$navy-600: $tron-panel-raised;
+$navy-500: $tron-panel-lit;
+$navy-400: #16162e;
+$navy-300: #1a1a36;
 
-$cyan-border: rgba(0, 212, 255, 0.5);
-$cyan-border-soft: rgba(0, 184, 230, 0.3);
-$cyan-border-strong: rgba(0, 212, 255, 0.82);
-$cyan-glow: rgba(0, 212, 255, 0.6);
-$cyan-glow-soft: rgba(0, 212, 255, 0.22);
+// --- Neon circuits (iconic Tron cyan) ---
+$tron-cyan: #00ffff;
+$tron-cyan-core: #00d9ff;
+$tron-cyan-bright: #7df9ff;
+$tron-cyan-dim: #00a8c8;
+$tron-cyan-pale: #b8ffff;
+$tron-cyan-white: #e8ffff;
 
-// --- Cool text (light cyan → pale ice-blue) ---
-$text-primary: #e0f2fe;
-$text-bright: #a5f3fc;
-$text-body: #7dd3fc;
-$text-muted: #5eb8d9;
-$text-subtle: #3d8eb0;
-$text-dim: #2a6a88;
+$cyan-600: $tron-cyan-dim;
+$cyan-500: $tron-cyan-core;
+$cyan-400: $tron-cyan;
+$cyan-300: $tron-cyan-bright;
+$cyan-200: $tron-cyan-pale;
+$cyan-100: $tron-cyan-white;
+
+$cyan-border: rgba(0, 255, 255, 0.55);
+$cyan-border-soft: rgba(0, 217, 255, 0.28);
+$cyan-border-strong: rgba(0, 255, 255, 0.9);
+$cyan-glow: rgba(0, 255, 255, 0.7);
+$cyan-glow-soft: rgba(0, 255, 255, 0.18);
+
+// --- Tron: Legacy accents ---
+$tron-orange: #ff7b00;
+$tron-orange-glow: rgba(255, 123, 0, 0.5);
+$tron-red: #ff2040;
+$tron-red-glow: rgba(255, 32, 64, 0.55);
+$tron-grid-line: rgba(0, 255, 255, 0.1);
+$tron-hex-grid-opacity: 0.2;
+
+// Grids
+$tron-grid-size: 48px;
+$editor-grid-size-idle: 44px;
+$editor-grid-size-active: 20px;
+$editor-grid-transition: 0.55s ease-in-out;
+
+// Trix editor
+$editor-bg-idle: $tron-void;
+$editor-bg-active: $tron-grid;
+
+// --- Text (luminous cyan on black) ---
+$text-primary: $tron-cyan-white;
+$text-bright: $tron-cyan-pale;
+$text-body: $tron-cyan-bright;
+$text-muted: $tron-cyan-dim;
+$text-subtle: #0088aa;
+$text-dim: #005566;
 
 // =============================================================================
 // Bootstrap (must be set before @import "bootstrap")
 // =============================================================================
-$primary: $cyan-600;
-$secondary: #3d6a7a;
-$success: #2a9aaa;
-$info: $cyan-500;
-$warning: #5eb8d9;
-$danger: #e85d7a;
-$light: $navy-700;
+$primary: $tron-cyan-core;
+$secondary: #1a4a5a;
+$success: $tron-cyan-dim;
+$info: $tron-cyan;
+$warning: $tron-orange;
+$danger: $tron-red;
+$light: $tron-panel;
 $dark: $text-primary;
 
-$body-bg: $navy-800;
+$body-bg: $tron-grid;
 $body-color: $text-body;
 
-$card-bg: $navy-600;
+$card-bg: $tron-panel-raised;
 $card-border-color: $cyan-border;
 $card-text: $text-primary;
 
 $input-bg: $navy-400;
-$input-border-color: $cyan-500;
+$input-border-color: $tron-cyan;
 $input-color: $text-bright;
 $input-placeholder-color: $text-subtle;
 
-$btn-color: $text-primary;
-
-$link-color: $cyan-200;
-$link-decoration: none;
-$link-hover-color: $cyan-100;
-$link-hover-decoration: none;
+$btn-color: $tron-void;
 
 // =============================================================================
 // Brand & borders
 // =============================================================================
-$brand-color: $cyan-500;
+$brand-color: $tron-cyan;
 
 $border-default: $cyan-border;
 $border-muted: $cyan-border-soft;
@@ -77,83 +105,88 @@ $border-accent: $cyan-border-strong;
 $border-strong: $cyan-border-strong;
 
 // =============================================================================
-// Accent / highlight (selection glow, icons, badges)
+// Accent / highlight (identity-disc glow, selection, badges)
 // =============================================================================
-$accent-highlight: $cyan-500;
-$accent-icon: $cyan-400;
-$accent-owner: $cyan-600;
-$accent-badge-bg: $navy-500;
-$accent-badge-text: $text-primary;
+$accent-highlight: $tron-cyan;
+$accent-icon: $tron-cyan-bright;
+$accent-owner: $tron-orange;
+$accent-badge-bg: $tron-panel-lit;
+$accent-badge-text: $tron-cyan;
 $glow-hover: $cyan-glow;
 
 // =============================================================================
 // Surfaces
 // =============================================================================
-$surface-sidebar-left: $navy-700;
-$surface-sidebar-right: #080c14;
-$surface-panel: $navy-500;
-$surface-squak: $navy-600;
-$surface-squak-stripe: $navy-800;
-$surface-sidebar-footer: $navy-600;
-$surface-list-hover: $navy-400;
-$surface-brand: $navy-600;
+$surface-sidebar-left: $tron-panel;
+$surface-sidebar-right: $tron-void-deep;
+$surface-panel: $tron-panel-lit;
+$surface-squak: $tron-panel-raised;
+$surface-squak-stripe: $tron-grid;
+$surface-sidebar-footer: $tron-panel-raised;
+$surface-list-hover: $navy-300;
+$surface-brand: $tron-panel-raised;
 $surface-user-hover: $cyan-glow-soft;
-$surface-overlay: rgba(0, 4, 8, 0.82);
+$surface-overlay: rgba(0, 0, 0, 0.88);
 
 // =============================================================================
 // Text roles
 // =============================================================================
 $text-secondary: $text-muted;
 $text-secondary-hover: $text-bright;
-$text-preview-title: $cyan-200;
-$text-preview-title-hover: $cyan-100;
-$text-list-hover: $cyan-400;
-$text-hover-emphasis: $cyan-500;
-$text-username: $cyan-300;
+$text-preview-title: $tron-cyan-pale;
+$text-preview-title-hover: $tron-cyan-white;
+$text-list-hover: $tron-cyan;
+$text-hover-emphasis: $tron-cyan-core;
+$text-username: $tron-cyan-bright;
 $text-caption: $text-muted;
-$text-attachment: $text-bright;
+$text-attachment: $tron-cyan-pale;
+
+$link-color: $tron-cyan-pale;
+$link-decoration: none;
+$link-hover-color: $tron-cyan-white;
+$link-hover-decoration: none;
 
 // =============================================================================
 // Tooltip
 // =============================================================================
-$tooltip-bg-custom: $navy-500;
-$tooltip-color-custom: $cyan-300;
+$tooltip-bg-custom: $tron-panel-lit;
+$tooltip-color-custom: $tron-cyan-bright;
 
 // =============================================================================
 // Trix / editor chrome
 // =============================================================================
-$trix-caption-bg: $navy-900;
-$trix-caption-color: $cyan-300;
-$trix-figcaption: $cyan-400;
+$trix-caption-bg: $tron-void;
+$trix-caption-color: $tron-cyan-bright;
+$trix-figcaption: $tron-cyan;
 $trix-file-border: $border-default;
-$trix-file-color: $cyan-300;
+$trix-file-color: $tron-cyan-bright;
 $trix-progress-bg: $cyan-glow-soft;
 
 // =============================================================================
 // Image viewer (standalone page)
 // =============================================================================
-$viewer-bg: $navy-900;
-$viewer-toolbar-bg: $navy-700;
+$viewer-bg: $tron-void;
+$viewer-toolbar-bg: $tron-panel;
 $viewer-border: $border-muted;
 $viewer-text: $text-primary;
 $viewer-hint: $text-muted;
-$viewer-link: $cyan-200;
-$viewer-link-hover: $cyan-100;
-$viewer-gradient-inner: $navy-800;
-$viewer-gradient-outer: $navy-900;
+$viewer-link: $tron-cyan-pale;
+$viewer-link-hover: $tron-cyan-white;
+$viewer-gradient-inner: $tron-grid;
+$viewer-gradient-outer: $tron-void;
 
 // =============================================================================
 // Lightbox & embeds
 // =============================================================================
-$lightbox-overlay: rgba(0, 4, 8, 0.94);
-$lightbox-shadow: rgba(0, 0, 0, 0.6);
-$lightbox-close-bg: rgba($text-primary, 0.9);
-$lightbox-close-text: $navy-900;
-$lightbox-close-hover: $cyan-100;
-$lightbox-close-shadow: rgba(0, 212, 255, 0.25);
+$lightbox-overlay: rgba(0, 0, 0, 0.96);
+$lightbox-shadow: rgba(0, 255, 255, 0.15);
+$lightbox-close-bg: rgba($tron-cyan-white, 0.92);
+$lightbox-close-text: $tron-void;
+$lightbox-close-hover: $tron-cyan-white;
+$lightbox-close-shadow: $cyan-glow-soft;
 
-$youtube-badge: #cc2244;
-$youtube-badge-shadow: rgba(0, 0, 0, 0.5);
+$youtube-badge: $tron-red;
+$youtube-badge-shadow: $tron-red-glow;
 
 // =============================================================================
 // Bootstrap theme map

@@ -31,6 +31,7 @@
 body {
   background-color: $body-bg;
   color: $body-color;
+  @include tron-square-grid($tron-grid-line, $tron-grid-size);
 }
 
 .form-control {

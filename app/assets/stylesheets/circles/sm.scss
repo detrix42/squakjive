@@ -29,6 +29,7 @@
   top: 0;
   overflow: hidden;
   background-color: c.$surface-sidebar-left;
+  @include tron-hex-grid(c.$tron-hex-grid-opacity);
 }
 
 /* Right sidebar: stick to the page (doesn't move while center feed scrolls).
@@ -40,6 +41,7 @@
   overflow-y: auto;
   align-self: flex-start;
   background-color: c.$surface-sidebar-right;
+  @include tron-hex-grid(c.$tron-hex-grid-opacity);
 }
 
 
@@ -69,6 +71,7 @@
       min-height: 0;
       overflow-y: auto;
       margin-bottom: 0;
+      @include tron-hex-grid(c.$tron-hex-grid-opacity);
     }
 
     .circle-item {
@@ -102,7 +105,7 @@
     }
 
     .selected.owner {
-      box-shadow: 0 0 14px c.$cyan-glow, 0 0 4px c.$accent-owner;
+      box-shadow: 0 0 14px c.$cyan-glow, 0 0 8px c.$tron-orange-glow;
     }
 
     .circle-add-user-icon {

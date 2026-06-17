@@ -8,3 +8,20 @@ $userinfo-card-height: auto;
   max-width: 100%;
   height: auto;
 }
+
+// Faint flat-top honeycomb for Tron sidebars — offset rows, not square-aligned.
+// One tile = center hex + two half-offset hexes on the row below (seamless wrap).
+@mixin tron-hex-grid($opacity: 0.1) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48' viewBox='0 0 28 48'%3E%3Cg fill='none' stroke='%2300ffff' stroke-opacity='#{$opacity}' stroke-width='0.5'%3E%3Cpath d='M14 1 L27 8.5 V23.5 L14 31 L1 23.5 V8.5 Z'/%3E%3Cpath d='M14 1 L27 8.5 V23.5 L14 31 L1 23.5 V8.5 Z' transform='translate(-14 24)'/%3E%3Cpath d='M14 1 L27 8.5 V23.5 L14 31 L1 23.5 V8.5 Z' transform='translate(14 24)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 28px 48px;
+  background-position: 0 0;
+}
+
+// Faint square grid (page background, editor, etc.).
+@mixin tron-square-grid($line-color: rgba(0, 255, 255, 0.1), $grid-size: 48px) {
+  background-image:
+    linear-gradient($line-color 1px, transparent 1px),
+    linear-gradient(90deg, $line-color 1px, transparent 1px);
+  background-size: $grid-size $grid-size;
+  background-position: 0 0;
+}
