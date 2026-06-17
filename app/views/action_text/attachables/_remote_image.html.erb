@@ -1,19 +1,13 @@
-<!-- DEBUG: Using custom _remote_image.html.erb -->
 <figure class="attachment attachment--preview">
-  <%= link_to (remote_image.node['href'] || remote_image.url),
-              title: "Download #{remote_image.node['filename'] || 'file'}" do %>
-    <img src="<%= remote_image.url %>"
-         class="attachment-preview-img"
-         <% if remote_image.width %>width="<%= remote_image.width %>"<% end %>
-      <% if remote_image.height %>height="<%= remote_image.height %>"<% end %>
-      alt="<%= remote_image.node['filename'] || 'file' %>">
-  <% end %>
+  <% filename = remote_image.node['filename'].presence || 'file' %>
+  <% inline_url = remote_image.url %>
+  <% download_url = remote_image.node['href'].presence || inline_url %>
+  <% size_text = remote_image.node['filesize'].to_i.positive? ? number_to_human_size(remote_image.node['filesize']) : nil %>
+  <%= build_image_attachment_html(
+        preview_src: inline_url,
+        inline_url: inline_url,
+        download_url: download_url,
+        filename: filename,
+        size_text: size_text
+      ).html_safe %>
 </figure>
-<figcaption class="d-flex flex-column text-center attachment__caption">
-  <%#= remote_image.node['filename'] || 'file' %>
-  <% if remote_image.node['filesize'].to_i > 0 %>
-    <span class="attachment__size">
-      (<%= number_to_human_size remote_image.node['filesize'] if remote_image.node['filesize'] %>)
-    </span>
-  <% end %>
-</figcaption>

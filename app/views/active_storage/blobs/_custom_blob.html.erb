@@ -36,9 +36,7 @@
     </a>
   <% elsif blob.representable? %>
     <% if blob.image? %>
-      <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
-        <%= image_tag blob.variant(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}", class: "attachment-preview-img" %>
-      <% end %>
+      <%= image_figure_html(blob).html_safe %>
     <% elsif blob.previewable? %>
       <%= link_to rails_blob_url(blob, disposition: "attachment"), title: "Download #{blob.filename}" do %>
         <%= image_tag blob.preview(resize_to_limit: [800, 600]).processed, alt: "Preview of #{blob.filename}", class: "attachment-preview-img" %>
@@ -49,7 +47,7 @@
   <% else %>
     <%= link_to blob.filename, rails_blob_url(blob, disposition: "attachment") %>
   <% end %>
-  <% unless blob.content_type&.start_with?('application/pdf') || blob.content_type&.start_with?('video/') %>
+  <% unless blob.content_type&.start_with?('application/pdf') || blob.content_type&.start_with?('video/') || blob.image? %>
   <figcaption class="attachment__caption">
     <span class="attachment__size">(<%= number_to_human_size(blob.byte_size) %>)</span>
   </figcaption>

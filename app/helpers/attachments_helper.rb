@@ -53,6 +53,51 @@ module AttachmentsHelper
     end
   end
 
+  # Low-level builder for image attachments in posted squaks.
+  # Preview opens full size inline in a new tab; caption link downloads the file.
+  def build_image_attachment_html(preview_src:, inline_url:, download_url:, filename:, size_text: nil)
+    size_part = size_text.present? ? " (#{size_text})" : ''
+
+    <<~HTML.strip
+      <a href="#{inline_url}" target="_blank" rel="noopener" title="View #{filename} full size">
+        <img src="#{preview_src}" alt="Preview of #{filename}" class="attachment-preview-img">
+      </a>
+      <a href="#{download_url}" target="_blank" rel="noopener" class="attachment-caption-link">
+        #{filename}#{size_part}
+      </a>
+      <span class="download-hint">click link above to download</span>
+    HTML
+  end
+
+  # Build the canonical image preview + filename download link block for a blob.
+  def image_figure_html(blob, preview_src: nil)
+    return "" unless blob&.image?
+
+    inline_url = rails_blob_url(blob, disposition: "inline")
+    download_url = rails_blob_url(blob, disposition: "attachment")
+    filename = blob.filename.to_s
+    size_text = number_to_human_size(blob.byte_size)
+
+    effective_preview = preview_src.presence
+    if effective_preview.blank?
+      begin
+        variant = blob.variant(resize_to_limit: [800, 600]).processed
+        effective_preview = rails_representation_url(variant)
+      rescue => e
+        Rails.logger.warn("image_figure_html: could not generate preview for #{blob.id}: #{e.message}")
+        effective_preview = inline_url
+      end
+    end
+
+    build_image_attachment_html(
+      preview_src: effective_preview,
+      inline_url: inline_url,
+      download_url: download_url,
+      filename: filename,
+      size_text: size_text
+    )
+  end
+
   # Build the canonical preview + filename link block for a PDF or video blob (from DB).
   # Delegates to the clean builder above. No inline styles.
   # Used at create time (inlining into rich text) and for sgid-based replacements.
@@ -169,13 +214,13 @@ module AttachmentsHelper
     # 1) Normalize/upgrade any attachment blocks (div or figure) that came from
     #    baked inlines or from the actiontext partials. This ensures filename is
     #    always in the "link text below the image" and removes any leftover inline styles.
-    # Only target PDF/video (and similar file) attachments; do not re-wrap plain image
-    # attachments (which use the custom_blob image case for inline preview).
     fragment.css("div.attachment, figure.attachment").each do |node|
       cls = node['class'].to_s
-      next unless cls.match?(/attachment-video|attachment-pdf|attachment--video|attachment--pdf|attachment--file/)
-
-      normalize_attachment_block!(node)
+      if cls.match?(/attachment-video|attachment-pdf|attachment--video|attachment--pdf|attachment--file/)
+        normalize_attachment_block!(node)
+      elsif node.at_css("img") && !node.at_css(".attachment-caption-link")
+        normalize_image_attachment_block!(node)
+      end
     end
 
     # 2) Ensure preview links always open externally in a new tab.
@@ -278,14 +323,10 @@ module AttachmentsHelper
               end
             end
           elsif blob.image?
-            # Only recover when the standard render path left no visible image for this blob.
             unless image_blob_visible_in_fragment?(fragment, blob)
-              url = rails_blob_url(blob, disposition: "inline")
-              href = rails_blob_url(blob, disposition: "attachment")
-              img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
-              figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
+              figure = image_figure_html(blob)
               if figure.present?
-                node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+                node = Nokogiri::HTML::DocumentFragment.parse("<figure class=\"attachment attachment--preview\">#{figure}</figure>")
                 if fragment.children.any?
                   fragment.children.first.add_previous_sibling(node)
                 else
@@ -327,12 +368,9 @@ module AttachmentsHelper
           elsif blob.image?
             next if image_blob_visible_in_fragment?(fragment, blob)
 
-            url = rails_blob_url(blob, disposition: "inline")
-            href = rails_blob_url(blob, disposition: "attachment")
-            img = image_tag(url, class: "attachment-preview-img", alt: "Preview of #{blob.filename}")
-            figure = content_tag(:a, img, href: href, title: "Download #{blob.filename}")
+            figure = image_figure_html(blob)
             if figure.present?
-              node = Nokogiri::HTML::DocumentFragment.parse(figure.to_s)
+              node = Nokogiri::HTML::DocumentFragment.parse("<figure class=\"attachment attachment--preview\">#{figure}</figure>")
               if fragment.children.any?
                 fragment.children.first.add_previous_sibling(node)
               else
@@ -379,6 +417,46 @@ module AttachmentsHelper
         node["src"].to_s.include?(filename) ||
         node["poster"].to_s.include?(filename)
     end
+  end
+
+  # Upgrade legacy image figures that only show filesize in figcaption (or wrap the
+  # preview in a download link) to the canonical preview + filename link + hint layout.
+  def normalize_image_attachment_block!(node)
+    img = node.at_css("img")
+    return unless img
+
+    preview_src = img["src"].to_s.presence
+    return if preview_src.blank?
+
+    alt = img["alt"].to_s
+    filename = alt.sub(/^Preview of /i, "").strip.presence || "image"
+
+    img_link = img.ancestors("a").first
+    inline_url = img_link ? img_link["href"].to_s.presence : preview_src
+    download_url = inline_url
+
+    if inline_url&.include?("disposition=attachment")
+      download_url = inline_url
+      inline_url = inline_url.sub("disposition=attachment", "disposition=inline")
+    elsif (cap_link = node.at_css("a.attachment-caption-link[href]"))
+      download_url = cap_link["href"].to_s.presence || download_url
+    end
+
+    size_text = nil
+    if (cap = node.at_css("figcaption .attachment__size, .attachment__size"))
+      size_match = cap.text.match(/\(([^)]+)\)/)
+      size_text = size_match[1] if size_match
+    end
+
+    clean = build_image_attachment_html(
+      preview_src: preview_src,
+      inline_url: inline_url || preview_src,
+      download_url: download_url || preview_src,
+      filename: filename,
+      size_text: size_text
+    )
+
+    node.inner_html = clean if clean.present?
   end
 
   # Extract what we can from a resolved attachment node (div or figure from partial or old bake),

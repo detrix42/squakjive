@@ -120,6 +120,16 @@ trix-editor .attachment__caption {
   line-height: 1.2;
 }
 
+/* PDF/video: hint sits above the caption link */
+.squak-body .attachment .download-hint + .attachment-caption-link {
+  margin-top: 0 !important;
+}
+
+/* Images: hint sits below the caption link */
+.squak-body .attachment .attachment-caption-link + .download-hint {
+  margin: 2px 0 0;
+}
+
 /* Link preview cards inserted by paste-url controller (editor + posted squaks) */
 trix-editor .link-preview.card,
 .squak-body .link-preview.card {
