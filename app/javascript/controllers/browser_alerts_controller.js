@@ -10,7 +10,9 @@ export default class extends Controller {
   }
 
   connect() {
+    this.faviconBadgeToken = 0
     this.unreadIds = new Set(this.unreadCircleIdsValue.map(id => Number(id)))
+    this.clearSelectedCircleFromUnread()
     this.baseFaviconHref = this.resolveBaseFaviconHref()
     this.observer = new MutationObserver(() => this.processBridgeEvents())
     if (this.hasBridgeTarget) {
@@ -37,7 +39,14 @@ export default class extends Controller {
     if (!circleId) return
 
     this.selectedCircleIdValue = circleId
+    this.clearSelectedCircleFromUnread()
     this.markCircleRead(circleId)
+  }
+
+  selectedCircleIdValueChanged() {
+    this.clearSelectedCircleFromUnread()
+    this.syncUnreadUi()
+    this.updateTabBadge()
   }
 
   handleTurboStream = (event) => {
@@ -81,12 +90,7 @@ export default class extends Controller {
   }
 
   markCircleRead(circleId) {
-    if (!this.unreadIds.delete(circleId)) {
-      this.syncCircleItem(circleId, false)
-      this.updateTabBadge()
-      return
-    }
-
+    this.unreadIds.delete(Number(circleId))
     this.syncUnreadUi()
     this.updateTabBadge()
   }
@@ -106,7 +110,15 @@ export default class extends Controller {
   }
 
   unreadCount() {
-    return this.unreadIds.size
+    const selectedId = Number(this.selectedCircleIdValue)
+    return [...this.unreadIds].filter((id) => id !== selectedId).length
+  }
+
+  clearSelectedCircleFromUnread() {
+    const selectedId = Number(this.selectedCircleIdValue)
+    if (!selectedId) return
+
+    this.unreadIds.delete(selectedId)
   }
 
   updateTabBadge() {
@@ -131,9 +143,12 @@ export default class extends Controller {
   }
 
   setFaviconBadge() {
+    const token = ++this.faviconBadgeToken
     const image = new Image()
     image.crossOrigin = "anonymous"
     image.onload = () => {
+      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
+
       const size = 32
       const canvas = document.createElement("canvas")
       canvas.width = size
@@ -149,9 +164,11 @@ export default class extends Controller {
       ctx.lineWidth = 1.5
       ctx.stroke()
 
+      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
       this.applyFavicon(canvas.toDataURL("image/png"))
     }
     image.onerror = () => {
+      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
       this.applyFavicon(this.badgeFallbackDataUrl())
     }
     image.src = this.baseFaviconHref
@@ -181,6 +198,8 @@ export default class extends Controller {
   }
 
   restoreFavicon() {
+    this.faviconBadgeToken += 1
+
     const badgeLink = document.querySelector('link[data-browser-alerts-favicon="true"]')
     badgeLink?.remove()
 

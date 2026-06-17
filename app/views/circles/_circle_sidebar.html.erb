@@ -1,7 +1,7 @@
 <%= turbo_stream_from current_user, :circle_alerts %>
 
 <div class="d-flex flex-column circle-index-container"
-     data-controller="circles browser-alerts"
+     data-controller="browser-alerts circles"
      data-browser-alerts-unread-circle-ids-value="<%= (@unread_circle_ids || []).to_json %>"
      data-browser-alerts-selected-circle-id-value="<%= @selected_circle_id || @selected_circle&.id || 0 %>"
      data-browser-alerts-favicon-url-value="/icon.png"
