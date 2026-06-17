@@ -1,0 +1,105 @@
+@import "custom_colors";
+
+.image-viewer-body {
+  margin: 0;
+  background: $viewer-bg;
+  color: $viewer-text;
+  overflow: hidden;
+}
+
+.image-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.image-viewer__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: $viewer-toolbar-bg;
+  border-bottom: 1px solid $viewer-border;
+  flex-shrink: 0;
+}
+
+.image-viewer__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.image-viewer__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.image-viewer__hint {
+  font-size: 0.8rem;
+  color: $viewer-hint;
+  white-space: nowrap;
+}
+
+.image-viewer__download {
+  color: $viewer-link;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  white-space: nowrap;
+
+  &:hover {
+    color: $viewer-link-hover;
+  }
+}
+
+.image-viewer__viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background:
+    radial-gradient(circle at center, $viewer-gradient-inner 0%, $viewer-gradient-outer 100%);
+}
+
+.image-viewer__viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.image-viewer__stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.image-viewer__image {
+  display: block;
+  max-width: none;
+  max-height: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .image-viewer__toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .image-viewer__actions {
+    flex-wrap: wrap;
+  }
+
+  .image-viewer__hint {
+    white-space: normal;
+  }
+}

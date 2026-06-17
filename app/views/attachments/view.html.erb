@@ -1,0 +1,26 @@
+<% content_for :title, @filename %>
+
+<div class="image-viewer" data-controller="image-viewer">
+  <header class="image-viewer__toolbar">
+    <div class="image-viewer__title" title="<%= @filename %>"><%= @filename %></div>
+    <div class="image-viewer__actions">
+      <span class="image-viewer__hint">Scroll to zoom · drag to pan · double-click to reset</span>
+      <%= link_to "Download", @download_url, class: "image-viewer__download", target: "_blank", rel: "noopener" %>
+    </div>
+  </header>
+
+  <div class="image-viewer__viewport"
+       data-image-viewer-target="viewport"
+       data-action="wheel->image-viewer#zoom dblclick->image-viewer#reset pointerdown->image-viewer#startPan pointermove->image-viewer#pan pointerup->image-viewer#endPan pointercancel->image-viewer#endPan lostpointercapture->image-viewer#endPan">
+    <div class="image-viewer__stage" data-image-viewer-target="stage">
+      <%= image_tag @image_url,
+                    alt: @filename,
+                    class: "image-viewer__image",
+                    data: {
+                      image_viewer_target: "image",
+                      action: "load->image-viewer#imageLoaded"
+                    },
+                    draggable: false %>
+    </div>
+  </div>
+</div>
