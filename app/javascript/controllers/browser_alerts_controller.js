@@ -127,7 +127,7 @@ export default class extends Controller {
     if (brandIcon?.href) return brandIcon.href
 
     const iconLink = document.querySelector('link[rel="icon"]')
-    return iconLink?.href || "/brand/icon?size=64x64"
+    return iconLink?.href || "/icon.png"
   }
 
   setFaviconBadge() {

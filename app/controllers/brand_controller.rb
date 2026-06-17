@@ -13,7 +13,10 @@ class BrandController < ApplicationController
               cache_control: "public, max-age=86400"
   rescue StandardError => e
     Rails.logger.warn("brand#icon failed (#{size}): #{e.class} #{e.message}")
-    head :bad_gateway
+    send_file Rails.public_path.join("icon.png"),
+              type: "image/png",
+              disposition: "inline",
+              cache_control: "public, max-age=86400"
   end
 
   private
