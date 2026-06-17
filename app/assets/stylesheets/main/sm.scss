@@ -1,8 +1,8 @@
+@use "../custom_colors" as c;
 @import "../custom_variables";
 
 .brand-logo {
-  background-color: #353232;
-  border-bottom: 1px solid #888888;
-
+  background-color: c.$surface-brand;
+  border-bottom: 1px solid c.$border-strong;
+  color: c.$brand-color;
 }
-

@@ -1,46 +1,170 @@
-// Custom Bootstrap variables must be set or imported *before* bootstrap
-$primary: #007483;    // You can adjust this blue color
-$secondary: #6c757d;
-$success: #198754;
-$info: #0dcaf0;
-$warning: #ffc107;
-$danger: #9c2430;
-$light: #212529;
-$dark: #f8f9fa;
+// =============================================================================
+// SquakJive theme — cyber HUD: near-black navy, electric-cyan borders, cool text
+// Reference vibe: dark command-center panels with glowing cyan outlines.
+// Tune BASE palettes first; everything else derives from these.
+// =============================================================================
 
-// Background colors
-$body-bg: #212529;
-$body-color: #f8f9fa;
+// --- Void / navy (backgrounds) ---
+$navy-900: #000408;
+$navy-800: #0a0f1a;
+$navy-700: #0c121c;
+$navy-600: #0f1624;
+$navy-500: #141e2e;
+$navy-400: #1a2535;
+$navy-300: #1e2d42;
 
-// Card colors
-$card-bg: #2c3034;
-$card-border-color: rgba(255, 255, 255, 0.125);
+// --- Electric cyan (borders, glows, data accents) ---
+$cyan-600: #00b8e6;
+$cyan-500: #00d4ff;
+$cyan-400: #33ddff;
+$cyan-300: #7dd3fc;
+$cyan-200: #a5f3fc;
+$cyan-100: #e0f2fe;
 
-// Input colors
-$input-bg: #2c3034;
-$input-border-color: #495057;
-$input-color: #f8f9fa;
-$input-placeholder-color: #6c757d;
+$cyan-border: rgba(0, 212, 255, 0.5);
+$cyan-border-soft: rgba(0, 184, 230, 0.3);
+$cyan-border-strong: rgba(0, 212, 255, 0.82);
+$cyan-glow: rgba(0, 212, 255, 0.6);
+$cyan-glow-soft: rgba(0, 212, 255, 0.22);
 
-// Button colors
-$btn-color: #f8f9fa;
+// --- Cool text (light cyan → pale ice-blue) ---
+$text-primary: #e0f2fe;
+$text-bright: #a5f3fc;
+$text-body: #7dd3fc;
+$text-muted: #5eb8d9;
+$text-subtle: #3d8eb0;
+$text-dim: #2a6a88;
 
-// Link colors
-$link-color: #9a9202;
+// =============================================================================
+// Bootstrap (must be set before @import "bootstrap")
+// =============================================================================
+$primary: $cyan-600;
+$secondary: #3d6a7a;
+$success: #2a9aaa;
+$info: $cyan-500;
+$warning: #5eb8d9;
+$danger: #e85d7a;
+$light: $navy-700;
+$dark: $text-primary;
+
+$body-bg: $navy-800;
+$body-color: $text-body;
+
+$card-bg: $navy-600;
+$card-border-color: $cyan-border;
+$card-text: $text-primary;
+
+$input-bg: $navy-400;
+$input-border-color: $cyan-500;
+$input-color: $text-bright;
+$input-placeholder-color: $text-subtle;
+
+$btn-color: $text-primary;
+
+$link-color: $cyan-200;
 $link-decoration: none;
-$link-hover-color: lighten($link-color, 25%);
+$link-hover-color: $cyan-100;
 $link-hover-decoration: none;
 
-// Set theme colors
+// =============================================================================
+// Brand & borders
+// =============================================================================
+$brand-color: $cyan-500;
+
+$border-default: $cyan-border;
+$border-muted: $cyan-border-soft;
+$border-accent: $cyan-border-strong;
+$border-strong: $cyan-border-strong;
+
+// =============================================================================
+// Accent / highlight (selection glow, icons, badges)
+// =============================================================================
+$accent-highlight: $cyan-500;
+$accent-icon: $cyan-400;
+$accent-owner: $cyan-600;
+$accent-badge-bg: $navy-500;
+$accent-badge-text: $text-primary;
+$glow-hover: $cyan-glow;
+
+// =============================================================================
+// Surfaces
+// =============================================================================
+$surface-sidebar-left: $navy-700;
+$surface-sidebar-right: #080c14;
+$surface-panel: $navy-500;
+$surface-squak: $navy-600;
+$surface-squak-stripe: $navy-800;
+$surface-sidebar-footer: $navy-600;
+$surface-list-hover: $navy-400;
+$surface-brand: $navy-600;
+$surface-user-hover: $cyan-glow-soft;
+$surface-overlay: rgba(0, 4, 8, 0.82);
+
+// =============================================================================
+// Text roles
+// =============================================================================
+$text-secondary: $text-muted;
+$text-secondary-hover: $text-bright;
+$text-preview-title: $cyan-200;
+$text-preview-title-hover: $cyan-100;
+$text-list-hover: $cyan-400;
+$text-hover-emphasis: $cyan-500;
+$text-username: $cyan-300;
+$text-caption: $text-muted;
+$text-attachment: $text-bright;
+
+// =============================================================================
+// Tooltip
+// =============================================================================
+$tooltip-bg-custom: $navy-500;
+$tooltip-color-custom: $cyan-300;
+
+// =============================================================================
+// Trix / editor chrome
+// =============================================================================
+$trix-caption-bg: $navy-900;
+$trix-caption-color: $cyan-300;
+$trix-figcaption: $cyan-400;
+$trix-file-border: $border-default;
+$trix-file-color: $cyan-300;
+$trix-progress-bg: $cyan-glow-soft;
+
+// =============================================================================
+// Image viewer (standalone page)
+// =============================================================================
+$viewer-bg: $navy-900;
+$viewer-toolbar-bg: $navy-700;
+$viewer-border: $border-muted;
+$viewer-text: $text-primary;
+$viewer-hint: $text-muted;
+$viewer-link: $cyan-200;
+$viewer-link-hover: $cyan-100;
+$viewer-gradient-inner: $navy-800;
+$viewer-gradient-outer: $navy-900;
+
+// =============================================================================
+// Lightbox & embeds
+// =============================================================================
+$lightbox-overlay: rgba(0, 4, 8, 0.94);
+$lightbox-shadow: rgba(0, 0, 0, 0.6);
+$lightbox-close-bg: rgba($text-primary, 0.9);
+$lightbox-close-text: $navy-900;
+$lightbox-close-hover: $cyan-100;
+$lightbox-close-shadow: rgba(0, 212, 255, 0.25);
+
+$youtube-badge: #cc2244;
+$youtube-badge-shadow: rgba(0, 0, 0, 0.5);
+
+// =============================================================================
+// Bootstrap theme map
+// =============================================================================
 $theme-colors: (
-"primary": $primary,
-"secondary": $secondary,
-"success": $success,
-"info": $info,
-"warning": $warning,
-"danger": $danger,
-"light": $light,
-"dark": $dark
+  "primary": $primary,
+  "secondary": $secondary,
+  "success": $success,
+  "info": $info,
+  "warning": $warning,
+  "danger": $danger,
+  "light": $light,
+  "dark": $dark
 );
-
-

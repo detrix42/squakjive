@@ -72,6 +72,10 @@ Rails.application.configure do
 
   config.assets.debug = false
 
+  # Serve live assets from app/assets/builds, not a stale public/assets manifest
+  # left over from a local assets:precompile (otherwise SCSS edits never show up).
+  config.assets.manifest_path = Rails.root.join("tmp/nonexistent-propshaft-manifest.json")
+
   config.web_console.permissions = "192.168.1.11"
   config.hosts += ["192.168.1.11", "novasector.net"]
 

@@ -25,6 +25,12 @@
 .card {
   background-color: $card-bg;
   border-color: $card-border-color;
+  color: $card-text;
+}
+
+body {
+  background-color: $body-bg;
+  color: $body-color;
 }
 
 .form-control {
@@ -58,7 +64,7 @@ a {
   color: $link-color;
   &:hover {
     color: $link-hover-color;
-    text-shadow: 0 0 4px yellow;
+    text-shadow: 0 0 6px $cyan-glow;
   }
 }
 
@@ -68,7 +74,7 @@ a {
       color: $danger;
 
       &:hover {
-        color: #ff0000 !important;
+        color: lighten($danger, 10%) !important;
         font-weight: bold;
         background-color: transparent;
       }

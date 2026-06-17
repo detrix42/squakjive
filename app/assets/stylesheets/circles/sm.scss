@@ -1,8 +1,8 @@
+@use '../custom_colors' as c;
 @import "../custom_variables";
-$fg-color: #ffeeb4;
 
 // Mixin to reduce repetition for the many small icon/badge elements in circles
-@mixin circle-action-icon($size: 30px, $font-size: 12px, $color: #b5a832) {
+@mixin circle-action-icon($size: 30px, $font-size: 12px, $color: c.$accent-icon) {
   width: $size;
   height: $size;
   font-size: $font-size;
@@ -25,15 +25,10 @@ $fg-color: #ffeeb4;
 #circles-column-sidebar {
   position: sticky;
   flex-direction: column;
-  //max-height: 100vh;
   height: 100vh;
   top: 0;
-  //overflow-y: auto;
   overflow: hidden;
-  //width: 500px;
-  //background: #fff;
-  //border-right: 1px solid #ccc;
-  //padding: 1rem;
+  background-color: c.$surface-sidebar-left;
 }
 
 /* Right sidebar: stick to the page (doesn't move while center feed scrolls).
@@ -44,6 +39,7 @@ $fg-color: #ffeeb4;
   height: 100vh;
   overflow-y: auto;
   align-self: flex-start;
+  background-color: c.$surface-sidebar-right;
 }
 
 
@@ -56,22 +52,19 @@ $fg-color: #ffeeb4;
 
     .circles-header,
     .circles-index {
-      background-color: #323535;
-      border: 1px solid #49592d;
+      background-color: c.$card-bg;
+      border: 1px solid c.$card-border-color;
+      color: c.$card-text;
     }
 
     .circles-header {
-      border-bottom: none;
-      border-radius: 5px 5px 0 0;
-      margin-top: 1rem;
-      margin-bottom: 0;
       padding: 1rem;
+      border-radius: 5px 5px 0 0;
     }
 
     .circles-index {
       padding: 1rem;
       border-radius: 0 0 5px 5px;
-      //height: calc(100% - $userinfo-card-height - 2rem);
       flex: 1;
       min-height: 0;
       overflow-y: auto;
@@ -81,55 +74,35 @@ $fg-color: #ffeeb4;
     .circle-item {
       min-height: 60px;
       height: 60px;
-      border: 1px solid #ccc;
+      border: 1px solid c.$border-default;
       border-radius: 5px;
       margin-bottom: 1rem;
       padding: 1rem;
 
       .member-count-badge {
-        @include circle-action-icon($size: 20px, $font-size: 12px, $color: #fff);
+        @include circle-action-icon($size: 20px, $font-size: 12px, $color: c.$accent-badge-text);
         margin-right: 1rem;
-        background: #01515e;
+        background: c.$accent-badge-bg;
         text-align: center;
         display: inline-block;
-
-        // Note: no inner i.icon for badges, so mixin 's i rules are inert here
       }
 
-
-
       .circle-action-panel {
-        //margin-right: 1rem;
-
-        
-        //.circle-add-user-icon {
-        //  //justify-content: flex-end;
-        //  width: 30px;
-        //  padding-right: 0;
-        //}
-
-
         .circle-add-user-icon,
         .circle-remove-icon,
         .owner-icon {
           @include circle-action-icon;
         }
-
-
       }
     }
 
-
-
-
-
     .selected {
-      box-shadow: 0 0 10px $fg-color;
+      box-shadow: 0 0 12px c.$cyan-glow, inset 0 0 0 1px c.$cyan-border-soft;
       height: auto;
     }
 
     .selected.owner {
-      box-shadow: 0 0 10px #18aa00;
+      box-shadow: 0 0 14px c.$cyan-glow, 0 0 4px c.$accent-owner;
     }
 
     .circle-add-user-icon {
@@ -140,18 +113,16 @@ $fg-color: #ffeeb4;
       display: block;
     }
 
-
     .circle-user-list {
       min-height: 0;
       max-height: 0;
       opacity: 0;
       overflow: hidden;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid c.$border-default;
       -webkit-transition: max-height 0.5s ease;
       -moz-transition: max-height 0.5s ease;
       -o-transition: max-height 0.5s ease;
       transition: max-height 0.5s ease;
-
     }
 
     .circle-item.selected .circle-user-list {
@@ -164,22 +135,16 @@ $fg-color: #ffeeb4;
       position: static;
       align-self: flex-end;
       margin: .5rem 1rem 0 0;
-
     }
 
-    // Optionally, have a footer container that always stays visible
-    // this has not been implemented yet; sidebar-footer is being considered.
     .sidebar-footer {
-      border-top: 1px solid #49592d;
+      border-top: 1px solid c.$border-accent;
       padding: .5rem 1rem;
-      background: #323535;
-      /* If you want it to remain visible while the list scrolls: */
+      background: c.$surface-sidebar-footer;
       position: sticky;
       bottom: 0;
       z-index: 1;
     }
-
-
 
     .user-list-entry {
       transition: box-shadow 0.2s, background 0.2s;
@@ -187,11 +152,11 @@ $fg-color: #ffeeb4;
       margin-top: .5rem;
 
       &:hover {
-        background: #e5f3ff;
-        box-shadow: 0 0 6px #72adf7;
+        background: c.$surface-user-hover;
+        box-shadow: 0 0 8px c.$glow-hover;
 
         .text-dark {
-          color: #039be5 !important;
+          color: c.$text-hover-emphasis !important;
         }
       }
     }
@@ -199,7 +164,6 @@ $fg-color: #ffeeb4;
     .footer-row {
       display: none;
       overflow: hidden;
-
 
       .circle-rem-self-icon {
         @include circle-action-icon($size: 20px, $font-size: 12px);
@@ -211,7 +175,6 @@ $fg-color: #ffeeb4;
         cursor: pointer;
       }
     }
-
   }
 
   // user info card styles
@@ -221,13 +184,11 @@ $fg-color: #ffeeb4;
   margin-top: 1rem;
   height: $userinfo-card-height;
 
-
   #user-action-col {
     padding-top: 5px;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: c.$surface-overlay;
   }
 }
-
 
 // add user dialog styles
   #search-add-user-modal-close-button {
@@ -239,79 +200,70 @@ $fg-color: #ffeeb4;
             1.414-1.414L9.414 8l6.293-6.293L14.293.293 8 6.586 1.707.293z'/%3E%3C/svg%3E");
   }
 
-/* Give everyone a top border by default */
 .list-group .list-group-item { border-top-width: 1px; }
 
-/* Collapse only between two adjacent visible items */
 .list-group .list-group-item:not(.d-none) + .list-group-item:not(.d-none) {
   border-top-width: 0 !important;
 }
 
-/* Restore top border for the first visible item */
 .list-group .list-group-item.first-visible {
   border-top-width: 1px !important;
   border-top-left-radius: var(--bs-list-group-border-radius, .375rem) !important;
   border-top-right-radius: var(--bs-list-group-border-radius, .375rem) !important;
 }
 
-/* Restore bottom border + bottom radii for the last visible item */
 .list-group .list-group-item.last-visible {
   border-bottom-width: 1px !important;
   border-bottom-left-radius: var(--bs-list-group-border-radius, .375rem) !important;
   border-bottom-right-radius: var(--bs-list-group-border-radius, .375rem) !important;
 }
 
-/* Ensure interior visible items have no rounding */
 .list-group .list-group-item:not(.first-visible):not(.last-visible) {
   border-radius: 0;
 }
 
-/* When there is exactly one visible item, give it full rounding */
 .list-group .list-group-item.first-visible.last-visible {
   border-radius: var(--bs-list-group-border-radius, .375rem) !important;
 }
 
 .list-group-item-action:not(.active):hover, .list-group-item-action:not(.active):focus {
-  background-color: #323e49;
-  color: #5cd1c0;
+  background-color: c.$surface-list-hover;
+  color: c.$text-list-hover;
 }
 
-// invite card styles
 .card-title {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid c.$border-default;
 }
 
 .card-body {
   padding: .5rem;
 
   p.card-text {
-    background-color: #1f252b;
+    background-color: c.$surface-panel;
+    color: c.$card-text;
     padding: .5rem;
     margin-bottom: 0;
   }
 }
 
 .card-footer {
-  border-top: 1px solid #ccc;
+  border-top: 1px solid c.$border-default;
 }
 
 .tooltip-colors {
-  --bs-tooltip-bg: #21255e;     /* background */
-  --bs-tooltip-color: #17d3a0;  /* text */
-
+  --bs-tooltip-bg: #{c.$tooltip-bg-custom};
+  --bs-tooltip-color: #{c.$tooltip-color-custom};
 }
 
-/* Ensure pasted/posted images never overflow their container */
 [contenteditable="true"] img,
 #squak-view img,
 .squak-editor img,
 .squak-body img,
 .squak img {
   @include squak-media;
-  object-fit: contain;    /* extra safety for very large images */
+  object-fit: contain;
 }
 
-/* Optional: keep long unbroken text/URLs from stretching the layout */
 #squak-view,
 .squak-editor,
 .squak-body,
@@ -319,4 +271,3 @@ $fg-color: #ffeeb4;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-

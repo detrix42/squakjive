@@ -1,8 +1,7 @@
 <div class="container-fluid center-text" style="min-height: 100vh;">
   <div class="row">
     <div class="d-flex flex-column col-3"
-         id="circles-column-sidebar"
-         style="background-color: #383d3e;">
+         id="circles-column-sidebar">
 
         <%= render "brand_logo" %>
         <%= render partial: "circles/circle_sidebar" %>
@@ -17,7 +16,7 @@
       <% end %>
 
     </div>
-    <div id="right-column-sidebar" class="col-3" style="background-color: #343934;">
+    <div id="right-column-sidebar" class="col-3">
       <%= render partial: "user_info_card" %>
 
       <%= turbo_frame_tag "invite-to-circle-frame" do %>
