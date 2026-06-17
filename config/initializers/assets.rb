@@ -10,3 +10,9 @@ Rails.application.config.dartsass.builds = {
   "application.scss" => "application.css",
   "trix.scss" => "trix.css"
 }
+
+Rails.application.config.dartsass.build_options << "--quiet-deps"
+Rails.application.config.dartsass.build_options << "--silence-deprecation=import"
+Rails.application.config.dartsass.build_options << "--silence-deprecation=color-functions"
+Rails.application.config.dartsass.build_options << "--silence-deprecation=global-builtin"
+Rails.application.config.dartsass.build_options << "--silence-deprecation=mixed-decls"
