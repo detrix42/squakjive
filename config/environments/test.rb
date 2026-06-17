@@ -39,6 +39,13 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
+  config.hosts << "www.example.com"
+  config.action_controller.default_url_options = { host: "www.example.com" }
+
+  # Resolve assets from app/assets instead of a stale public/assets manifest
+  # (e.g. after adding new dartsass builds such as image_viewer.css).
+  config.assets.manifest_path = Rails.root.join("tmp/nonexistent-propshaft-manifest.json")
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 

@@ -69,11 +69,16 @@ module AttachmentsHelper
     HTML
   end
 
+  # Viewer page URL for full-size image with scroll zoom (opens in a new tab).
+  def attachment_image_view_url(blob)
+    attachment_view_path(blob.signed_id)
+  end
+
   # Build the canonical image preview + filename download link block for a blob.
   def image_figure_html(blob, preview_src: nil)
     return "" unless blob&.image?
 
-    inline_url = rails_blob_url(blob, disposition: "inline")
+    inline_url = attachment_image_view_url(blob)
     download_url = rails_blob_url(blob, disposition: "attachment")
     filename = blob.filename.to_s
     size_text = number_to_human_size(blob.byte_size)

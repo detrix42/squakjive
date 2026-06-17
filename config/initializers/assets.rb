@@ -8,7 +8,8 @@ Rails.application.config.assets.version = "1.0"
 
 Rails.application.config.dartsass.builds = {
   "application.scss" => "application.css",
-  "trix.scss" => "trix.css"
+  "trix.scss" => "trix.css",
+  "image_viewer.scss" => "image_viewer.css"
 }
 
 Rails.application.config.dartsass.build_options << "--quiet-deps"

@@ -1,5 +1,20 @@
 class AttachmentsController < ApplicationController
-  respond_to :json
+  before_action :authenticate_user!, only: [:view]
+
+  def view
+    blob = resolve_blob_for_view(params[:signed_id])
+    unless blob&.image?
+      head :not_found
+      return
+    end
+
+    @blob = blob
+    @filename = blob.filename.to_s
+    @image_url = rails_blob_url(blob, disposition: "inline")
+    @download_url = rails_blob_url(blob, disposition: "attachment")
+
+    render layout: "viewer"
+  end
 
   def create
     @attachment = Attachment.new(attachment_params)
@@ -78,6 +93,14 @@ class AttachmentsController < ApplicationController
   end
 
   private
+
+  def resolve_blob_for_view(signed_id)
+    return nil if signed_id.blank?
+
+    ActiveStorage::Blob.resolve_from_sgid(signed_id)
+  rescue ActiveRecord::RecordNotFound
+    nil
+  end
 
   def attachment_params
     params.expect(attachment: [:file])
