@@ -7,7 +7,7 @@ module ApplicationHelper
   end
 
   def robohash_avatar_url(seed, size: "60x60")
-    self.class.robohash_avatar_url(seed, size: size)
+    ApplicationHelper.robohash_avatar_url(seed, size: size)
   end
 
   def squakjive_avatar_url(size: "60x60")
