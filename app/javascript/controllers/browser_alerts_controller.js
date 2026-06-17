@@ -6,14 +6,13 @@ export default class extends Controller {
   static values = {
     unreadCircleIds: { type: Array, default: [] },
     selectedCircleId: { type: Number, default: 0 },
-    faviconUrl: { type: String, default: "" }
+    faviconUrl: { type: String, default: "/icon.png" },
+    faviconBadgeUrl: { type: String, default: "/icon-badge.png" }
   }
 
   connect() {
-    this.faviconBadgeToken = 0
     this.unreadIds = new Set(this.unreadCircleIdsValue.map(id => Number(id)))
-    this.clearSelectedCircleFromUnread()
-    this.baseFaviconHref = this.resolveBaseFaviconHref()
+    this.dismissUnreadForSelectedCircle()
     this.observer = new MutationObserver(() => this.processBridgeEvents())
     if (this.hasBridgeTarget) {
       this.observer.observe(this.bridgeTarget, { childList: true, subtree: true })
@@ -30,8 +29,21 @@ export default class extends Controller {
     this.observer?.disconnect()
     window.removeEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.removeEventListener("turbo:before-stream-render", this.handleTurboStream)
-    this.restoreFavicon()
+    this.showPlainFavicon()
     this.clearAppBadge()
+  }
+
+  circleOpened(event) {
+    const item = event.currentTarget.closest(".circle-item")
+    if (!item) return
+
+    const circleId = Number(item.dataset.circlesCircleId)
+    if (!circleId) return
+
+    this.selectedCircleIdValue = circleId
+    this.unreadIds.delete(circleId)
+    this.syncUnreadUi()
+    this.updateTabBadge()
   }
 
   handleCircleSelected = (event) => {
@@ -39,12 +51,7 @@ export default class extends Controller {
     if (!circleId) return
 
     this.selectedCircleIdValue = circleId
-    this.clearSelectedCircleFromUnread()
-    this.markCircleRead(circleId)
-  }
-
-  selectedCircleIdValueChanged() {
-    this.clearSelectedCircleFromUnread()
+    this.unreadIds.delete(circleId)
     this.syncUnreadUi()
     this.updateTabBadge()
   }
@@ -57,10 +64,18 @@ export default class extends Controller {
     const target = newStream.getAttribute("target")
     if (action !== "prepend" || target !== "squaks-list") return
 
-    const circleId = this.selectedCircleIdValue
+    const circleId = Number(this.selectedCircleIdValue)
     if (!circleId) return
 
-    this.markCircleRead(circleId)
+    this.unreadIds.delete(circleId)
+    this.syncUnreadUi()
+    this.updateTabBadge()
+  }
+
+  selectedCircleIdValueChanged() {
+    this.dismissUnreadForSelectedCircle()
+    this.syncUnreadUi()
+    this.updateTabBadge()
   }
 
   processBridgeEvents() {
@@ -74,7 +89,9 @@ export default class extends Controller {
       if (action === "mark_unread") {
         this.markCircleUnread(circleId)
       } else if (action === "mark_read") {
-        this.markCircleRead(circleId)
+        this.unreadIds.delete(circleId)
+        this.syncUnreadUi()
+        this.updateTabBadge()
       }
 
       node.remove()
@@ -82,129 +99,62 @@ export default class extends Controller {
   }
 
   markCircleUnread(circleId) {
-    if (circleId === this.selectedCircleIdValue) return
+    const id = Number(circleId)
+    if (id === Number(this.selectedCircleIdValue)) return
 
-    this.unreadIds.add(circleId)
+    this.unreadIds.add(id)
     this.syncUnreadUi()
     this.updateTabBadge()
   }
 
-  markCircleRead(circleId) {
-    this.unreadIds.delete(Number(circleId))
-    this.syncUnreadUi()
-    this.updateTabBadge()
-  }
-
-  syncUnreadUi() {
-    this.element.querySelectorAll(".circle-item").forEach((item) => {
-      const circleId = Number(item.dataset.circlesCircleId)
-      const unread = this.unreadIds.has(circleId)
-      item.classList.toggle("unread", unread && !item.classList.contains("selected"))
-    })
-  }
-
-  syncCircleItem(circleId, unread) {
-    const item = document.getElementById(`circle-id-${circleId}`)
-    if (!item) return
-    item.classList.toggle("unread", unread && !item.classList.contains("selected"))
-  }
-
-  unreadCount() {
-    const selectedId = Number(this.selectedCircleIdValue)
-    return [...this.unreadIds].filter((id) => id !== selectedId).length
-  }
-
-  clearSelectedCircleFromUnread() {
+  dismissUnreadForSelectedCircle() {
     const selectedId = Number(this.selectedCircleIdValue)
     if (!selectedId) return
 
     this.unreadIds.delete(selectedId)
   }
 
+  syncUnreadUi() {
+    this.element.querySelectorAll(".circle-item").forEach((item) => {
+      const circleId = Number(item.dataset.circlesCircleId)
+      const showUnread = this.unreadIds.has(circleId) && !item.classList.contains("selected")
+      item.classList.toggle("unread", showUnread)
+    })
+  }
+
+  unreadCount() {
+    return this.element.querySelectorAll(".circle-item.unread").length
+  }
+
   updateTabBadge() {
-    const count = this.unreadCount()
-    if (count > 0) {
-      this.setFaviconBadge()
-      this.setAppBadge(count)
+    if (this.unreadCount() > 0) {
+      this.showBadgedFavicon()
+      this.setAppBadge(this.unreadCount())
     } else {
-      this.restoreFavicon()
+      this.showPlainFavicon()
       this.clearAppBadge()
     }
   }
 
-  resolveBaseFaviconHref() {
-    if (this.faviconUrlValue) return this.faviconUrlValue
-
-    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
-    if (brandIcon?.href) return brandIcon.href
-
-    const iconLink = document.querySelector('link[rel="icon"]')
-    return iconLink?.href || "/icon.png"
+  brandIconLink() {
+    return document.querySelector('link[data-squakjive-brand-icon="true"]')
   }
 
-  setFaviconBadge() {
-    const token = ++this.faviconBadgeToken
-    const image = new Image()
-    image.crossOrigin = "anonymous"
-    image.onload = () => {
-      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
+  showBadgedFavicon() {
+    const link = this.brandIconLink()
+    if (!link) return
 
-      const size = 32
-      const canvas = document.createElement("canvas")
-      canvas.width = size
-      canvas.height = size
-      const ctx = canvas.getContext("2d")
-      ctx.drawImage(image, 0, 0, size, size)
-
-      ctx.fillStyle = "#e53935"
-      ctx.beginPath()
-      ctx.arc(size - 7, 7, 6, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = "#ffffff"
-      ctx.lineWidth = 1.5
-      ctx.stroke()
-
-      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
-      this.applyFavicon(canvas.toDataURL("image/png"))
-    }
-    image.onerror = () => {
-      if (token !== this.faviconBadgeToken || this.unreadCount() === 0) return
-      this.applyFavicon(this.badgeFallbackDataUrl())
-    }
-    image.src = this.baseFaviconHref
+    link.href = this.faviconBadgeUrlValue
   }
 
-  badgeFallbackDataUrl() {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-      <rect width="32" height="32" rx="6" fill="#0a1628"/>
-      <circle cx="25" cy="7" r="6" fill="#e53935" stroke="#fff" stroke-width="1.5"/>
-    </svg>`
-    return `data:image/svg+xml,${encodeURIComponent(svg)}`
-  }
+  showPlainFavicon() {
+    document.querySelector('link[data-browser-alerts-favicon="true"]')?.remove()
 
-  applyFavicon(href) {
-    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
-    if (brandIcon) brandIcon.setAttribute("disabled", "true")
+    const link = this.brandIconLink()
+    if (!link) return
 
-    let link = document.querySelector('link[data-browser-alerts-favicon="true"]')
-    if (!link) {
-      link = document.createElement("link")
-      link.rel = "icon"
-      link.type = "image/png"
-      link.dataset.browserAlertsFavicon = "true"
-      document.head.appendChild(link)
-    }
-    link.href = href
-  }
-
-  restoreFavicon() {
-    this.faviconBadgeToken += 1
-
-    const badgeLink = document.querySelector('link[data-browser-alerts-favicon="true"]')
-    badgeLink?.remove()
-
-    const brandIcon = document.querySelector('link[data-squakjive-brand-icon="true"]')
-    if (brandIcon) brandIcon.removeAttribute("disabled")
+    link.removeAttribute("disabled")
+    link.href = this.faviconUrlValue
   }
 
   async setAppBadge(count) {
@@ -217,9 +167,13 @@ export default class extends Controller {
   }
 
   async clearAppBadge() {
-    if (!("clearAppBadge" in navigator)) return
+    if (!("setAppBadge" in navigator) && !("clearAppBadge" in navigator)) return
     try {
-      await navigator.clearAppBadge()
+      if ("clearAppBadge" in navigator) {
+        await navigator.clearAppBadge()
+      } else {
+        await navigator.setAppBadge(0)
+      }
     } catch (_) {
       // Unsupported or blocked by the browser.
     }
