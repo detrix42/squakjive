@@ -1,6 +1,13 @@
 class UserProfileController < ApplicationController
   before_action :authenticate_user!
 
+  def unread_alerts
+    circles = (current_user.circles + current_user.joined_circles).uniq
+    render json: {
+      unread_circle_ids: CircleUnreadAlerts.unread_circle_ids_for(current_user, circles)
+    }
+  end
+
   def update_selected_circle
     circle_id = params.expect(:circle_id)&.to_i
     if circle_id == 0 || current_user.circles.exists?(id: circle_id) ||

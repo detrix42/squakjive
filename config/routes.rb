@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   # get "link_preview", to: "link_preview#show"
 
   get "user_profile/selected_circle"
+  get "user_profile/unread_alerts", to: "user_profile#unread_alerts"
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"

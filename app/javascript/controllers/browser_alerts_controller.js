@@ -1,4 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
+import consumer from "channels/consumer"
+
+const HIDDEN_POLL_INTERVAL_MS = 3000
 
 export default class extends Controller {
   static targets = ["bridge"]
@@ -10,6 +13,7 @@ export default class extends Controller {
 
   connect() {
     this.baseTitle = document.title.replace(/^\(\d+\)\s+/, "")
+    this.hiddenPollTimer = null
     this.unreadIds = new Set(this.unreadCircleIdsValue.map(id => Number(id)))
     this.dismissUnreadForSelectedCircle()
     this.observer = new MutationObserver(() => this.processBridgeEvents())
@@ -20,13 +24,20 @@ export default class extends Controller {
     window.addEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.addEventListener("turbo:before-stream-render", this.handleTurboStream)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
+    this.cableSubscription = consumer.subscriptions.create(
+      { channel: "CircleAlertsChannel" },
+      { received: (data) => this.handleCableAlert(data) }
+    )
 
     this.syncUnreadUi()
     this.updateTabBadge()
+    this.startHiddenPollingIfNeeded()
   }
 
   disconnect() {
+    this.cableSubscription?.unsubscribe()
     this.observer?.disconnect()
+    this.stopHiddenPolling()
     window.removeEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.removeEventListener("turbo:before-stream-render", this.handleTurboStream)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
@@ -152,7 +163,12 @@ export default class extends Controller {
   }
 
   handleVisibilityChange = async () => {
-    if (document.visibilityState !== "visible") return
+    if (document.visibilityState === "hidden") {
+      this.startHiddenPolling()
+      return
+    }
+
+    this.stopHiddenPolling()
 
     // Flush any alert events that were queued while the tab was in the background.
     this.processBridgeEvents()
@@ -176,7 +192,75 @@ export default class extends Controller {
       }
     }
 
+    await this.pollUnreadAlerts()
     this.dismissUnreadForSelectedCircle()
+    this.syncUnreadUi()
+    this.updateTabBadge()
+  }
+
+  startHiddenPollingIfNeeded() {
+    if (document.visibilityState === "hidden") {
+      this.startHiddenPolling()
+    }
+  }
+
+  startHiddenPolling() {
+    if (this.hiddenPollTimer) return
+
+    this.pollUnreadAlerts()
+    this.hiddenPollTimer = setInterval(() => this.pollUnreadAlerts(), HIDDEN_POLL_INTERVAL_MS)
+  }
+
+  stopHiddenPolling() {
+    if (!this.hiddenPollTimer) return
+
+    clearInterval(this.hiddenPollTimer)
+    this.hiddenPollTimer = null
+  }
+
+  async pollUnreadAlerts() {
+    try {
+      const resp = await fetch("/user_profile/unread_alerts", {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin"
+      })
+
+      if (!resp.ok) return
+
+      const data = await resp.json()
+      this.applyUnreadIds(data.unread_circle_ids)
+    } catch (_) {
+      // Retry on the next poll while the tab stays in the background.
+    }
+  }
+
+  handleCableAlert(data) {
+    if (!data) return
+
+    if (data.event === "unread_snapshot") {
+      this.applyUnreadIds(data.unread_circle_ids)
+      return
+    }
+
+    if (data.event === "mark_unread") {
+      this.markCircleUnread(data.circle_id)
+      return
+    }
+
+    if (data.event === "mark_read") {
+      this.unreadIds.delete(Number(data.circle_id))
+      this.syncUnreadUi()
+      this.updateTabBadge()
+    }
+  }
+
+  applyUnreadIds(ids) {
+    this.unreadIds = new Set((ids || []).map((id) => Number(id)))
+
+    if (document.visibilityState === "visible") {
+      this.dismissUnreadForSelectedCircle()
+    }
+
     this.syncUnreadUi()
     this.updateTabBadge()
   }
