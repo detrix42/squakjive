@@ -68,7 +68,11 @@ export default class extends Controller {
     const circleId = Number(this.selectedCircleIdValue)
     if (!circleId) return
 
-    this.unreadIds.delete(circleId)
+    if (document.visibilityState === "hidden") {
+      this.unreadIds.add(circleId)
+    } else {
+      this.unreadIds.delete(circleId)
+    }
     this.syncUnreadUi()
     this.updateTabBadge()
   }
@@ -101,7 +105,7 @@ export default class extends Controller {
 
   markCircleUnread(circleId) {
     const id = Number(circleId)
-    if (id === Number(this.selectedCircleIdValue)) return
+    if (id === Number(this.selectedCircleIdValue) && document.visibilityState === "visible") return
 
     this.unreadIds.add(id)
     this.syncUnreadUi()
@@ -123,12 +127,21 @@ export default class extends Controller {
     })
   }
 
-  unreadCount() {
-    return this.element.querySelectorAll(".circle-item.unread").length
+  tabNotificationCount() {
+    const selectedId = Number(this.selectedCircleIdValue)
+    const tabIsVisible = document.visibilityState === "visible"
+    let count = 0
+
+    this.unreadIds.forEach((id) => {
+      if (id === selectedId && tabIsVisible) return
+      count++
+    })
+
+    return count
   }
 
   updateTabBadge() {
-    const count = this.unreadCount()
+    const count = this.tabNotificationCount()
     if (count > 0) {
       document.title = `(${count}) ${this.baseTitle}`
       this.setAppBadge(count)
@@ -141,28 +154,31 @@ export default class extends Controller {
   handleVisibilityChange = async () => {
     if (document.visibilityState !== "visible") return
 
+    // Flush any alert events that were queued while the tab was in the background.
+    this.processBridgeEvents()
+
     const circleId = Number(this.selectedCircleIdValue)
-    if (!circleId) return
+    if (circleId) {
+      try {
+        const resp = await fetch(`/squaks/${circleId}`, {
+          headers: { Accept: "text/vnd.turbo-stream.html" },
+          credentials: "same-origin"
+        })
 
-    try {
-      const resp = await fetch(`/squaks/${circleId}`, {
-        headers: { Accept: "text/vnd.turbo-stream.html" },
-        credentials: "same-origin"
-      })
-
-      if (!resp.ok) return
-
-      const html = await resp.text()
-      if (html && html.includes("<turbo-stream")) {
-        Turbo.renderStreamMessage(html)
+        if (resp.ok) {
+          const html = await resp.text()
+          if (html && html.includes("<turbo-stream")) {
+            Turbo.renderStreamMessage(html)
+          }
+        }
+      } catch (_) {
+        // Network failure while resyncing; keep current feed and retry on next focus.
       }
-
-      this.unreadIds.delete(circleId)
-      this.syncUnreadUi()
-      this.updateTabBadge()
-    } catch (_) {
-      // Network failure while resyncing; keep current feed and retry on next focus.
     }
+
+    this.dismissUnreadForSelectedCircle()
+    this.syncUnreadUi()
+    this.updateTabBadge()
   }
 
   async setAppBadge(count) {
