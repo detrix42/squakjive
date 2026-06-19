@@ -5,12 +5,11 @@ export default class extends Controller {
 
   static values = {
     unreadCircleIds: { type: Array, default: [] },
-    selectedCircleId: { type: Number, default: 0 },
-    faviconUrl: { type: String, default: "/icon.png" },
-    faviconBadgeUrl: { type: String, default: "/icon-badge.png" }
+    selectedCircleId: { type: Number, default: 0 }
   }
 
   connect() {
+    this.baseTitle = document.title.replace(/^\(\d+\)\s+/, "")
     this.unreadIds = new Set(this.unreadCircleIdsValue.map(id => Number(id)))
     this.dismissUnreadForSelectedCircle()
     this.observer = new MutationObserver(() => this.processBridgeEvents())
@@ -20,6 +19,7 @@ export default class extends Controller {
 
     window.addEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.addEventListener("turbo:before-stream-render", this.handleTurboStream)
+    document.addEventListener("visibilitychange", this.handleVisibilityChange)
 
     this.syncUnreadUi()
     this.updateTabBadge()
@@ -29,7 +29,8 @@ export default class extends Controller {
     this.observer?.disconnect()
     window.removeEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.removeEventListener("turbo:before-stream-render", this.handleTurboStream)
-    this.showPlainFavicon()
+    document.removeEventListener("visibilitychange", this.handleVisibilityChange)
+    document.title = this.baseTitle
     this.clearAppBadge()
   }
 
@@ -127,34 +128,41 @@ export default class extends Controller {
   }
 
   updateTabBadge() {
-    if (this.unreadCount() > 0) {
-      this.showBadgedFavicon()
-      this.setAppBadge(this.unreadCount())
+    const count = this.unreadCount()
+    if (count > 0) {
+      document.title = `(${count}) ${this.baseTitle}`
+      this.setAppBadge(count)
     } else {
-      this.showPlainFavicon()
+      document.title = this.baseTitle
       this.clearAppBadge()
     }
   }
 
-  brandIconLink() {
-    return document.querySelector('link[data-squakjive-brand-icon="true"]')
-  }
+  handleVisibilityChange = async () => {
+    if (document.visibilityState !== "visible") return
 
-  showBadgedFavicon() {
-    const link = this.brandIconLink()
-    if (!link) return
+    const circleId = Number(this.selectedCircleIdValue)
+    if (!circleId) return
 
-    link.href = this.faviconBadgeUrlValue
-  }
+    try {
+      const resp = await fetch(`/squaks/${circleId}`, {
+        headers: { Accept: "text/vnd.turbo-stream.html" },
+        credentials: "same-origin"
+      })
 
-  showPlainFavicon() {
-    document.querySelector('link[data-browser-alerts-favicon="true"]')?.remove()
+      if (!resp.ok) return
 
-    const link = this.brandIconLink()
-    if (!link) return
+      const html = await resp.text()
+      if (html && html.includes("<turbo-stream")) {
+        Turbo.renderStreamMessage(html)
+      }
 
-    link.removeAttribute("disabled")
-    link.href = this.faviconUrlValue
+      this.unreadIds.delete(circleId)
+      this.syncUnreadUi()
+      this.updateTabBadge()
+    } catch (_) {
+      // Network failure while resyncing; keep current feed and retry on next focus.
+    }
   }
 
   async setAppBadge(count) {
