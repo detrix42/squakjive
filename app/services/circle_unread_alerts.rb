@@ -24,7 +24,6 @@ class CircleUnreadAlerts
 
     user.circle_read_states.find_or_initialize_by(circle: circle).update!(last_read_at: Time.current)
     broadcast_mark_read(user, circle.id)
-    broadcast_unread_snapshot(user)
   end
 
   def self.broadcast_new_squak(squak)
@@ -37,19 +36,7 @@ class CircleUnreadAlerts
       next unless user
 
       broadcast_mark_unread(user, circle.id)
-      broadcast_unread_snapshot(user)
     end
-  end
-
-  def self.broadcast_unread_snapshot(user)
-    circles = (user.circles + user.joined_circles).uniq
-    CircleAlertsChannel.broadcast_to(
-      user,
-      {
-        event: "unread_snapshot",
-        unread_circle_ids: unread_circle_ids_for(user, circles)
-      }
-    )
   end
 
   def self.broadcast_mark_unread(user, circle_id)

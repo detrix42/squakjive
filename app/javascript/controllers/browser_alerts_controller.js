@@ -1,7 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
-import consumer from "channels/consumer"
 
-const HIDDEN_POLL_INTERVAL_MS = 3000
+const HIDDEN_POLL_INTERVAL_MS = 2000
 
 export default class extends Controller {
   static targets = ["bridge"]
@@ -24,10 +23,6 @@ export default class extends Controller {
     window.addEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.addEventListener("turbo:before-stream-render", this.handleTurboStream)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
-    this.cableSubscription = consumer.subscriptions.create(
-      { channel: "CircleAlertsChannel" },
-      { received: (data) => this.handleCableAlert(data) }
-    )
 
     this.syncUnreadUi()
     this.updateTabBadge()
@@ -35,7 +30,6 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.cableSubscription?.unsubscribe()
     this.observer?.disconnect()
     this.stopHiddenPolling()
     window.removeEventListener("circle-selection:circleSelected", this.handleCircleSelected)
@@ -231,26 +225,6 @@ export default class extends Controller {
       this.applyUnreadIds(data.unread_circle_ids)
     } catch (_) {
       // Retry on the next poll while the tab stays in the background.
-    }
-  }
-
-  handleCableAlert(data) {
-    if (!data) return
-
-    if (data.event === "unread_snapshot") {
-      this.applyUnreadIds(data.unread_circle_ids)
-      return
-    }
-
-    if (data.event === "mark_unread") {
-      this.markCircleUnread(data.circle_id)
-      return
-    }
-
-    if (data.event === "mark_read") {
-      this.unreadIds.delete(Number(data.circle_id))
-      this.syncUnreadUi()
-      this.updateTabBadge()
     }
   }
 
