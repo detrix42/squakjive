@@ -2,7 +2,8 @@
 // Browsers require a user gesture before audio can play; we unlock on first interaction.
 
 const ALERT_SOUND_URL = "/sounds/new_message_alert.wav"
-const FALLBACK_TONE_VOLUME = 0.27
+const ALERT_VOLUME = 1.5
+const FALLBACK_TONE_VOLUME = 0.405
 
 let sharedBlip = null
 
@@ -90,7 +91,7 @@ class AlertBlip {
       const gain = ctx.createGain()
 
       source.buffer = this.audioBuffer
-      gain.gain.value = 1
+      gain.gain.value = ALERT_VOLUME
 
       source.connect(gain)
       gain.connect(ctx.destination)
