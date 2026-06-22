@@ -301,6 +301,8 @@ export default class extends Controller {
     if (this.tabReturnInFlight) return
     this.tabReturnInFlight = true
 
+    const hadUnreadAlerts = this.tabNotificationCount() > 0
+
     try {
       hiddenPoll.stop()
       this.processBridgeEvents()
@@ -314,6 +316,11 @@ export default class extends Controller {
       this.dismissUnreadForSelectedCircle()
       this.syncUnreadUi()
       this.updateTabBadge()
+
+      // Browsers block audio in background tabs, so blip once when returning with unreads.
+      if (this.tabWasInactive && (hadUnreadAlerts || this.tabNotificationCount() > 0)) {
+        this.alertBlip?.play()
+      }
     } finally {
       this.tabReturnInFlight = false
       this.tabWasInactive = false

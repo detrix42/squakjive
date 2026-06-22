@@ -16,25 +16,36 @@ export function getAlertBlip() {
 class AlertBlip {
   constructor() {
     this.audioContext = null
-    this.audio = null
+    this.audioTemplate = null
     this.unlocked = false
     this.lastPlayedAt = 0
     this.bindUnlock()
   }
 
   bindUnlock() {
-    const unlock = () => {
+    const unlock = async () => {
       if (this.unlocked) return
 
       const AudioContext = window.AudioContext || window.webkitAudioContext
       if (AudioContext) {
         this.audioContext = new AudioContext()
-        this.audioContext.resume().catch(() => {})
+        await this.audioContext.resume().catch(() => {})
       }
 
-      this.audio = new Audio(ALERT_SOUND_URL)
-      this.audio.preload = "auto"
-      this.audio.load()
+      this.audioTemplate = new Audio(ALERT_SOUND_URL)
+      this.audioTemplate.preload = "auto"
+      this.audioTemplate.load()
+
+      // Prime playback during the user gesture so later alerts are not blocked.
+      try {
+        this.audioTemplate.volume = 0.01
+        await this.audioTemplate.play()
+        this.audioTemplate.pause()
+        this.audioTemplate.currentTime = 0
+        this.audioTemplate.volume = 1
+      } catch (_) {
+        // HTML5 audio may still be blocked; Web Audio fallback remains available.
+      }
 
       this.unlocked = true
     }
@@ -52,22 +63,32 @@ class AlertBlip {
     if (now - this.lastPlayedAt < 650) return
     this.lastPlayedAt = now
 
-    if (this.audio) {
-      this.audio.volume = 1
-      this.audio.currentTime = 0
-      this.audio.play().catch(() => this.playFallback())
+    // Background tabs usually block HTML5 audio; try Web Audio first there.
+    if (document.hidden) {
+      this.playFallback()
       return
     }
 
-    this.playFallback()
+    this.playHtml5()
   }
 
-  playFallback() {
+  playHtml5() {
+    if (!this.audioTemplate) {
+      this.playFallback()
+      return
+    }
+
+    const audio = this.audioTemplate.cloneNode()
+    audio.volume = 1
+    audio.play().catch(() => this.playFallback())
+  }
+
+  async playFallback() {
     if (!this.audioContext) return
 
     const ctx = this.audioContext
     if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {})
+      await ctx.resume().catch(() => {})
     }
 
     const toneDuration = 0.3
