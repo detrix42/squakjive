@@ -1,4 +1,4 @@
-// Notification sound from public/sounds/new_message_alert.wav, with Web Audio fallback.
+// Play public/sounds/new_message_alert.wav via Web Audio API (most reliable cross-browser).
 // Browsers require a user gesture before audio can play; we unlock on first interaction.
 
 const ALERT_SOUND_URL = "/sounds/new_message_alert.wav"
@@ -16,37 +16,22 @@ export function getAlertBlip() {
 class AlertBlip {
   constructor() {
     this.audioContext = null
-    this.audioTemplate = null
+    this.audioBuffer = null
+    this.bufferReady = null
     this.unlocked = false
     this.lastPlayedAt = 0
     this.bindUnlock()
   }
 
   bindUnlock() {
-    const unlock = async () => {
+    const unlock = () => {
       if (this.unlocked) return
 
       const AudioContext = window.AudioContext || window.webkitAudioContext
-      if (AudioContext) {
-        this.audioContext = new AudioContext()
-        await this.audioContext.resume().catch(() => {})
-      }
+      if (!AudioContext) return
 
-      this.audioTemplate = new Audio(ALERT_SOUND_URL)
-      this.audioTemplate.preload = "auto"
-      this.audioTemplate.load()
-
-      // Prime playback during the user gesture so later alerts are not blocked.
-      try {
-        this.audioTemplate.volume = 0.01
-        await this.audioTemplate.play()
-        this.audioTemplate.pause()
-        this.audioTemplate.currentTime = 0
-        this.audioTemplate.volume = 1
-      } catch (_) {
-        // HTML5 audio may still be blocked; Web Audio fallback remains available.
-      }
-
+      this.audioContext = new AudioContext()
+      this.bufferReady = this.prepareSound()
       this.unlocked = true
     }
 
@@ -56,39 +41,73 @@ class AlertBlip {
     document.addEventListener("touchstart", unlock, options)
   }
 
-  play() {
-    if (!this.unlocked) return
+  async prepareSound() {
+    if (!this.audioContext) return false
+
+    await this.audioContext.resume().catch(() => {})
+
+    try {
+      const response = await fetch(ALERT_SOUND_URL, { cache: "force-cache" })
+      if (!response.ok) return false
+
+      const data = await response.arrayBuffer()
+      this.audioBuffer = await this.audioContext.decodeAudioData(data)
+      return true
+    } catch (_) {
+      return false
+    }
+  }
+
+  async play() {
+    if (!this.unlocked || !this.audioContext) return
 
     const now = Date.now()
     if (now - this.lastPlayedAt < 650) return
     this.lastPlayedAt = now
 
-    // Background tabs usually block HTML5 audio; try Web Audio first there.
-    if (document.hidden) {
-      this.playFallback()
-      return
+    if (this.bufferReady) {
+      await this.bufferReady
     }
 
-    this.playHtml5()
-  }
-
-  playHtml5() {
-    if (!this.audioTemplate) {
-      this.playFallback()
-      return
+    if (this.audioBuffer) {
+      const played = await this.playBuffer()
+      if (played) return
     }
 
-    const audio = this.audioTemplate.cloneNode()
-    audio.volume = 1
-    audio.play().catch(() => this.playFallback())
+    this.playFallback()
   }
 
-  async playFallback() {
+  async playBuffer() {
+    const ctx = this.audioContext
+    if (!ctx || !this.audioBuffer) return false
+
+    if (ctx.state === "suspended") {
+      await ctx.resume().catch(() => {})
+    }
+
+    try {
+      const source = ctx.createBufferSource()
+      const gain = ctx.createGain()
+
+      source.buffer = this.audioBuffer
+      gain.gain.value = 1
+
+      source.connect(gain)
+      gain.connect(ctx.destination)
+      source.start()
+
+      return true
+    } catch (_) {
+      return false
+    }
+  }
+
+  playFallback() {
     if (!this.audioContext) return
 
     const ctx = this.audioContext
     if (ctx.state === "suspended") {
-      await ctx.resume().catch(() => {})
+      ctx.resume().catch(() => {})
     }
 
     const toneDuration = 0.3
