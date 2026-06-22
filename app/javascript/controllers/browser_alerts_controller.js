@@ -1,6 +1,84 @@
 import { Controller } from "@hotwired/stimulus"
+import { getAlertBlip } from "utility/alert_blip"
+import { TabAlerts } from "utility/tab_alerts"
 
 const HIDDEN_POLL_INTERVAL_MS = 2000
+
+// One shared timer for the whole page so Turbo/Stimulus reconnects cannot leave
+// orphaned intervals behind.
+const hiddenPoll = {
+  timerId: null,
+  controller: null,
+  abortController: null,
+
+  stop() {
+    if (this.timerId) {
+      clearTimeout(this.timerId)
+      this.timerId = null
+    }
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
+    }
+    this.controller = null
+  },
+
+  start(controller) {
+    this.stop()
+    if (!tabIsHidden()) return
+
+    this.controller = controller
+    controller.fetchUnreadAlerts()
+    this.schedule()
+  },
+
+  schedule() {
+    this.timerId = setTimeout(async () => {
+      this.timerId = null
+
+      if (!tabIsHidden() || !this.controller) {
+        this.stop()
+        return
+      }
+
+      await this.controller.fetchUnreadAlerts()
+      if (tabIsHidden() && this.controller) {
+        this.schedule()
+      } else {
+        this.stop()
+      }
+    }, HIDDEN_POLL_INTERVAL_MS)
+  },
+
+  nextAbortSignal() {
+    if (this.abortController) {
+      this.abortController.abort()
+    }
+    this.abortController = new AbortController()
+    return this.abortController.signal
+  }
+}
+
+function tabIsHidden() {
+  return document.visibilityState === "hidden"
+}
+
+function stopHiddenPolling() {
+  hiddenPoll.stop()
+}
+
+if (!window.__squakJivePollLifecycleBound) {
+  window.__squakJivePollLifecycleBound = true
+  window.__squakJiveStopPolling = stopHiddenPolling
+
+  window.addEventListener("pagehide", stopHiddenPolling, { capture: true })
+  document.addEventListener("turbo:before-visit", stopHiddenPolling)
+  document.addEventListener("visibilitychange", () => {
+    if (!tabIsHidden()) {
+      stopHiddenPolling()
+    }
+  })
+}
 
 export default class extends Controller {
   static targets = ["bridge"]
@@ -10,9 +88,17 @@ export default class extends Controller {
     selectedCircleId: { type: Number, default: 0 }
   }
 
+  initialize() {
+    // Stimulus runs *ValueChanged callbacks during connect(), before connect() body runs.
+    this.unreadIds = new Set()
+    this.resyncingFeed = false
+    this.tabReturnInFlight = false
+    this.tabWasInactive = false
+  }
+
   connect() {
-    this.baseTitle = document.title.replace(/^\(\d+\)\s+/, "")
-    this.hiddenPollTimer = null
+    this.alertBlip = getAlertBlip()
+    this.tabAlerts = new TabAlerts({ baseTitle: document.title.replace(/^\(\d+\)\s+/, "") })
     this.unreadIds = new Set(this.unreadCircleIdsValue.map(id => Number(id)))
     this.dismissUnreadForSelectedCircle()
     this.observer = new MutationObserver(() => this.processBridgeEvents())
@@ -23,20 +109,33 @@ export default class extends Controller {
     window.addEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.addEventListener("turbo:before-stream-render", this.handleTurboStream)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
+    window.addEventListener("blur", this.handleWindowBlur)
+    window.addEventListener("focus", this.handleWindowFocus)
+    window.addEventListener("pageshow", this.handlePageShow)
 
     this.syncUnreadUi()
     this.updateTabBadge()
-    this.startHiddenPollingIfNeeded()
+
+    if (tabIsHidden()) {
+      this.tabWasInactive = true
+      hiddenPoll.start(this)
+    } else {
+      hiddenPoll.stop()
+    }
   }
 
   disconnect() {
     this.observer?.disconnect()
-    this.stopHiddenPolling()
+    if (hiddenPoll.controller === this) {
+      hiddenPoll.stop()
+    }
     window.removeEventListener("circle-selection:circleSelected", this.handleCircleSelected)
     document.removeEventListener("turbo:before-stream-render", this.handleTurboStream)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
-    document.title = this.baseTitle
-    this.clearAppBadge()
+    window.removeEventListener("blur", this.handleWindowBlur)
+    window.removeEventListener("focus", this.handleWindowFocus)
+    window.removeEventListener("pageshow", this.handlePageShow)
+    this.tabAlerts?.reset()
   }
 
   circleOpened(event) {
@@ -73,13 +172,13 @@ export default class extends Controller {
     const circleId = Number(this.selectedCircleIdValue)
     if (!circleId) return
 
-    if (document.visibilityState === "hidden") {
-      this.unreadIds.add(circleId)
+    if (tabIsHidden() || !document.hasFocus()) {
+      this.addUnread(circleId, { announce: true })
     } else {
       this.unreadIds.delete(circleId)
+      this.syncUnreadUi()
+      this.updateTabBadge()
     }
-    this.syncUnreadUi()
-    this.updateTabBadge()
   }
 
   selectedCircleIdValueChanged() {
@@ -110,9 +209,28 @@ export default class extends Controller {
 
   markCircleUnread(circleId) {
     const id = Number(circleId)
-    if (id === Number(this.selectedCircleIdValue) && document.visibilityState === "visible") return
+    if (this.isActivelyViewingCircle(id)) return
 
+    this.addUnread(id, { announce: true })
+  }
+
+  isActivelyViewingCircle(circleId) {
+    const id = Number(circleId)
+    const selectedId = Number(this.selectedCircleIdValue)
+    return id === selectedId && !tabIsHidden() && document.hasFocus()
+  }
+
+  addUnread(circleId, { announce = false } = {}) {
+    const id = Number(circleId)
+    if (!id) return
+
+    const isNew = !this.unreadIds.has(id)
     this.unreadIds.add(id)
+
+    if (announce && isNew) {
+      this.alertBlip?.play()
+    }
+
     this.syncUnreadUi()
     this.updateTabBadge()
   }
@@ -134,7 +252,7 @@ export default class extends Controller {
 
   tabNotificationCount() {
     const selectedId = Number(this.selectedCircleIdValue)
-    const tabIsVisible = document.visibilityState === "visible"
+    const tabIsVisible = !tabIsHidden()
     let count = 0
 
     this.unreadIds.forEach((id) => {
@@ -147,117 +265,127 @@ export default class extends Controller {
 
   updateTabBadge() {
     const count = this.tabNotificationCount()
-    if (count > 0) {
-      document.title = `(${count}) ${this.baseTitle}`
-      this.setAppBadge(count)
-    } else {
-      document.title = this.baseTitle
-      this.clearAppBadge()
-    }
+    this.tabAlerts?.update(count)
   }
 
-  handleVisibilityChange = async () => {
-    if (document.visibilityState === "hidden") {
-      this.startHiddenPolling()
+  handleVisibilityChange = () => {
+    if (tabIsHidden()) {
+      this.tabWasInactive = true
+      hiddenPoll.start(this)
       return
     }
 
-    this.stopHiddenPolling()
+    hiddenPoll.stop()
+    this.handleTabReturned()
+  }
 
-    // Flush any alert events that were queued while the tab was in the background.
-    this.processBridgeEvents()
+  handleWindowBlur = () => {
+    this.tabWasInactive = true
+  }
 
-    const circleId = Number(this.selectedCircleIdValue)
-    if (circleId) {
-      try {
-        const resp = await fetch(`/squaks/${circleId}`, {
-          headers: { Accept: "text/vnd.turbo-stream.html" },
-          credentials: "same-origin"
-        })
+  handleWindowFocus = () => {
+    if (tabIsHidden()) return
+    if (!this.tabWasInactive) return
 
-        if (resp.ok) {
-          const html = await resp.text()
-          if (html && html.includes("<turbo-stream")) {
-            Turbo.renderStreamMessage(html)
-          }
-        }
-      } catch (_) {
-        // Network failure while resyncing; keep current feed and retry on next focus.
+    hiddenPoll.stop()
+    this.handleTabReturned()
+  }
+
+  handlePageShow = (event) => {
+    if (!event.persisted) return
+    hiddenPoll.stop()
+    this.handleTabReturned()
+  }
+
+  handleTabReturned = async () => {
+    if (this.tabReturnInFlight) return
+    this.tabReturnInFlight = true
+
+    try {
+      hiddenPoll.stop()
+      this.processBridgeEvents()
+
+      await this.resyncSquakFeed()
+
+      if (this.tabWasInactive) {
+        await this.fetchUnreadAlerts()
       }
-    }
 
-    await this.pollUnreadAlerts()
-    this.dismissUnreadForSelectedCircle()
-    this.syncUnreadUi()
-    this.updateTabBadge()
-  }
-
-  startHiddenPollingIfNeeded() {
-    if (document.visibilityState === "hidden") {
-      this.startHiddenPolling()
+      this.dismissUnreadForSelectedCircle()
+      this.syncUnreadUi()
+      this.updateTabBadge()
+    } finally {
+      this.tabReturnInFlight = false
+      this.tabWasInactive = false
     }
   }
 
-  startHiddenPolling() {
-    if (this.hiddenPollTimer) return
+  async resyncSquakFeed() {
+    const circleId = Number(this.selectedCircleIdValue)
+    if (!circleId || this.resyncingFeed) return
 
-    this.pollUnreadAlerts()
-    this.hiddenPollTimer = setInterval(() => this.pollUnreadAlerts(), HIDDEN_POLL_INTERVAL_MS)
+    this.resyncingFeed = true
+    try {
+      const resp = await fetch(`/squaks/${circleId}`, {
+        headers: { Accept: "text/vnd.turbo-stream.html" },
+        credentials: "same-origin",
+        cache: "no-store"
+      })
+
+      if (!resp.ok) return
+
+      const html = await resp.text()
+      if (html && html.includes("<turbo-stream")) {
+        Turbo.renderStreamMessage(html)
+      }
+    } catch (_) {
+      // Keep the current feed; the next focus/visibility event can retry.
+    } finally {
+      this.resyncingFeed = false
+    }
   }
 
-  stopHiddenPolling() {
-    if (!this.hiddenPollTimer) return
+  async fetchUnreadAlerts() {
+    if (!tabIsHidden()) {
+      stopHiddenPolling()
+      return
+    }
 
-    clearInterval(this.hiddenPollTimer)
-    this.hiddenPollTimer = null
-  }
-
-  async pollUnreadAlerts() {
     try {
       const resp = await fetch("/user_profile/unread_alerts", {
         headers: { Accept: "application/json" },
-        credentials: "same-origin"
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: hiddenPoll.nextAbortSignal()
       })
 
       if (!resp.ok) return
 
       const data = await resp.json()
       this.applyUnreadIds(data.unread_circle_ids)
-    } catch (_) {
-      // Retry on the next poll while the tab stays in the background.
+    } catch (error) {
+      if (error?.name === "AbortError") return
+      // Retry on the next hidden-tab poll.
     }
   }
 
   applyUnreadIds(ids) {
-    this.unreadIds = new Set((ids || []).map((id) => Number(id)))
+    const prev = this.unreadIds
+    const next = new Set((ids || []).map((id) => Number(id)))
 
-    if (document.visibilityState === "visible") {
+    next.forEach((id) => {
+      if (!prev.has(id)) {
+        this.alertBlip?.play()
+      }
+    })
+
+    this.unreadIds = next
+
+    if (!tabIsHidden()) {
       this.dismissUnreadForSelectedCircle()
     }
 
     this.syncUnreadUi()
     this.updateTabBadge()
-  }
-
-  async setAppBadge(count) {
-    if (!("setAppBadge" in navigator)) return
-    try {
-      await navigator.setAppBadge(count)
-    } catch (_) {
-      // Unsupported or blocked by the browser.
-    }
-  }
-
-  async clearAppBadge() {
-    if (!("setAppBadge" in navigator) && !("clearAppBadge" in navigator)) return
-    try {
-      if ("clearAppBadge" in navigator) {
-        await navigator.clearAppBadge()
-      } else {
-        await navigator.setAppBadge(0)
-      }
-    } catch (_) {
-      // Unsupported or blocked by the browser.
-    }
   }
 }
