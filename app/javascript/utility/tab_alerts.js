@@ -1,6 +1,4 @@
-// Keeps inactive-tab alerts visible the way Discord/Slack do:
-// 1) document.title prefix  (works in background, but easy to miss)
-// 2) favicon badge overlay  (the red dot users actually notice on the tab strip)
+// Favicon badge overlay for unread alerts (red dot with count on the tab icon).
 
 const FAVICON_SIZE = 32
 const BADGE_RADIUS = 9
@@ -16,6 +14,7 @@ export class TabAlerts {
     this.faviconImage = null
     this.faviconReady = this.prepareFavicon()
     this.lastCount = 0
+    this.resetTitle()
     this.clearAppBadge()
   }
 
@@ -36,17 +35,17 @@ export class TabAlerts {
   async update(count) {
     const unread = Math.max(0, Number(count) || 0)
     this.lastCount = unread
-    this.updateTitle(unread)
+    this.resetTitle()
     await this.updateFavicon(unread)
+    await this.clearAppBadge()
   }
 
   async reset() {
     await this.update(0)
-    await this.clearAppBadge()
   }
 
-  updateTitle(count) {
-    document.title = count > 0 ? `(${count}) ${this.baseTitle}` : this.baseTitle
+  resetTitle() {
+    document.title = this.baseTitle
   }
 
   async updateFavicon(count) {
