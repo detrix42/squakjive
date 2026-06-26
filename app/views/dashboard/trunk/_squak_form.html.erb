@@ -10,7 +10,7 @@
 </div>
 <%= form_with model: Squak.new, id: "squak-form",
               data: {
-                action: "submit->paste-image#beforeSubmit turbo:submit-end->squakeditor#resetEditor",
+                action: "submit->paste-image#beforeSubmit turbo:submit-end->squakeditor#onTurboSubmitEnd",
                 controller: "squakeditor paste-image",
               } do |f| %>
 

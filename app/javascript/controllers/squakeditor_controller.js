@@ -89,8 +89,9 @@ export default class extends Controller {
 
 
   onTurboSubmitEnd(event) {
-    if (!(event?.target instanceof HTMLFormElement)) return
-    if (this.form && event.target !== this.form) return
+    const form = event?.target
+    if (!(form instanceof HTMLFormElement)) return
+    if (this.form && form !== this.form) return
     if (!turboSubmitSucceeded(event)) return
 
     this.clearEditor()
@@ -100,8 +101,17 @@ export default class extends Controller {
     const trixEl = this.form?.querySelector("trix-editor")
     if (!trixEl?.editor) return
 
+    this.form?.dispatchEvent(new CustomEvent("squak:editor-clearing", {bubbles: true}))
+
     const editor = trixEl.editor
     editor.recordUndoEntry("Clear")
+
+    const docLength = editor.getDocument().getLength()
+    if (docLength > 1) {
+      editor.setSelectedRange([0, docLength - 1])
+      editor.deleteInDirection("forward")
+    }
+
     editor.loadHTML("")
 
     const inputId = trixEl.getAttribute("input")
@@ -110,9 +120,11 @@ export default class extends Controller {
       if (hidden) {
         hidden.value = ""
         hidden.dispatchEvent(new Event("input", {bubbles: true}))
+        hidden.dispatchEvent(new Event("change", {bubbles: true}))
       }
     }
 
+    this.form?.dispatchEvent(new CustomEvent("squak:editor-cleared", {bubbles: true}))
     trixEl.focus()
   }
 

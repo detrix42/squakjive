@@ -28,6 +28,8 @@ export default class extends Controller {
 
     this.onTrixChange = this.scheduleTypedUrlScan.bind(this)
     this.onTurboSubmitEnd = this.onTurboSubmitEnd.bind(this)
+    this.onEditorClearing = this.onEditorClearing.bind(this)
+    this.onEditorCleared = this.onEditorCleared.bind(this)
 
     window.addEventListener("paste", this.onPasteCapture, true)
     this.trixEl.addEventListener("trix-paste", this.onPaste)
@@ -35,6 +37,8 @@ export default class extends Controller {
 
     if (this.form) {
       this.form.addEventListener("turbo:submit-end", this.onTurboSubmitEnd)
+      this.form.addEventListener("squak:editor-clearing", this.onEditorClearing)
+      this.form.addEventListener("squak:editor-cleared", this.onEditorCleared)
     }
   }
 
@@ -46,8 +50,16 @@ export default class extends Controller {
       if (this.onPaste) this.trixEl.removeEventListener("trix-paste", this.onPaste)
       if (this.onTrixChange) this.trixEl.removeEventListener("trix-change", this.onTrixChange)
     }
-    if (this.form && this.onTurboSubmitEnd) {
-      this.form.removeEventListener("turbo:submit-end", this.onTurboSubmitEnd)
+    if (this.form) {
+      if (this.onTurboSubmitEnd) {
+        this.form.removeEventListener("turbo:submit-end", this.onTurboSubmitEnd)
+      }
+      if (this.onEditorClearing) {
+        this.form.removeEventListener("squak:editor-clearing", this.onEditorClearing)
+      }
+      if (this.onEditorCleared) {
+        this.form.removeEventListener("squak:editor-cleared", this.onEditorCleared)
+      }
     }
     if (this._typedUrlScanTimer) {
       clearTimeout(this._typedUrlScanTimer)
@@ -55,13 +67,36 @@ export default class extends Controller {
   }
 
   onTurboSubmitEnd(event) {
-    if (turboSubmitSucceeded(event)) {
-      this.seenUrls = new Set()
-      this.pendingPreviews = new Map()
+    if (!turboSubmitSucceeded(event)) return
+
+    this.cancelTypedUrlScan()
+    this.seenUrls = new Set()
+    this.pendingPreviews = new Map()
+    this._enhancingUrl = false
+  }
+
+  onEditorClearing() {
+    this._suppressUrlScan = true
+    this.cancelTypedUrlScan()
+  }
+
+  onEditorCleared() {
+    this._suppressUrlScan = false
+    this.seenUrls = new Set()
+    this.pendingPreviews = new Map()
+    this._enhancingUrl = false
+  }
+
+  cancelTypedUrlScan() {
+    if (this._typedUrlScanTimer) {
+      clearTimeout(this._typedUrlScanTimer)
+      this._typedUrlScanTimer = null
     }
   }
 
   scheduleTypedUrlScan() {
+    if (this._suppressUrlScan) return
+
     if (this._typedUrlScanTimer) {
       clearTimeout(this._typedUrlScanTimer)
     }
