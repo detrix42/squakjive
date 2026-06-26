@@ -20,13 +20,25 @@ module Api
       private
 
       def fetch_metadata(url)
-        cache_key = ["metadata", "v2", url]
+        cache_key = ["metadata", "v3", url]
         cached = Rails.cache.read(cache_key)
+        cached = nil if cached.present? && stale_tweet_preview?(url, cached)
+
         return cached if cached.present?
 
         data = LinkPreviewFetcher.call(url)
-        Rails.cache.write(cache_key, data, expires_in: 1.day) if data.present?
+        Rails.cache.write(cache_key, data, expires_in: 1.day) if data.present? && !stale_tweet_preview?(url, data)
         data
+      end
+
+      def stale_tweet_preview?(url, data)
+        return false unless tweet_status_url?(url)
+
+        data[:preview_type] != :tweet || data[:image].to_s.include?("profile_images")
+      end
+
+      def tweet_status_url?(url)
+        url.to_s.match?(%r{(?:twitter\.com|x\.com)/(?:[^/]+/)?status/\d+}i)
       end
 
       def valid_url?(url)
@@ -42,7 +54,7 @@ module Api
         title = data[:title].presence || "Untitled"
         image = data[:image]
 
-        if data[:preview_type] == :tweet || data[:site_name] == "X"
+        if data[:preview_type] == :tweet
           {
             type: "tweet",
             title: title,

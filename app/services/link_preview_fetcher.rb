@@ -21,9 +21,11 @@ class LinkPreviewFetcher
     uri = URI.parse(@url)
 
     if twitter_status_url?(uri)
-      if (tweet = fetch_x_preview(@url))
-        return tweet
-      end
+      tweet = fetch_x_preview(@url)
+      return tweet if tweet.present?
+
+      # Never fall back to page OG for tweet URLs — X only exposes the author avatar there.
+      return nil
     end
 
     if (og = fetch_og(uri))
@@ -51,16 +53,18 @@ class LinkPreviewFetcher
   private
 
   def fetch_x_preview(url)
-    fetch_x_syndication(url) || fetch_x_oembed(url)
+    fetch_x_syndication(url) ||
+      fetch_x_syndication(url, read_timeout: 12, open_timeout: 6) ||
+      fetch_x_oembed(url)
   end
 
-  def fetch_x_syndication(url)
+  def fetch_x_syndication(url, read_timeout: 8, open_timeout: 4)
     tweet_id = tweet_id_from_url(url)
     return nil unless tweet_id
 
     token = syndication_token(tweet_id)
     uri = URI("#{X_SYNDICATION}?id=#{tweet_id}&token=#{token}&lang=en")
-    resp = http_get(uri, read_timeout: 3, open_timeout: 2)
+    resp = http_get(uri, read_timeout: read_timeout, open_timeout: open_timeout)
     return nil unless resp&.is_a?(Net::HTTPSuccess)
 
     data = JSON.parse(resp.body) rescue nil
@@ -138,13 +142,22 @@ class LinkPreviewFetcher
     end
 
     {
-      url:          data["url"].presence || url,
-      title:        title,
-      site_name:    "X",
-      image:        thumbnail,
-      desc:         text,
-      preview_type: :tweet
+      url:            data["url"].presence || url,
+      title:          title,
+      site_name:      "X",
+      image:          thumbnail,
+      desc:           text,
+      preview_type:   :tweet,
+      media_type:     infer_media_type_from_thumbnail(thumbnail)
     }
+  end
+
+  def infer_media_type_from_thumbnail(url)
+    thumb = url.to_s
+    return :video if thumb.include?("ext_tw_video_thumb") || thumb.include?("amplify_video_thumb")
+    return :photo if thumb.include?("pbs.twimg.com/media/")
+
+    nil
   end
 
   def syndication_thumbnail(data)

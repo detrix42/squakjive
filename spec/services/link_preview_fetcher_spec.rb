@@ -90,6 +90,31 @@ RSpec.describe LinkPreviewFetcher do
       )
     end
 
+    it "does not fall back to page OG metadata for tweet URLs" do
+      fetcher = described_class.new(tweet_url)
+      og_html = <<~HTML
+        <html>
+          <head>
+            <meta property="og:title" content="TaraBull (@TaraBull) on X" />
+            <meta property="og:site_name" content="X (formerly Twitter)" />
+            <meta property="og:image" content="https://pbs.twimg.com/profile_images/123/lDUcgkJy_200x200.jpg" />
+          </head>
+        </html>
+      HTML
+
+      allow(fetcher).to receive(:http_get) do |uri|
+        if uri.to_s.include?("cdn.syndication.twimg.com/tweet-result")
+          http_response(504, "")
+        elsif uri.to_s.include?("publish.x.com/oembed")
+          http_response(504, "")
+        elsif uri.host&.include?("x.com")
+          http_response(200, og_html)
+        end
+      end
+
+      expect(fetcher.call).to be_nil
+    end
+
     it "falls back to OG metadata for non-tweet URLs" do
       url = "https://example.com/article"
       fetcher = described_class.new(url)
