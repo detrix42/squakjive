@@ -16,6 +16,7 @@ export default class extends Controller {
     }
 
     this.seenUrls = new Set()
+    this.pendingPreviews = new Map()
     this.form = this.element.closest("form")
 
     this.onPaste = this.handlePaste.bind(this)
@@ -56,6 +57,7 @@ export default class extends Controller {
   onTurboSubmitEnd(event) {
     if (turboSubmitSucceeded(event)) {
       this.seenUrls = new Set()
+      this.pendingPreviews = new Map()
     }
   }
 
@@ -88,9 +90,32 @@ export default class extends Controller {
   }
 
   isPreviewOrAttachmentAt(position) {
+    if (this.pendingPreviews.has(position)) return true
+
     const piece = this.editor.getDocument().getPieceAtPosition(position)
     if (!piece) return false
-    return typeof piece.isAttachment === "function" && piece.isAttachment()
+
+    return this.isAttachmentPiece(piece) &&
+      this.attachmentHtml(piece).includes("link-preview")
+  }
+
+  isAttachmentPiece(piece) {
+    return Boolean(piece?.attachment)
+  }
+
+  attachmentHtml(piece) {
+    return piece?.attachment?.getContent?.() || ""
+  }
+
+  canStartPreview(normalizedUrl, position) {
+    const piece = this.editor.getDocument().getPieceAtPosition(position)
+    if (!piece || this.isAttachmentPiece(piece)) return false
+
+    return piece.getAttribute?.("href") === normalizedUrl
+  }
+
+  previewStillPending(normalizedUrl, position) {
+    return this.pendingPreviews.get(position) === normalizedUrl
   }
 
   async enhanceUrlAtRange(urlText, normalizedUrl, start, end) {
@@ -175,38 +200,26 @@ export default class extends Controller {
       data = {type: "link", url: normalizedUrl, title: normalizedUrl}
     }
 
-    if (!this.previewPieceMatches(normalizedUrl, start)) {
+    if (!this.previewStillPending(normalizedUrl, start)) {
       console.warn("Content changed - skipping replacement")
       return
     }
 
     const content = this.buildPreviewContent(data)
-    if (!content) return
-
-    editor.setSelectedRange([start, start + 1])
-    editor.deleteInDirection("backward")
-    editor.insertAttachment(new Trix.Attachment({
-      content: content,
-      contentType: "text/html"
-    }))
-  }
-
-  previewPieceMatches(normalizedUrl, position) {
-    const piece = this.editor.getDocument().getPieceAtPosition(position)
-    if (!piece) return false
-
-    if (typeof piece.isAttachment === "function" && piece.isAttachment()) {
-      const attachment = piece.getAttachment?.()
-      const html = attachment?.getContent?.() || ""
-      return html.includes("link-preview--loading")
+    if (!content) {
+      this.pendingPreviews.delete(start)
+      return
     }
 
-    return piece.getAttribute?.("href") === normalizedUrl
+    this.replacePreviewAt(start, content)
   }
 
   insertLoadingPreview(normalizedUrl, start, end) {
     const editor = this.editor
-    if (!this.previewPieceMatches(normalizedUrl, start)) return
+    if (this.pendingPreviews.has(start)) return
+    if (!this.canStartPreview(normalizedUrl, start)) return
+
+    this.pendingPreviews.set(start, normalizedUrl)
 
     const content = `
       <div class="link-preview card link-preview--loading my-2 w-100" aria-busy="true">
@@ -219,6 +232,18 @@ export default class extends Controller {
       content: content,
       contentType: "text/html"
     }))
+  }
+
+  replacePreviewAt(start, content) {
+    const editor = this.editor
+
+    editor.setSelectedRange([start, start + 1])
+    editor.deleteInDirection("backward")
+    editor.insertAttachment(new Trix.Attachment({
+      content: content,
+      contentType: "text/html"
+    }))
+    this.pendingPreviews.delete(start)
   }
 
   buildPreviewContent(data) {
