@@ -189,16 +189,13 @@ export default class extends Controller {
     let data = null
 
     try {
-      const response = await fetch(`/api/v1/metadata?url=${encodeURIComponent(normalizedUrl)}`)
-      data = await response.json()
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error || "Metadata fetch failed")
-      }
+      data = await this.fetchMetadata(normalizedUrl)
     } catch (error) {
       console.warn("Metadata unavailable, using text-only preview:", error)
       data = {type: "link", url: normalizedUrl, title: normalizedUrl}
     }
+
+    data = this.normalizePreviewData(normalizedUrl, data)
 
     if (!this.previewStillPending(normalizedUrl, start)) {
       console.warn("Content changed - skipping replacement")
@@ -244,6 +241,59 @@ export default class extends Controller {
       contentType: "text/html"
     }))
     this.pendingPreviews.delete(start)
+  }
+
+  async fetchMetadata(normalizedUrl, { allowRetry = true } = {}) {
+    const requestUrl = `/api/v1/metadata?url=${encodeURIComponent(normalizedUrl)}&_=${Date.now()}`
+    const response = await fetch(requestUrl, {
+      cache: "no-store",
+      headers: {Accept: "application/json"},
+      credentials: "same-origin"
+    })
+    const data = await response.json()
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || "Metadata fetch failed")
+    }
+
+    if (this.isTweetStatusUrl(normalizedUrl) && data.type === "link") {
+      if (allowRetry) {
+        return this.fetchMetadata(normalizedUrl, {allowRetry: false})
+      }
+      throw new Error("Received stale generic link preview for an X status URL")
+    }
+
+    return data
+  }
+
+  normalizePreviewData(normalizedUrl, data) {
+    if (!data || data.type === "tweet" || data.type === "youtube") return data
+    if (!this.isTweetStatusUrl(normalizedUrl)) return data
+
+    const thumbnail = data.thumbnail || data.image
+    if (!thumbnail || thumbnail.includes("profile_images")) return data
+
+    return {
+      ...data,
+      type: "tweet",
+      text: data.text || data.desc,
+      thumbnail: thumbnail,
+      media_type: this.inferTweetMediaType(thumbnail)
+    }
+  }
+
+  inferTweetMediaType(thumbnail) {
+    if (thumbnail.includes("ext_tw_video_thumb") || thumbnail.includes("amplify_video_thumb")) {
+      return "video"
+    }
+    if (thumbnail.includes("pbs.twimg.com/media/")) {
+      return "photo"
+    }
+    return undefined
+  }
+
+  isTweetStatusUrl(url) {
+    return /(?:twitter\.com|x\.com)\/(?:[^/]+\/)?status\/\d+/i.test(String(url || ""))
   }
 
   buildPreviewContent(data) {
