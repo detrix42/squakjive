@@ -7,6 +7,7 @@ require "uri"
 class LinkPreviewFetcher
   YT_OEMBED = "https://www.youtube.com/oembed?format=json&url="
   X_OEMBED = "https://publish.x.com/oembed?omit_script=1&url="
+  X_SYNDICATION = "https://cdn.syndication.twimg.com/tweet-result"
 
   def self.call(url)
     new(url).call
@@ -20,7 +21,7 @@ class LinkPreviewFetcher
     uri = URI.parse(@url)
 
     if twitter_status_url?(uri)
-      if (tweet = fetch_x_oembed(@url))
+      if (tweet = fetch_x_preview(@url))
         return tweet
       end
     end
@@ -49,14 +50,74 @@ class LinkPreviewFetcher
 
   private
 
+  def fetch_x_preview(url)
+    fetch_x_syndication(url) || fetch_x_oembed(url)
+  end
+
+  def fetch_x_syndication(url)
+    tweet_id = tweet_id_from_url(url)
+    return nil unless tweet_id
+
+    token = syndication_token(tweet_id)
+    uri = URI("#{X_SYNDICATION}?id=#{tweet_id}&token=#{token}&lang=en")
+    resp = http_get(uri, read_timeout: 3, open_timeout: 2)
+    return nil unless resp&.is_a?(Net::HTTPSuccess)
+
+    data = JSON.parse(resp.body) rescue nil
+    return nil unless data.is_a?(Hash) && data["text"].present?
+
+    user = data["user"].is_a?(Hash) ? data["user"] : {}
+    author_name = user["name"].to_s.strip
+    handle = user["screen_name"].to_s.strip
+    text = data["text"].to_s.gsub(/\s+/, " ").strip
+
+    title = if author_name.present? && handle.present?
+      "#{author_name} (@#{handle})"
+    elsif author_name.present?
+      author_name
+    else
+      "Post on X"
+    end
+
+    {
+      url:          url,
+      title:        title,
+      site_name:    "X",
+      image:        syndication_thumbnail(data),
+      desc:         text.presence,
+      preview_type: :tweet
+    }
+  rescue => e
+    Rails.logger.warn("LinkPreviewFetcher X syndication error: #{e.class} #{e.message}")
+    nil
+  end
+
   def fetch_x_oembed(url)
+    oembed_data = nil
+    thumbnail = nil
+
+    oembed_thread = Thread.new { oembed_data = fetch_x_oembed_payload(url) }
+    thumbnail_thread = Thread.new { thumbnail = fetch_x_media_thumbnail(url) }
+    oembed_thread.join
+    thumbnail_thread.join
+
+    return nil unless oembed_data.is_a?(Hash) && oembed_data["html"].present?
+
+    build_x_preview_from_oembed(oembed_data, url, thumbnail)
+  rescue => e
+    Rails.logger.warn("LinkPreviewFetcher X oEmbed error: #{e.class} #{e.message}")
+    nil
+  end
+
+  def fetch_x_oembed_payload(url)
     uri = URI.parse(X_OEMBED + CGI.escape(url))
     resp = http_get(uri)
     return nil unless resp&.is_a?(Net::HTTPSuccess)
 
-    data = JSON.parse(resp.body) rescue nil
-    return nil unless data.is_a?(Hash) && data["html"].present?
+    JSON.parse(resp.body) rescue nil
+  end
 
+  def build_x_preview_from_oembed(data, url, thumbnail)
     author_name = data["author_name"].to_s.strip
     author_url = data["author_url"].to_s.strip
     handle = twitter_handle_from_url(author_url)
@@ -74,13 +135,33 @@ class LinkPreviewFetcher
       url:          data["url"].presence || url,
       title:        title,
       site_name:    "X",
-      image:        fetch_x_media_thumbnail(url),
+      image:        thumbnail,
       desc:         text,
       preview_type: :tweet
     }
-  rescue => e
-    Rails.logger.warn("LinkPreviewFetcher X oEmbed error: #{e.class} #{e.message}")
+  end
+
+  def syndication_thumbnail(data)
+    poster = data.dig("video", "poster").to_s.strip
+    return poster if poster.include?("pbs.twimg.com")
+
+    photo = Array(data["photos"]).find { |entry| entry.is_a?(Hash) }
+    photo_url = photo&.dig("url").to_s.strip
+    return photo_url if photo_url.include?("pbs.twimg.com")
+
+    media = Array(data["mediaDetails"]).find { |entry| entry.is_a?(Hash) }
+    media_url = media&.dig("media_url_https").to_s.strip
+    return media_url if media_url.include?("pbs.twimg.com")
+
     nil
+  end
+
+  def syndication_token(tweet_id)
+    ((tweet_id.to_f / 1_000_000_000_000_000) * Math::PI).to_i.to_s(36).tr("0o.", "")
+  end
+
+  def tweet_id_from_url(url)
+    url.to_s[%r{/status/(\d+)}i, 1]
   end
 
   def extract_tweet_text(html)
@@ -171,10 +252,10 @@ class LinkPreviewFetcher
     host.end_with?("youtube.com", "youtu.be", "m.youtube.com")
   end
 
-  def http_get(uri, redirect_limit: 5)
+  def http_get(uri, redirect_limit: 5, read_timeout: 5, open_timeout: 5)
     raise ArgumentError, "too many HTTP redirects" if redirect_limit <= 0
 
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 5, open_timeout: 5) do |http|
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: read_timeout, open_timeout: open_timeout) do |http|
       req = Net::HTTP::Get.new(uri)
       req["User-Agent"] = "SquakJiveLinkPreview/1.0"
       resp = http.request(req)

@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
   get "user_profile/selected_circle"
   get "user_profile/unread_alerts", to: "user_profile#unread_alerts"
+  post "user_profile/mark_circle_read", to: "user_profile#mark_circle_read"
 
   # dashboard for when user is logged in
   get :dashboard, to: "dashboard#index"

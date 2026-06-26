@@ -13,7 +13,38 @@ RSpec.describe LinkPreviewFetcher do
   describe ".call" do
     let(:tweet_url) { "https://x.com/Upworkout/status/2066036369126826267" }
 
-    it "prefers X oEmbed for tweet URLs" do
+    it "prefers the X syndication API for tweet URLs" do
+      fetcher = described_class.new(tweet_url)
+      syndication_body = {
+        text: "Most people blame their mattress.",
+        user: {
+          name: "Up Workout",
+          screen_name: "Upworkout"
+        },
+        video: {
+          poster: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg"
+        }
+      }.to_json
+
+      allow(fetcher).to receive(:http_get) do |uri|
+        if uri.to_s.include?("cdn.syndication.twimg.com/tweet-result")
+          http_response(200, syndication_body)
+        end
+      end
+
+      result = fetcher.call
+
+      expect(result).to include(
+        preview_type: :tweet,
+        site_name: "X",
+        title: "Up Workout (@Upworkout)",
+        desc: "Most people blame their mattress.",
+        image: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
+        url: tweet_url
+      )
+    end
+
+    it "falls back to parallel X oEmbed and page scrape when syndication fails" do
       fetcher = described_class.new(tweet_url)
       oembed_body = {
         url: tweet_url,
@@ -30,7 +61,9 @@ RSpec.describe LinkPreviewFetcher do
       }.to_json
 
       allow(fetcher).to receive(:http_get) do |uri|
-        if uri.to_s.include?("publish.x.com/oembed")
+        if uri.to_s.include?("cdn.syndication.twimg.com/tweet-result")
+          http_response(404, "")
+        elsif uri.to_s.include?("publish.x.com/oembed")
           http_response(200, oembed_body)
         elsif uri.to_s.include?("x.com/Upworkout/status")
           http_response(

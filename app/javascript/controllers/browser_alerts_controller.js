@@ -94,6 +94,8 @@ export default class extends Controller {
     this.resyncingFeed = false
     this.tabReturnInFlight = false
     this.tabWasInactive = false
+    // Circle the user already saw live while this tab was focused (server may still flag unread).
+    this.seenWhileFocusedCircleId = null
   }
 
   connect() {
@@ -175,6 +177,7 @@ export default class extends Controller {
     if (tabIsHidden() || !document.hasFocus()) {
       this.addUnread(circleId, { announce: true })
     } else {
+      this.markSeenWhileFocused(circleId)
       this.unreadIds.delete(circleId)
       this.syncUnreadUi()
       this.updateTabBadge()
@@ -182,6 +185,7 @@ export default class extends Controller {
   }
 
   selectedCircleIdValueChanged() {
+    this.seenWhileFocusedCircleId = null
     this.dismissUnreadForSelectedCircle()
     this.syncUnreadUi()
     this.updateTabBadge()
@@ -209,7 +213,10 @@ export default class extends Controller {
 
   markCircleUnread(circleId) {
     const id = Number(circleId)
-    if (this.isActivelyViewingCircle(id)) return
+    if (this.isActivelyViewingCircle(id)) {
+      this.markSeenWhileFocused(id)
+      return
+    }
 
     this.addUnread(id, { announce: true })
   }
@@ -218,6 +225,41 @@ export default class extends Controller {
     const id = Number(circleId)
     const selectedId = Number(this.selectedCircleIdValue)
     return id === selectedId && !tabIsHidden() && document.hasFocus()
+  }
+
+  shouldSilenceUnreadForCircle(circleId) {
+    const id = Number(circleId)
+    return id > 0 && id === Number(this.seenWhileFocusedCircleId)
+  }
+
+  markSeenWhileFocused(circleId) {
+    const id = Number(circleId)
+    if (!id || !this.isActivelyViewingCircle(id)) return
+
+    this.seenWhileFocusedCircleId = id
+    this.markCircleReadOnServer(id)
+  }
+
+  markCircleReadOnServer(circleId) {
+    const id = Number(circleId)
+    if (!id) return
+
+    fetch("/user_profile/mark_circle_read", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-CSRF-Token": this.csrfToken()
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ circle_id: id })
+    }).catch(() => {
+      // The next poll or focus event can retry.
+    })
+  }
+
+  csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || ""
   }
 
   addUnread(circleId, { announce = false } = {}) {
@@ -380,8 +422,12 @@ export default class extends Controller {
     const prev = this.unreadIds
     const next = new Set((ids || []).map((id) => Number(id)))
 
+    if (this.seenWhileFocusedCircleId) {
+      next.delete(Number(this.seenWhileFocusedCircleId))
+    }
+
     next.forEach((id) => {
-      if (!prev.has(id)) {
+      if (!prev.has(id) && !this.shouldSilenceUnreadForCircle(id)) {
         this.alertBlip?.play()
       }
     })

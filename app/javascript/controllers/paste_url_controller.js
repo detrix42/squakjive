@@ -3,7 +3,7 @@ import "trix"
 import {getClipboardImageItems, getPastedText, isUrl, extractTypedUrls, turboSubmitSucceeded} from "trix_paste_utils"
 
 export default class extends Controller {
-  static TYPED_URL_DEBOUNCE_MS = 500
+  static TYPED_URL_DEBOUNCE_MS = 250
 
   connect() {
     this.trixEl = this.element.tagName === "TRIX-EDITOR"
@@ -159,6 +159,8 @@ export default class extends Controller {
   async replaceRangeWithPreview({urlText, normalizedUrl, start, end}) {
     const editor = this.editor
 
+    this.insertLoadingPreview(normalizedUrl, start, end)
+
     let data = null
 
     try {
@@ -173,14 +175,43 @@ export default class extends Controller {
       data = {type: "link", url: normalizedUrl, title: normalizedUrl}
     }
 
-    const currentHref = editor.getDocument().getPieceAtPosition(start)?.getAttribute("href")
-    if (currentHref !== normalizedUrl) {
+    if (!this.previewPieceMatches(normalizedUrl, start)) {
       console.warn("Content changed - skipping replacement")
       return
     }
 
     const content = this.buildPreviewContent(data)
     if (!content) return
+
+    editor.setSelectedRange([start, start + 1])
+    editor.deleteInDirection("backward")
+    editor.insertAttachment(new Trix.Attachment({
+      content: content,
+      contentType: "text/html"
+    }))
+  }
+
+  previewPieceMatches(normalizedUrl, position) {
+    const piece = this.editor.getDocument().getPieceAtPosition(position)
+    if (!piece) return false
+
+    if (typeof piece.isAttachment === "function" && piece.isAttachment()) {
+      const attachment = piece.getAttachment?.()
+      const html = attachment?.getContent?.() || ""
+      return html.includes("link-preview--loading")
+    }
+
+    return piece.getAttribute?.("href") === normalizedUrl
+  }
+
+  insertLoadingPreview(normalizedUrl, start, end) {
+    const editor = this.editor
+    if (!this.previewPieceMatches(normalizedUrl, start)) return
+
+    const content = `
+      <div class="link-preview card link-preview--loading my-2 w-100" aria-busy="true">
+        <div class="card-body py-2 text-muted small">Loading preview...</div>
+      </div>`
 
     editor.setSelectedRange([start, end])
     editor.deleteInDirection("backward")

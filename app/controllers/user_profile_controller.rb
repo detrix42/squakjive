@@ -8,6 +8,18 @@ class UserProfileController < ApplicationController
     }
   end
 
+  def mark_circle_read
+    circle_id = params.expect(:circle_id).to_i
+    return head :bad_request unless circle_id.positive?
+
+    circle = current_user.circles.find_by(id: circle_id) ||
+      current_user.joined_circles.find_by(id: circle_id)
+    return head :not_found unless circle
+
+    CircleUnreadAlerts.mark_circle_read!(current_user, circle)
+    head :ok
+  end
+
   def update_selected_circle
     circle_id = params.expect(:circle_id)&.to_i
     if circle_id == 0 || current_user.circles.exists?(id: circle_id) ||
