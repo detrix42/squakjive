@@ -9,7 +9,8 @@ const PREVIEW_LINK_SELECTOR = [
   "a.link-preview-youtube",
   "a.link-preview-tweet",
   ".link-preview a.card-title[href]",
-  ".link-preview-thumbnail--wide"
+  ".link-preview-thumbnail--wide",
+  ".link-preview-tweet-thumbnail"
 ].join(", ")
 
 function findPreviewLink(target) {
@@ -24,7 +25,7 @@ function findPreviewLink(target) {
   const tweet = target.closest(".link-preview-tweet")
   if (tweet instanceof HTMLAnchorElement && tweet.href) return tweet
 
-  const thumbnail = target.closest(".link-preview-thumbnail--wide")
+  const thumbnail = target.closest(".link-preview-thumbnail--wide, .link-preview-tweet-thumbnail")
   if (thumbnail) {
     const parentLink = thumbnail.closest("a[href]")
     if (parentLink instanceof HTMLAnchorElement && parentLink.href) return parentLink

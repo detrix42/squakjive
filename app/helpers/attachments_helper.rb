@@ -224,6 +224,8 @@ module AttachmentsHelper
       if cls.match?(/attachment-video|attachment-pdf|attachment--video|attachment--pdf|attachment--file/)
         normalize_attachment_block!(node)
       elsif node.at_css("img") && !node.at_css(".attachment-caption-link")
+        next if node.at_css(".link-preview-tweet, .link-preview-youtube, .link-preview")
+
         normalize_image_attachment_block!(node)
       end
     end
