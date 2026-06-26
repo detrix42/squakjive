@@ -69,7 +69,10 @@ class LinkPreviewFetcher
     user = data["user"].is_a?(Hash) ? data["user"] : {}
     author_name = user["name"].to_s.strip
     handle = user["screen_name"].to_s.strip
-    text = data["text"].to_s.gsub(/\s+/, " ").strip
+    text = data["text"].to_s
+      .gsub(%r{https?://t\.co/\S+}i, "")
+      .gsub(/\s+/, " ")
+      .strip
 
     title = if author_name.present? && handle.present?
       "#{author_name} (@#{handle})"
@@ -80,12 +83,15 @@ class LinkPreviewFetcher
     end
 
     {
-      url:          url,
-      title:        title,
-      site_name:    "X",
-      image:        syndication_thumbnail(data),
-      desc:         text.presence,
-      preview_type: :tweet
+      url:            url,
+      title:          title,
+      site_name:      "X",
+      image:          syndication_thumbnail(data),
+      desc:           text.presence,
+      preview_type:   :tweet,
+      media_type:     syndication_media_type(data),
+      duration_ms:    data.dig("video", "durationMs"),
+      author_avatar:  user["profile_image_url_https"].to_s.presence
     }
   rescue => e
     Rails.logger.warn("LinkPreviewFetcher X syndication error: #{e.class} #{e.message}")
@@ -143,17 +149,28 @@ class LinkPreviewFetcher
 
   def syndication_thumbnail(data)
     poster = data.dig("video", "poster").to_s.strip
-    return poster if poster.include?("pbs.twimg.com")
+    return poster if twitter_media_url?(poster)
 
     photo = Array(data["photos"]).find { |entry| entry.is_a?(Hash) }
     photo_url = photo&.dig("url").to_s.strip
-    return photo_url if photo_url.include?("pbs.twimg.com")
+    return photo_url if twitter_media_url?(photo_url)
 
     media = Array(data["mediaDetails"]).find { |entry| entry.is_a?(Hash) }
     media_url = media&.dig("media_url_https").to_s.strip
-    return media_url if media_url.include?("pbs.twimg.com")
+    return media_url if twitter_media_url?(media_url)
 
     nil
+  end
+
+  def syndication_media_type(data)
+    return :video if data["video"].is_a?(Hash)
+    return :photo if Array(data["photos"]).any? || Array(data["mediaDetails"]).any?
+
+    nil
+  end
+
+  def twitter_media_url?(url)
+    url.present? && url.include?("pbs.twimg.com") && !url.include?("profile_images")
   end
 
   def syndication_token(tweet_id)

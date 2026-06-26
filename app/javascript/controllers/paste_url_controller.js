@@ -281,20 +281,44 @@ export default class extends Controller {
 
   buildTweetContent(data) {
     const url = this.escapeAttr(data.url)
-    const author = this.escapeHtml(data.title || "Post on X")
-    const tweetTitle = data.text
-      ? `<div class="link-preview-tweet-title">${this.escapeHtml(data.text)}</div>`
-      : `<div class="link-preview-tweet-title">${author}</div>`
-    const authorLine = data.text
-      ? `<div class="link-preview-tweet-author">${author}</div>`
-      : ""
+    const authorLabel = data.title || "Post on X"
+    const {name: authorName, handle: authorHandle} = this.parseTweetAuthor(authorLabel)
     const thumbnail = data.thumbnail || data.image
     const visitHint = `<div class="link-preview-tweet-hint">click to view on X</div>`
+    const header = this.buildTweetHeader(data.author_avatar, authorName, authorHandle)
+    const tweetTitle = data.text
+      ? `<div class="link-preview-tweet-title">${this.escapeHtml(data.text)}</div>`
+      : `<div class="link-preview-tweet-title">${this.escapeHtml(authorLabel)}</div>`
+    const authorLine = data.text && !header
+      ? `<div class="link-preview-tweet-author">${this.escapeHtml(authorLabel)}</div>`
+      : ""
+
+    if (thumbnail && data.media_type === "video") {
+      const duration = this.formatDuration(data.duration_ms)
+      const durationBadge = duration
+        ? `<span class="link-preview-tweet-duration">${this.escapeHtml(duration)}</span>`
+        : ""
+
+      return `
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="link-preview-tweet link-preview-tweet--video">
+          <div class="link-preview-tweet-card">
+            ${header}
+            ${tweetTitle}
+            <div class="link-preview-tweet-thumb">
+              <img src="${this.escapeAttr(thumbnail)}" alt="" class="link-preview-tweet-thumbnail">
+              <span class="link-preview-tweet-play-badge" aria-hidden="true"></span>
+              ${durationBadge}
+            </div>
+            ${visitHint}
+          </div>
+        </a>`
+    }
 
     if (thumbnail) {
       return `
         <a href="${url}" target="_blank" rel="noopener noreferrer" class="link-preview-tweet">
           <div class="link-preview-tweet-card">
+            ${header}
             <div class="link-preview-tweet-thumb">
               <img src="${this.escapeAttr(thumbnail)}" alt="" class="link-preview-tweet-thumbnail">
             </div>
@@ -308,11 +332,53 @@ export default class extends Controller {
     return `
       <div class="link-preview card link-preview--tweet link-preview--text-only">
         <div class="card-body py-2">
+          ${header}
           ${tweetTitle}
           ${authorLine}
           ${visitHint}
         </div>
       </div>`
+  }
+
+  buildTweetHeader(avatarUrl, authorName, authorHandle) {
+    if (!avatarUrl) return ""
+
+    const handleLine = authorHandle
+      ? `<span class="link-preview-tweet-handle">@${this.escapeHtml(authorHandle)}</span>`
+      : ""
+
+    return `
+      <div class="link-preview-tweet-header">
+        <img src="${this.escapeAttr(avatarUrl)}" alt="" class="link-preview-tweet-avatar">
+        <div class="link-preview-tweet-header-text">
+          <span class="link-preview-tweet-name">${this.escapeHtml(authorName)}</span>
+          ${handleLine}
+        </div>
+      </div>`
+  }
+
+  parseTweetAuthor(label) {
+    const match = String(label || "").match(/^(.+?)\s+\(@([^)]+)\)$/)
+    if (!match) {
+      return {name: label || "Post on X", handle: ""}
+    }
+
+    return {name: match[1].trim(), handle: match[2].trim()}
+  }
+
+  formatDuration(durationMs) {
+    const ms = Number(durationMs)
+    if (!Number.isFinite(ms) || ms <= 0) return ""
+
+    const totalSeconds = Math.round(ms / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+
+    if (minutes > 0) {
+      return `${minutes}:${String(seconds).padStart(2, "0")}`
+    }
+
+    return `0:${String(seconds).padStart(2, "0")}`
   }
 
   buildLinkContent(data) {

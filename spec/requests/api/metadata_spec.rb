@@ -48,7 +48,10 @@ RSpec.describe "Api::V1::Metadata", type: :request do
         site_name: "X",
         image: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
         desc: "Most people blame their mattress.",
-        preview_type: :tweet
+        preview_type: :tweet,
+        media_type: :video,
+        duration_ms: 25311,
+        author_avatar: "https://pbs.twimg.com/profile_images/123/lDUcgkJy_normal.jpg"
       )
 
       get "/api/v1/metadata", params: { url: "https://x.com/Upworkout/status/2066036369126826267" }
@@ -59,7 +62,10 @@ RSpec.describe "Api::V1::Metadata", type: :request do
         "title" => "Up Workout (@Upworkout)",
         "text" => "Most people blame their mattress.",
         "thumbnail" => "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
-        "url" => "https://x.com/Upworkout/status/2066036369126826267"
+        "url" => "https://x.com/Upworkout/status/2066036369126826267",
+        "media_type" => "video",
+        "duration_ms" => 25311,
+        "author_avatar" => "https://pbs.twimg.com/profile_images/123/lDUcgkJy_normal.jpg"
       )
     end
 

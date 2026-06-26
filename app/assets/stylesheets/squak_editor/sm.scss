@@ -311,8 +311,43 @@ trix-editor .link-preview-tweet,
     border-radius: var(--bs-border-radius, 0.375rem);
   }
 
+  .link-preview-tweet-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+    max-width: $link-preview-tweet-thumb-width;
+  }
+
+  .link-preview-tweet-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+
+  .link-preview-tweet-header-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
+  }
+
+  .link-preview-tweet-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: inherit;
+  }
+
+  .link-preview-tweet-handle {
+    font-size: 0.75rem;
+    color: $text-secondary;
+  }
+
   .link-preview-tweet-thumb {
     display: block;
+    position: relative;
     width: 100%;
     line-height: 0;
   }
@@ -365,14 +400,64 @@ trix-editor .link-preview-tweet,
     text-align: center;
   }
 
+  .link-preview-tweet-play-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 54%;
+      transform: translate(-50%, -50%);
+      border-style: solid;
+      border-width: 0.62rem 0 0.62rem 1.05rem;
+      border-color: transparent transparent transparent rgba(0, 0, 0, 0.82);
+    }
+  }
+
+  .link-preview-tweet-duration {
+    position: absolute;
+    left: 0.45rem;
+    bottom: 0.45rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.25rem;
+    background: rgba(0, 0, 0, 0.72);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    pointer-events: none;
+  }
+
+  &.link-preview-tweet--video {
+    .link-preview-tweet-title {
+      margin-top: 0;
+      margin-bottom: 0.55rem;
+    }
+  }
+
   &:hover,
   &:focus {
-    .link-preview-tweet-author {
+    .link-preview-tweet-author,
+    .link-preview-tweet-handle {
       color: $text-secondary-hover;
     }
 
     .link-preview-tweet-hint {
       color: $text-secondary;
+    }
+
+    .link-preview-tweet-play-badge {
+      background: rgba(255, 255, 255, 0.96);
     }
   }
 }

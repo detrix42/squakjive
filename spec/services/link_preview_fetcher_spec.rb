@@ -19,10 +19,12 @@ RSpec.describe LinkPreviewFetcher do
         text: "Most people blame their mattress.",
         user: {
           name: "Up Workout",
-          screen_name: "Upworkout"
+          screen_name: "Upworkout",
+          profile_image_url_https: "https://pbs.twimg.com/profile_images/123/lDUcgkJy_normal.jpg"
         },
         video: {
-          poster: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg"
+          poster: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
+          durationMs: 25311
         }
       }.to_json
 
@@ -40,6 +42,9 @@ RSpec.describe LinkPreviewFetcher do
         title: "Up Workout (@Upworkout)",
         desc: "Most people blame their mattress.",
         image: "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/thumb.jpg",
+        media_type: :video,
+        duration_ms: 25311,
+        author_avatar: "https://pbs.twimg.com/profile_images/123/lDUcgkJy_normal.jpg",
         url: tweet_url
       )
     end

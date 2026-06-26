@@ -20,7 +20,7 @@ module Api
       private
 
       def fetch_metadata(url)
-        cache_key = ["metadata", url]
+        cache_key = ["metadata", "v2", url]
         cached = Rails.cache.read(cache_key)
         return cached if cached.present?
 
@@ -48,7 +48,10 @@ module Api
             title: title,
             text: data[:desc],
             thumbnail: image,
-            url: url
+            url: url,
+            media_type: data[:media_type]&.to_s,
+            duration_ms: data[:duration_ms],
+            author_avatar: data[:author_avatar]
           }.compact
         elsif youtube_url?(url) || data[:site_name] == "YouTube"
           {
