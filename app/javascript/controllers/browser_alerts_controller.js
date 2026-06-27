@@ -275,10 +275,11 @@ export default class extends Controller {
 
     hiddenPoll.abortInFlight()
 
-    const isNew = !this.unreadIds.has(id)
     this.unreadIds.add(id)
 
-    if (announce && isNew) {
+    // Always honor announce requests. A circle may already be unread from a prior poll
+    // merge; debounce inside AlertBlip dedupes the bridge + turbo double-delivery.
+    if (announce) {
       this.alertBlip?.play()
     }
 
