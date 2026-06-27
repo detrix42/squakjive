@@ -28,23 +28,12 @@ class LinkPreviewFetcher
       return nil
     end
 
-    if (og = fetch_og(uri))
-      return og
+    if youtube_url?(uri)
+      youtube = fetch_youtube_preview(uri)
+      return youtube if youtube.present?
     end
 
-    if youtube_host?(uri.host)
-      if (embed = fetch_youtube_oembed(@url))
-        return {
-          url:       embed[:url] || @url,
-          title:     embed[:title],
-          site_name: "YouTube",
-          image:     embed[:thumbnail_url],
-          desc:      nil
-        }
-      end
-    end
-
-    nil
+    fetch_og(uri)
   rescue => e
     Rails.logger.warn("LinkPreviewFetcher error: #{e.class} #{e.message}")
     nil
@@ -261,25 +250,91 @@ class LinkPreviewFetcher
     og
   end
 
+  def fetch_youtube_preview(uri)
+    video_url = canonical_youtube_url(uri) || @url
+    embed = fetch_youtube_oembed(video_url) || fetch_youtube_oembed(@url)
+
+    title = embed&.dig(:title)
+    thumbnail = embed&.dig(:thumbnail_url)
+
+    if title.blank? || thumbnail.blank?
+      og = fetch_og(uri)
+      title ||= og&.dig(:title)
+      thumbnail ||= og&.dig(:image)
+    end
+
+    if thumbnail.blank?
+      video_id = youtube_video_id(video_url) || youtube_video_id(@url)
+      thumbnail = youtube_thumbnail_url(video_id) if video_id.present?
+    end
+
+    return nil if title.blank? && thumbnail.blank?
+
+    {
+      url:          video_url,
+      title:        title.presence || "YouTube Video",
+      site_name:    "YouTube",
+      image:        thumbnail,
+      desc:         nil,
+      preview_type: :youtube
+    }
+  end
+
   def fetch_youtube_oembed(url)
     uri = URI.parse(YT_OEMBED + CGI.escape(url))
     resp = http_get(uri)
     return nil unless resp&.is_a?(Net::HTTPSuccess)
 
     data = JSON.parse(resp.body) rescue nil
-    return nil unless data
+    return nil unless data.is_a?(Hash)
 
     {
-      url: data["author_url"],
-      title: data["title"],
-      thumbnail_url: data["thumbnail_url"]
+      url: url,
+      title: data["title"].to_s.strip.presence,
+      thumbnail_url: data["thumbnail_url"].to_s.strip.presence
     }
+  end
+
+  def youtube_url?(uri)
+    youtube_host?(uri.host)
   end
 
   def youtube_host?(host)
     return false if host.blank?
-    host.downcase!
-    host.end_with?("youtube.com", "youtu.be", "m.youtube.com")
+
+    host = host.to_s.downcase
+    host.end_with?("youtube.com", "youtu.be") || host == "m.youtube.com" || host == "music.youtube.com"
+  end
+
+  def canonical_youtube_url(uri)
+    video_id = youtube_video_id(uri)
+    return nil if video_id.blank?
+
+    "https://www.youtube.com/watch?v=#{video_id}"
+  end
+
+  def youtube_video_id(source)
+    uri = source.is_a?(URI) ? source : URI.parse(source.to_s)
+    host = uri.host.to_s.downcase
+    path = uri.path.to_s
+
+    if host.include?("youtu.be")
+      return path.delete_prefix("/").split("/").reject(&:blank?).first
+    end
+
+    if (match = path.match(%r{/(?:shorts|embed|live|v)/([\w-]{11})}i))
+      return match[1]
+    end
+
+    CGI.parse(uri.query.to_s)["v"]&.first
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  def youtube_thumbnail_url(video_id)
+    return nil if video_id.blank?
+
+    "https://i.ytimg.com/vi/#{video_id}/hqdefault.jpg"
   end
 
   def http_get(uri, redirect_limit: 5, read_timeout: 5, open_timeout: 5)

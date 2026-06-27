@@ -291,18 +291,47 @@ export default class extends Controller {
       throw new Error(data.error || "Metadata fetch failed")
     }
 
-    if (this.isTweetStatusUrl(normalizedUrl) && data.type === "link") {
+    if (this.isStalePreviewResponse(normalizedUrl, data)) {
       if (allowRetry) {
         return this.fetchMetadata(normalizedUrl, {allowRetry: false})
       }
-      throw new Error("Received stale generic link preview for an X status URL")
+
+      if (this.isTweetStatusUrl(normalizedUrl)) {
+        throw new Error("Received stale generic link preview for an X status URL")
+      }
     }
 
     return data
   }
 
+  isStalePreviewResponse(url, data) {
+    if (this.isTweetStatusUrl(url)) {
+      return data.type === "link"
+    }
+
+    if (this.isYoutubeUrl(url)) {
+      const thumbnail = data.thumbnail || data.image
+      return data.type === "link" || (data.type === "youtube" && !thumbnail)
+    }
+
+    return false
+  }
+
   normalizePreviewData(normalizedUrl, data) {
     if (!data || data.type === "tweet" || data.type === "youtube") return data
+
+    if (this.isYoutubeUrl(normalizedUrl)) {
+      const thumbnail = data.thumbnail || data.image
+      if (!thumbnail) return data
+
+      return {
+        ...data,
+        type: "youtube",
+        url: normalizedUrl,
+        thumbnail: thumbnail
+      }
+    }
+
     if (!this.isTweetStatusUrl(normalizedUrl)) return data
 
     const thumbnail = data.thumbnail || data.image
@@ -329,6 +358,10 @@ export default class extends Controller {
 
   isTweetStatusUrl(url) {
     return /(?:twitter\.com|x\.com)\/(?:[^/]+\/)?status\/\d+/i.test(String(url || ""))
+  }
+
+  isYoutubeUrl(url) {
+    return /(?:youtube\.com|youtu\.be)/i.test(String(url || ""))
   }
 
   buildPreviewContent(data) {

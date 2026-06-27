@@ -102,7 +102,7 @@ module SquakHelper
   # Returns a hash like { url:, title:, site_name:, image:, desc: } or nil
   def link_preview_for(url)
     return nil if url.blank?
-    Rails.cache.fetch(["link_preview", url], expires_in: 12.hours) do
+    Rails.cache.fetch(["link_preview", "v2", url], expires_in: 12.hours) do
       LinkPreviewFetcher.call(url)
     end
   end

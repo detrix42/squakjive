@@ -75,7 +75,8 @@ RSpec.describe "Api::V1::Metadata", type: :request do
         title: "Never Gonna Give You Up - YouTube",
         site_name: "YouTube",
         image: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-        desc: nil
+        desc: nil,
+        preview_type: :youtube
       )
 
       get "/api/v1/metadata", params: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
@@ -87,6 +88,33 @@ RSpec.describe "Api::V1::Metadata", type: :request do
         "thumbnail" => "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
         "url" => "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
       )
+    end
+
+    it "ignores cached youtube metadata that is missing a thumbnail" do
+      Rails.cache.write(
+        ["metadata", "v5", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+        {
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          title: "Never Gonna Give You Up - YouTube",
+          site_name: "YouTube",
+          preview_type: :youtube
+        },
+        expires_in: 1.day
+      )
+
+      allow(LinkPreviewFetcher).to receive(:call).and_return(
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        title: "Never Gonna Give You Up - YouTube",
+        site_name: "YouTube",
+        image: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        preview_type: :youtube
+      )
+
+      get "/api/v1/metadata", params: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["thumbnail"]).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
+      expect(LinkPreviewFetcher).to have_received(:call)
     end
   end
 end

@@ -115,6 +115,81 @@ RSpec.describe LinkPreviewFetcher do
       expect(fetcher.call).to be_nil
     end
 
+    it "prefers YouTube oEmbed and keeps the video URL and thumbnail" do
+      url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      fetcher = described_class.new(url)
+      oembed_body = {
+        title: "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+        thumbnail_url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        author_url: "https://www.youtube.com/@RickAstleyYT"
+      }.to_json
+
+      allow(fetcher).to receive(:http_get) do |uri|
+        if uri.to_s.include?("youtube.com/oembed")
+          http_response(200, oembed_body)
+        end
+      end
+
+      result = fetcher.call
+
+      expect(result).to include(
+        preview_type: :youtube,
+        site_name: "YouTube",
+        title: "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+        image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        url: url
+      )
+    end
+
+    it "falls back to oEmbed when YouTube OG metadata has no image" do
+      url = "https://youtu.be/dQw4w9WgXcQ"
+      fetcher = described_class.new(url)
+      og_html = <<~HTML
+        <html>
+          <head>
+            <meta property="og:title" content="Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)" />
+            <meta property="og:site_name" content="YouTube" />
+          </head>
+        </html>
+      HTML
+      oembed_body = {
+        title: "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+        thumbnail_url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+      }.to_json
+
+      allow(fetcher).to receive(:http_get) do |uri|
+        if uri.to_s.include?("youtube.com/oembed")
+          http_response(200, oembed_body)
+        elsif uri.host&.include?("youtu.be")
+          http_response(200, og_html)
+        end
+      end
+
+      result = fetcher.call
+
+      expect(result).to include(
+        preview_type: :youtube,
+        image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      )
+    end
+
+    it "uses a static thumbnail when both YouTube OG and oEmbed fail" do
+      url = "https://www.youtube.com/shorts/dQw4w9WgXcQ"
+      fetcher = described_class.new(url)
+
+      allow(fetcher).to receive(:http_get).and_return(http_response(504, ""))
+
+      result = fetcher.call
+
+      expect(result).to include(
+        preview_type: :youtube,
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        title: "YouTube Video"
+      )
+    end
+
     it "falls back to OG metadata for non-tweet URLs" do
       url = "https://example.com/article"
       fetcher = described_class.new(url)
