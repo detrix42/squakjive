@@ -56,6 +56,13 @@ const hiddenPoll = {
     }
     this.abortController = new AbortController()
     return this.abortController.signal
+  },
+
+  abortInFlight() {
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
+    }
   }
 }
 
@@ -266,6 +273,8 @@ export default class extends Controller {
     const id = Number(circleId)
     if (!id) return
 
+    hiddenPoll.abortInFlight()
+
     const isNew = !this.unreadIds.has(id)
     this.unreadIds.add(id)
 
@@ -420,19 +429,22 @@ export default class extends Controller {
 
   applyUnreadIds(ids) {
     const prev = this.unreadIds
-    const next = new Set((ids || []).map((id) => Number(id)))
+    const fromServer = new Set((ids || []).map((id) => Number(id)))
 
     if (this.seenWhileFocusedCircleId) {
-      next.delete(Number(this.seenWhileFocusedCircleId))
+      fromServer.delete(Number(this.seenWhileFocusedCircleId))
     }
 
-    next.forEach((id) => {
+    fromServer.forEach((id) => {
       if (!prev.has(id) && !this.shouldSilenceUnreadForCircle(id)) {
         this.alertBlip?.play()
       }
     })
 
-    this.unreadIds = next
+    // Hidden-tab polls can finish after a realtime squak/cable event already marked a
+    // circle unread locally. Merge instead of replace so a stale response cannot clear
+    // the favicon badge while the tab stays in the background.
+    this.unreadIds = new Set([...prev, ...fromServer])
 
     if (!tabIsHidden()) {
       this.dismissUnreadForSelectedCircle()
