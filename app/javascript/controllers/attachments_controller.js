@@ -85,12 +85,11 @@ export default class extends Controller {
 
     attachment.setAttributes({ upload: null });
 
-    // For image types, give Trix an immediate local object URL so the
-    // preview <img> appears right away in the editor. This prevents Trix
-    // from removing the attachment node while the background upload
-    // happens (the exact "shows for a split second then removed" behavior).
+    // Give Trix an immediate local object URL for images and videos so the
+    // preview appears right away in the editor. This prevents Trix from
+    // removing the attachment node while the background upload happens.
     // We'll swap to the real remote URL + sgid once the upload completes.
-    if (file.type && file.type.startsWith('image/')) {
+    if (this.isImageContentType(file.type) || this.isVideoContentType(file.type)) {
       const tempUrl = URL.createObjectURL(file);
       attachment.setAttributes({
         url: tempUrl,
@@ -98,7 +97,7 @@ export default class extends Controller {
         contentType: file.type,
         filename: file.name
       });
-      attachment._tempObjectUrl = tempUrl; // for cleanup
+      attachment._tempObjectUrl = tempUrl;
     }
 
     console.log("trix-attachment-add triggered for file:", file.name);
@@ -204,44 +203,29 @@ export default class extends Controller {
 
       // Upload is complete: snap to 100% once, after success
       attachment.setUploadProgress(100)
-      const serviceUrl = `/rails/active_storage/blobs/redirect/${blob.signed_id}/${encodeURIComponent(blob.filename)}?disposition=inline`;
+      const serviceUrl = this.blobRedirectUrl(blob)
       console.log("Service URL:", serviceUrl)
 
-      // Define previewable MIME types (PDFs and videos need server-side previews)
-      const previewableTypes = [
-        "application/pdf",
-        "video/mp4",
-        "video/mpeg",
-        "video/webm",
-        "video/mov",
-        "video/avi"
-      ]
-
-      // Define image types (use browser scaling, no server-side preview)
-      const imageTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/bmp",
-        "image/webp",
-        "image/tiff"
-      ]
-
-      if (previewableTypes.includes(blob.content_type)) {
-        // PDFs and videos: analyze and fetch preview
+      if (this.needsServerPreview(blob.content_type)) {
+        // PDFs and all video/* types (including iPhone video/quicktime .mov):
+        // pin sgid + URL immediately so Trix keeps the attachment in the form
+        // body, then fetch a server-generated thumbnail when available.
+        this.revokeTempObjectUrl(attachment)
+        attachment.setAttributes({
+          url: serviceUrl,
+          href: serviceUrl,
+          sgid: blob.signed_id,
+          filename: blob.filename,
+          contentType: blob.content_type,
+          previewable: true,
+          caption: blob.filename || "",
+        })
         await this.analyzeBlob(blob.signed_id)
-        await this.fetchPreviewUrl(blob.signed_id, attachment)
+        await this.fetchPreviewUrl(blob.signed_id, attachment, serviceUrl)
       }
-      else if (imageTypes.includes(blob.content_type)) {
-        // Swap from the temporary local object URL (set in onAttachmentAdd for
-        // instant preview) to the real remote one, set the sgid from this
-        // specific upload, and force progress 100. Then revoke the temp URL
-        // so we don't leak object URLs.
+      else if (this.isImageContentType(blob.content_type)) {
         console.log("Setting attributes for image:", blob.filename)
-        if (attachment._tempObjectUrl) {
-          URL.revokeObjectURL(attachment._tempObjectUrl);
-          attachment._tempObjectUrl = null;
-        }
+        this.revokeTempObjectUrl(attachment)
         attachment.setAttributes({
           url: serviceUrl,
           href: serviceUrl,
@@ -255,11 +239,11 @@ export default class extends Controller {
         console.log("Image attributes set:", attachment.getAttributes());
       }
       else {
-        // Non-previewable files
         console.log("Setting attributes for non-previewable file:", blob.filename)
+        this.revokeTempObjectUrl(attachment)
         attachment.setAttributes({
-          url: blob.service_url,
-          href: blob.service_url,
+          url: serviceUrl,
+          href: serviceUrl,
           sgid: blob.signed_id,
           filename: blob.filename,
           contentType: blob.content_type,
@@ -270,13 +254,10 @@ export default class extends Controller {
     } catch (error) {
       console.error("Upload error:", error)
       console.log("Falling back to file attributes for:", file.name)
-      if (attachment._tempObjectUrl) {
-        URL.revokeObjectURL(attachment._tempObjectUrl);
-        attachment._tempObjectUrl = null;
-      }
+      this.revokeTempObjectUrl(attachment)
       attachment.setAttributes({
-        url: file.service_url || file.url || file.name,
-        href: file.service_url || file.url || file.name,
+        url: file.name,
+        href: file.name,
         sgid: "",
         filename: file.name,
         contentType: file.type,
@@ -296,12 +277,30 @@ export default class extends Controller {
       // Reset progress to 0
       attachment.__uploadProcessed = false; // Reset for future uploads
       if (fileKey) this._inFlightByFile.delete(fileKey);
-      // Clean any leftover temp object URL (defensive)
-      if (attachment._tempObjectUrl) {
-        URL.revokeObjectURL(attachment._tempObjectUrl);
-        attachment._tempObjectUrl = null;
-      }
+      this.revokeTempObjectUrl(attachment)
     }
+  }
+
+  blobRedirectUrl(blob) {
+    return `/rails/active_storage/blobs/redirect/${blob.signed_id}/${encodeURIComponent(blob.filename)}?disposition=inline`
+  }
+
+  isImageContentType(contentType) {
+    return Boolean(contentType && contentType.startsWith("image/"))
+  }
+
+  isVideoContentType(contentType) {
+    return Boolean(contentType && contentType.startsWith("video/"))
+  }
+
+  needsServerPreview(contentType) {
+    return contentType === "application/pdf" || this.isVideoContentType(contentType)
+  }
+
+  revokeTempObjectUrl(attachment) {
+    if (!attachment?._tempObjectUrl) return
+    URL.revokeObjectURL(attachment._tempObjectUrl)
+    attachment._tempObjectUrl = null
   }
 
   async analyzeBlob(sgid, attempt = 0, maxAttempts = 5) {
@@ -330,34 +329,39 @@ export default class extends Controller {
     }
   }
 
-  async fetchPreviewUrl(sgid, attachment, attempt = 0, maxAttempts = 5) {
+  async fetchPreviewUrl(sgid, attachment, serviceUrl, attempt = 0, maxAttempts = 5) {
     console.log("Fetching preview URL for SGID:", sgid, "Attempt:", attempt + 1)
     try {
       const response = await window.axios.get(`/rails/active_storage/blobs/${sgid}/preview`, {
         headers: { "X-CSRF-Token": this.csrfTkn }
       })
       console.log("Preview URL response:", response.data)
+
+      const downloadUrl = response.data.url || serviceUrl
+      const displayUrl = response.data.preview_url || downloadUrl
       attachment.setAttributes({
-        url: response.data.preview_url,
-        href: response.data.url,
-        sgid: response.data.sgid,
-        filename: response.data.filename,
-        contentType: response.data.content_type || attachment.file.type,
+        url: displayUrl,
+        href: downloadUrl,
+        sgid: response.data.sgid || sgid,
+        filename: response.data.filename || attachment.file?.name,
+        contentType: response.data.content_type || attachment.file?.type,
         preview_url: response.data.preview_url,
-        previewable: true
+        previewable: true,
+        caption: response.data.filename || attachment.file?.name || "",
       })
 
-      // Add a hidden input to the form with the preview_url
-      const form = this.element.closest('form')
-      if (form) {
-        let hiddenInput = form.querySelector(`input[type="hidden"][name="squak[body_attributes][preview_urls][${sgid}]"]`)
-        if (!hiddenInput) {
-          hiddenInput = document.createElement('input')
-          hiddenInput.type = 'hidden'
-          hiddenInput.name = `squak[preview_urls][${sgid}]`
-          form.appendChild(hiddenInput)
+      if (response.data.preview_url) {
+        const form = this.element.closest('form')
+        if (form) {
+          let hiddenInput = form.querySelector(`input[type="hidden"][name="squak[body_attributes][preview_urls][${sgid}]"]`)
+          if (!hiddenInput) {
+            hiddenInput = document.createElement('input')
+            hiddenInput.type = 'hidden'
+            hiddenInput.name = `squak[preview_urls][${sgid}]`
+            form.appendChild(hiddenInput)
+          }
+          hiddenInput.value = response.data.preview_url
         }
-        hiddenInput.value = response.data.preview_url
       }
 
     } catch (error) {
@@ -370,18 +374,18 @@ export default class extends Controller {
       if (attempt < maxAttempts && error.response?.status === 422) {
         console.log("Retrying preview fetch after 1s...")
         await new Promise(resolve => setTimeout(resolve, 1000))
-        return this.fetchPreviewUrl(sgid, attachment, attempt + 1, maxAttempts)
+        return this.fetchPreviewUrl(sgid, attachment, serviceUrl, attempt + 1, maxAttempts)
       }
-      console.log("Falling back to file attributes for:", attachment.file.name)
+      console.log("Keeping attachment with direct URL for:", attachment.file?.name)
       attachment.setAttributes({
-        url: attachment.file.url || attachment.file.name,
-        href: attachment.file.url || attachment.file.name,
+        url: serviceUrl,
+        href: serviceUrl,
         sgid: sgid,
-        filename: attachment.file.name,
-        contentType: attachment.file.type,
-        previewable: false
+        filename: attachment.file?.name,
+        contentType: attachment.file?.type,
+        previewable: true,
+        caption: attachment.file?.name || "",
       })
-      alert("Failed to load preview: " + (error.response?.data?.error || error.message))
     }
   }
 
