@@ -70,8 +70,46 @@ Rails.application.routes.draw do
       get "uploads/create"
       resource :metadata, only: [:show]
       resources :uploads, only: [:create]
+
+      # Mobile / Flutter API (Phase 0)
+      scope :auth do
+        post :login, to: "auth#login"
+        post :register, to: "auth#register"
+        delete :logout, to: "auth#logout"
+      end
+
+      resource :me, only: [:show], controller: "me" do
+        patch :selected_circle, action: :update_selected_circle
+      end
+
+      resources :blobs, only: [:create]
+
+      # FCM device registration for push notifications
+      resource :device_token, only: [:create, :destroy], controller: "device_tokens"
+
+      get "users/search", to: "users#search"
+
+      resources :circles, only: [:index, :show, :create, :destroy] do
+        member do
+          delete :leave
+        end
+        resources :squaks, only: [:index, :create]
+        resources :invites, only: [:create]
+        resources :members, only: [:destroy]
+      end
+
+      resources :invites, only: [:index, :destroy] do
+        member do
+          post :accept
+        end
+      end
+
+      resources :squaks, only: [:destroy]
     end
   end
+
+
+
 
   root to: "main#home"
 

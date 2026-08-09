@@ -50,3 +50,7 @@ coverage/
 storage/*
 
 nohup.out
+
+# FCM service account (never commit)
+config/fcm_service_account.json
+/config/fcm_*.json

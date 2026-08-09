@@ -1,6 +1,12 @@
 module Api
   module V1
+    # Link preview metadata for web and mobile.
+    # Inherits ApplicationController so existing web callers keep working;
+    # CSRF is not required for GET.
     class MetadataController < ApplicationController
+      # Mobile clients may call without a session cookie.
+      skip_before_action :verify_authenticity_token, raise: false
+
       def show
         url = params[:url]
         return render json: { error: "Invalid URL" }, status: :bad_request unless valid_url?(url)

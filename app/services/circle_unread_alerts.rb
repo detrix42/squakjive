@@ -46,6 +46,7 @@ class CircleUnreadAlerts
       partial: "circle_alerts/event",
       locals: { circle_id: circle_id, action: "mark_unread" }
     )
+    MobileRealtimeBroadcast.circle_unread(user_id: user.id, circle_id: circle_id)
   end
 
   def self.broadcast_mark_read(user, circle_id)
@@ -55,5 +56,6 @@ class CircleUnreadAlerts
       partial: "circle_alerts/event",
       locals: { circle_id: circle_id, action: "mark_read" }
     )
+    MobileRealtimeBroadcast.circle_read(user_id: user.id, circle_id: circle_id)
   end
 end

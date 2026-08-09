@@ -10,9 +10,12 @@ class User < ApplicationRecord
   has_many :joined_circles, through: :circle_memberships, source: :circle  # Circles they're in
   has_many :squaks, dependent: :destroy
   has_many :user_invites, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
+  has_many :device_tokens, dependent: :destroy
 
   has_one :user_profile, dependent: :destroy
   has_many :circle_read_states, dependent: :destroy
+
 
   validates :username, presence: true, uniqueness: { case_sensitive: false }
 

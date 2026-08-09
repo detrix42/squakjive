@@ -1,0 +1,4 @@
+<%# Render HTML embeds from Trix (e.g. link preview cards) without re-invoking the broken ContentAttachment#to_html render path. %>
+<figure class="attachment attachment--content">
+  <%= sanitize_action_text_content(ActionText::Content.new(content_attachment.content)) %>
+</figure>

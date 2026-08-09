@@ -10,6 +10,7 @@ class UserInvite < ApplicationRecord
       partial: "dashboard/user_invites",
       locals: { invite: self }
     )
+    MobileRealtimeBroadcast.invite_created(self)
   end
 
   after_destroy_commit do
@@ -17,5 +18,6 @@ class UserInvite < ApplicationRecord
       [user, :user_invites],
       target: self
     )
+    MobileRealtimeBroadcast.invite_removed(user_id: user_id, invite_id: id)
   end
 end

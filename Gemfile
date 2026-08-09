@@ -43,6 +43,9 @@ gem "image_processing", "~> 1.2"
 gem "ruby-vips", "~> 2.2"
 
 gem "redis", "~> 4.5"
+
+# Firebase Cloud Messaging (HTTP v1) for mobile push
+gem "googleauth", "~> 1.11"
 # gem "redis-namespace", "~> 1.8"
 # gem "redis-activesupport", "~> 5.1"
 
@@ -56,13 +59,13 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
   gem "rspec-rails", "~> 8.0.1"
+  gem "factory_bot_rails"
+  gem "faker"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  gem 'factory_bot_rails'
-  gem 'faker'
 end
 
 group :test do

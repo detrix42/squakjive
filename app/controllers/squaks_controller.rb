@@ -181,6 +181,7 @@ class SquaksController < ApplicationController
         locals: { squak: @squak, user: current_user }
       )
       CircleUnreadAlerts.broadcast_new_squak(@squak)
+      MobileRealtimeBroadcast.squak_created(@squak)
 
       respond_to do |format|
         format.turbo_stream do
@@ -272,10 +273,13 @@ class SquaksController < ApplicationController
       end
     end
 
+    circle_id = @squak.circle_id
+    squak_id = @squak.id
     @squak.destroy
-    target_id = "squak-#{@squak.id}"
+    target_id = "squak-#{squak_id}"
     # Notify only viewers of this circle's list
-    Turbo::StreamsChannel.broadcast_remove_to("circle-#{@squak.circle_id}-squaks", target: target_id)
+    Turbo::StreamsChannel.broadcast_remove_to("circle-#{circle_id}-squaks", target: target_id)
+    MobileRealtimeBroadcast.squak_deleted(circle_id: circle_id, squak_id: squak_id)
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove(target_id) }
